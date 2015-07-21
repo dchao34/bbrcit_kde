@@ -7,6 +7,7 @@
 #include <iostream>
 #include <numeric>
 #include <random>
+#include <algorithm>
 #include <cassert>
 
 #include "gauss_legendre.h"
