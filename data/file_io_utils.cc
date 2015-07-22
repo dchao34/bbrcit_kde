@@ -1,5 +1,6 @@
 #include <string>
 #include <fstream>
+#include <algorithm>
 
 #include "file_io_utils.h"
 
