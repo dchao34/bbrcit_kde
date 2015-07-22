@@ -32,7 +32,18 @@ int main(int argc, char *argv[]) {
   ProdKde2d kde4(string(argv[1]) + "/evttype4.dat");
   kde4.set_h1(0.0057); kde4.set_h2(0.055);
   ProdKde2d kde5(string(argv[1]) + "/evttype5.dat");
-  kde5.set_h1(0.000435); kde4.set_h2(0.04);
+  kde5.set_h1(0.000435); kde5.set_h2(0.04);
+
+  /*ProdKde2d kde1(string(argv[1]) + "/evttype1.dat");
+  kde1.set_h1(0.008); kde1.set_h2(0.065);
+  ProdKde2d kde2(string(argv[1]) + "/evttype2.dat");
+  kde2.set_h1(0.008); kde2.set_h2(0.065);
+  ProdKde2d kde3(string(argv[1]) + "/evttype3.dat");
+  kde3.set_h1(0.008); kde3.set_h2(0.065);
+  ProdKde2d kde4(string(argv[1]) + "/evttype4.dat");
+  kde4.set_h1(0.008); kde4.set_h2(0.065);
+  ProdKde2d kde5(string(argv[1]) + "/evttype5.dat");
+  kde5.set_h1(0.008); kde5.set_h2(0.065);*/
 
   ifstream fin; open_for_reading(fin, string(argv[1]) + "/test_m.csv");
   vp points;
