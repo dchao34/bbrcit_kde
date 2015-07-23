@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
   ProdKde2d kde5(string(argv[1]) + "/evttype5.dat");
   kde5.set_h1(0.000435); kde5.set_h2(0.04);
 
-  ifstream fin; open_for_reading(fin, string(argv[1]) + "/test_m.csv");
+  ifstream fin; open_for_reading(fin, string(argv[1]) + "/test.c0c1.csv");
   vp points;
   double x1, x2;
   while (fin >> x1 >> x2) {

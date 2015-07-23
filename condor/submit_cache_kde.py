@@ -49,7 +49,7 @@ if __name__ == '__main__':
     os.makedirs(dirname + '/' + dir) 
 
   total = 0
-  with open('kde_data/test_m.csv') as f:
+  with open('kde_data/test.c0c1.csv') as f:
     for line in f: total += 1
 
   per_node = total / args.nodes
