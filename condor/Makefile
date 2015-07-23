@@ -7,7 +7,13 @@ INCFLAGS = -I../ -I../data
 INC = ../gauss_legendre.h ../Kde2d.h ../ProdKde2d.h ../data/file_io_utils.h
 OBJECTS = $(addprefix ../, gauss_legendre.o Kde2d.o ProdKde2d.o data/file_io_utils.o)
 
-all : cache_kde_score
+all : cv_scan cache_kde_score
+
+cv_scan : cv_scan.o $(OBJECTS)
+	$(CXX) $^ -o $@
+
+cv_scan.o : cv_scan.cc $(INC)
+	$(CXX) $(CXXFLAGS) $(INCFLAGS) -c $< -o $@
 
 cache_kde_score : cache_kde_score.o $(OBJECTS)
 	$(CXX) $^ -o $@

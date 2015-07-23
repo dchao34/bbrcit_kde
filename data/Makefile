@@ -2,7 +2,19 @@ CXX ?= g++
 
 CXXFLAGS = -Wall -std=c++11
 
-all : weighted_down_sample split_generic
+all : prepare_kde_data subsample weighted_down_sample split_generic
+
+prepare_kde_data : prepare_kde_data.o file_io_utils.o
+	$(CXX) $(CXXFLAGS) $^ -o $@
+
+prepare_kde_data.o : prepare_kde_data.cc file_io_utils.h 
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+subsample : subsample.o file_io_utils.o
+	$(CXX) $(CXXFLAGS) $^ -o $@
+
+subsample.o : subsample.cc file_io_utils.h 
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 weighted_down_sample : weighted_down_sample.o file_io_utils.o
 	$(CXX) $(CXXFLAGS) $^ -o $@

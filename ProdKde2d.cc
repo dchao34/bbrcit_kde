@@ -33,6 +33,25 @@ void ProdKde2d::compute_sample_stats() {
   shat2 /= (sample.size() - 1);
 }
 
+void ProdKde2d::cv(vector<double> &results, double h, bool cv_x1) {
+
+  decltype(get_first) *f = cv_x1 ? get_first : get_second;
+
+  double sum = 0.0, cv = 0.0;
+  auto n = sample.size();
+  for (auto it1 = sample.begin(); it1 != sample.end(); ++it1) {
+    for (auto it2 = sample.begin(); it2 != sample.end(); ++it2) {
+      sum += gauss_kernel_star((f(it1) - f(it2)) / h);
+    }
+  }
+  cv = 1/(h*n*n)*sum + 2/(n*h)/sqrt(2*M_PI);
+
+  results.clear();
+  results.push_back(h);
+  results.push_back(sum);
+  results.push_back(cv);
+}
+
 void ProdKde2d::cv(ostream &os, const vector<double> &candidates, bool cv_h1) {
 
   decltype(get_first) *f = cv_h1 ? get_first : get_second;

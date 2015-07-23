@@ -18,7 +18,7 @@ int main() {
   ProdKde2d kde4("data/evttype4.dat");
   kde4.set_h1(0.0057); kde4.set_h2(0.055);
   ProdKde2d kde5("data/evttype5.dat");
-  kde5.set_h1(0.000435); kde4.set_h2(0.04);
+  kde5.set_h1(0.000435); kde5.set_h2(0.04);
 
   ifstream fin; ofstream fout;
   open_for_reading(fin, "test_m.csv");

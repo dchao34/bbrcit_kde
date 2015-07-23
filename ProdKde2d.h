@@ -27,6 +27,7 @@ class ProdKde2d : public Kde2d {
 
     // perform cross validation
     void cv(std::ostream &os, const std::vector<double> &candidates, bool cv_h1=true);
+    void cv(std::vector<double> &results, double h, bool cv_x1=true);
 
   private:
 
