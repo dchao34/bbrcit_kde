@@ -1,0 +1,5 @@
+*.dat
+*.csv
+*.txt
+custom_python_utilities/
+.ipynb_checkpoints

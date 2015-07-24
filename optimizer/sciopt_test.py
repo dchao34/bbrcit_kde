@@ -4,8 +4,8 @@ import numpy as np
 import scipy.optimize as optimize
 from iopro import genfromtxt
 
-p = genfromtxt('cached_kde.csv')
-#p = genfromtxt('cached_kde.course.csv')
+#p = genfromtxt('cached_kde.csv')
+p = genfromtxt('cached_kde.course.csv')
 N, D = p.shape
 
 s = 1e-8
@@ -32,10 +32,11 @@ if __name__ == '__main__':
     sys.stdout.write('Setting up the problem...\n\n')
     sys.stdout.flush()
 
-    x0 = np.random.rand(D)
-    x0 = x0 / np.sum(x0)
-    print x0
+    #x0 = np.random.rand(D)
+    #x0 = x0 / np.sum(x0)
+    #print x0
     x0 = np.array([ 0.00458365, 0.00888265, 0.41721128, 0.07378726, 0.49553516 ])
+    print x0
     cons = ({ 'type': 'eq',
               'fun' : lambda x : np.array(np.sum(x) - 1.0),
               'jac' : lambda x : np.array([1.0, 1.0, 1.0, 1.0, 1.0]) },

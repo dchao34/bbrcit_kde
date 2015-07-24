@@ -17,6 +17,18 @@ double ProdKde2d::operator()(double x1, double x2) {
   return result /= (sample.size() * h1 * h2);
 }
 
+double ProdKde2d::evaluate_marginal(double x, bool dim1) {
+
+  decltype(get_first) *f = dim1 ? get_first : get_second;
+  const double &h = dim1 ? h1 : h2;
+
+  double result = 0.0;
+  for (auto it = sample.begin(); it != sample.end(); ++it) {
+    result += gauss_kernel_1d((x - f(it))/h);
+  }
+  return result /= (sample.size() * h);
+}
+
 void ProdKde2d::compute_sample_stats() {
   mhat1 = 0; mhat2 = 0;
   for (auto &p : sample) { mhat1 += p.first; mhat2 += p.second; }
