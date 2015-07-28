@@ -8,7 +8,7 @@ UTILDIR = data
 INCDIR = $(UTILDIR)
 LIBDIR = $(UTILDIR)
 
-all : cache_kde_score make_contours test_gauss test_kde test_cv cv_scan kde_scan
+all : cache_kde_score test_gauss test_kde test_cv cv_scan kde_scan
 
 kde_scan : kde_scan.cc gauss_legendre.o Kde2d.o ProdKde2d.o $(UTILDIR)/file_io_utils.o
 	$(CXX) $(CXXFLAGS) -I$(INCDIR) $^ -o $@
@@ -35,12 +35,6 @@ cache_kde_score : cache_kde_score.o gauss_legendre.o Kde2d.o ProdKde2d.o $(UTILD
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
 cache_kde_score.o : cache_kde_score.cc ProdKde2d.h $(UTILDIR)/file_io_utils.o
-	$(CXX) $(CXXFLAGS) -I$(INCDIR) -c $< -o $@
-
-make_contours : make_contours.o Kde2d.o gauss_legendre.o ProdKde2d.o $(UTILDIR)/file_io_utils.o
-	$(CXX) $(CXXFLAGS) $^ -o $@
-
-make_contours.o : make_contours.cc Kde2d.h
 	$(CXX) $(CXXFLAGS) -I$(INCDIR) -c $< -o $@
 
 Kde2d.o : Kde2d.cc Kde2d.h gauss_legendre.h $(UTILDIR)/file_io_utils.h

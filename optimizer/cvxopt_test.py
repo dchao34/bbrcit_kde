@@ -4,12 +4,12 @@ import numpy as np
 import cvxopt as cvx
 from iopro import genfromtxt
 
-p = genfromtxt('cached_kde.csv')
-#p = genfromtxt('cached_kde.course.csv')
+p = genfromtxt('cached_kde.1.csv')
+#p = genfromtxt('cached_kde.csv')
 N, D = p.shape
 
-#I = np.random.choice(N, N)
-#p = p[I]
+I = np.random.choice(N, N)
+p = p[I]
 
 s = 1e-8
 
