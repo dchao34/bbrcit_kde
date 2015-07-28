@@ -51,7 +51,7 @@ inline double ProdKde2d::gauss_kernel_1d(double x, double s) {
 
 // evaluates the K* function. see Wasserman. 
 inline double ProdKde2d::gauss_kernel_star(double x) {
-  return gauss_kernel_1d(x, 2) - 2 * gauss_kernel_1d(x, 1);
+  return gauss_kernel_1d(x, sqrt(2)) - 2 * gauss_kernel_1d(x, 1);
 }
 
 #endif

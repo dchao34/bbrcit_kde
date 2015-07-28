@@ -15,8 +15,8 @@ datadir = 'data'
 #opt_h2 = [ 0.0671, 0.0669, 0.0707, 0.0534, 0.0439 ]
 
 # corrected by guessing...
-opt_h1 = [ 0.00844, 0.00928, 0.001, 0.00579, 0.000435 ]
-opt_h2 = [ 0.0671, 0.0669, 0.01, 0.01, 0.01 ]
+opt_h1 = [ 0.00844, 0.00928, 0.0012, 0.00579, 0.000435 ]
+opt_h2 = [ 0.0671, 0.0669, 0.018, 0.01, 0.01 ]
 
 for i, (h1, h2) in enumerate(zip(opt_h1, opt_h2)):
     sys.stdout.write('Scanning evttype{0}...\n'.format(i+1))

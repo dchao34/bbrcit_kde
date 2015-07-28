@@ -1,4 +1,5 @@
 #include <vector>
+#include <limits>
 
 #include "ProdKde2d.h"
 
@@ -53,6 +54,7 @@ void ProdKde2d::cv(vector<double> &results, double h, bool cv_x1) {
   auto n = sample.size();
   for (auto it1 = sample.begin(); it1 != sample.end(); ++it1) {
     for (auto it2 = sample.begin(); it2 != sample.end(); ++it2) {
+      if (it1 == it2) continue;
       sum += gauss_kernel_star((f(it1) - f(it2)) / h);
     }
   }
