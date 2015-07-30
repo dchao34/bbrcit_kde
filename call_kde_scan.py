@@ -10,13 +10,9 @@ b2, e2, s2 = 0.0, 1.0, 0.01
 outdir = 'visual/contour/test'
 datadir = 'data'
 
-# apparently over-smoothed?
-#opt_h1 = [ 0.00844, 0.00928, 0.00565, 0.00579, 0.000435 ]
-#opt_h2 = [ 0.0671, 0.0669, 0.0707, 0.0534, 0.0439 ]
-
-# corrected by guessing...
-opt_h1 = [ 0.00844, 0.00928, 0.0012, 0.00579, 0.000435 ]
-opt_h2 = [ 0.0671, 0.0669, 0.018, 0.01, 0.01 ]
+# optimal for all except continum (approximate).
+opt_h1 = [ 2.39e-3, 2.11e-3, 1.21e-3, 1.49e-3, 5e-4]
+opt_h2 = [ 2.08e-2, 1.69e-2, 1.87e-2, 1.66e-2, 1.34e-2 ]
 
 for i, (h1, h2) in enumerate(zip(opt_h1, opt_h2)):
     sys.stdout.write('Scanning evttype{0}...\n'.format(i+1))
