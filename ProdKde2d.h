@@ -22,6 +22,8 @@ class ProdKde2d : public Kde2d {
     double operator()(double x1, double x2) override;
     double f1(double x) { return evaluate_marginal(x, true); }
     double f2(double x) { return evaluate_marginal(x, false); }
+    double f1_se(double x) { return evaluate_marginal_se(x, true); }
+    double f2_se(double x) { return evaluate_marginal_se(x, false); }
 
     // compute silverman's bandwidth
     double silverman_h1() const { return pow(sample.size(), -1/6.0) * shat1; }
@@ -41,6 +43,7 @@ class ProdKde2d : public Kde2d {
     void compute_sample_stats();
 
     double evaluate_marginal(double x, bool dim1);
+    double evaluate_marginal_se(double x, bool dim1);
 
 };
 

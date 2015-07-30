@@ -25,14 +25,20 @@ using namespace std;
 //
 // 1d output:
 //   + suppose:
+//     *h1(h2)* is the bandwidth for the 1st(2nd) dimension. 
 //     *f1* is the marginal kde for the 1st dimension.
+//     *f1_se* is the marginal kde standard error for the 1st dimension.
 //     *f2* is the marginal kde for the 2nd dimension.
+//     *f2_se* is the marginal kde standard error for the 2nd dimension.
 //     *m* is the total number of grid points over the 1st dimension.
 //     *n* is the total number of grid points over the 2nd dimension.
-//     line 1: b1 b1+s1 b1+2*s1 ... b1+(m-1)*s1
-//     line 2: b2 b2+s2 b1+2*s2 ... b1+(n-1)*s2
-//     line 3: f1(b1) f1(b1+s1) ... f1(b1+(n-1)*s1)
-//     line 4: f2(b2) f2(b2+s2) ... f2(b2+(n-2)*s2)
+//     line 1: h1 h2
+//     line 2: b1 b1+s1 b1+2*s1 ... b1+(m-1)*s1
+//     line 3: b2 b2+s2 b1+2*s2 ... b1+(n-1)*s2
+//     line 4: f1(b1) f1(b1+s1) ... f1(b1+(n-1)*s1)
+//     line 5: f1_se(b1) f1_se(b1+s1) ... f1_se(b1+(n-1)*s1)
+//     line 6: f2(b2) f2(b2+s2) ... f2(b2+(n-2)*s2)
+//     line 7: f2_se(b2) f2_se(b2+s2) ... f2_se(b2+(n-1)*s2)
 int main(int argc, char *argv[]) {
 
   if (argc < 7) {
@@ -54,14 +60,17 @@ int main(int argc, char *argv[]) {
   }
 
   // load kde
+  double h1 = atof(argv[4]), h2 = atof(argv[5]);
   ProdKde2d kde(argv[3]);
-  kde.set_h1(atof(argv[4])); kde.set_h2(atof(argv[5]));
+  kde.set_h1(h1); kde.set_h2(h2);
   double b1 = atof(argv[6]), e1 = atof(argv[7]), s1 = atof(argv[8]);
   double b2 = atof(argv[9]), e2 = atof(argv[10]), s2 = atof(argv[11]);
 
   // write 1d output
   ofstream f1out;
   open_for_writing(f1out, argv[2]);
+
+  f1out << h1 << " " << h2 << endl;
 
   f1out << b1;
   for (double i = b1 + s1; i <= e1; i += s1) { f1out << " " << i; }
@@ -75,8 +84,16 @@ int main(int argc, char *argv[]) {
   for (double i = b1 + s1; i <= e1; i += s1) { f1out << " " << kde.f1(i); }
   f1out << endl;
 
+  f1out << kde.f1_se(b1);
+  for (double i = b1 + s1; i <= e1; i += s1) { f1out << " " << kde.f1_se(i); }
+  f1out << endl;
+
   f1out << kde.f2(b2);
   for (double i = b2 + s2; i <= e2; i += s2) { f1out << " " << kde.f2(i); }
+  f1out << endl;
+
+  f1out << kde.f2_se(b2);
+  for (double i = b2 + s2; i <= e2; i += s2) { f1out << " " << kde.f2_se(i); }
   f1out << endl;
 
   f1out.close();

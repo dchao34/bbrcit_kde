@@ -30,6 +30,27 @@ double ProdKde2d::evaluate_marginal(double x, bool dim1) {
   return result /= (sample.size() * h);
 }
 
+double ProdKde2d::evaluate_marginal_se(double x, bool dim1) {
+
+  decltype(get_first) *f = dim1 ? get_first : get_second;
+  const double &h = dim1 ? h1 : h2;
+
+  double mean = 0.0;
+  for (auto it = sample.begin(); it != sample.end(); ++it) {
+    mean += gauss_kernel_1d((x - f(it))/h);
+  }
+  mean /= (sample.size() * h);
+
+  double se = 0.0;
+  for (auto it = sample.begin(); it != sample.end(); ++it) {
+    se += pow(gauss_kernel_1d((x - f(it))/h) - mean, 2.0);
+  }
+  se /= (sample.size() - 1);
+  se = sqrt(se / sample.size());
+
+  return se;
+}
+
 void ProdKde2d::compute_sample_stats() {
   mhat1 = 0; mhat2 = 0;
   for (auto &p : sample) { mhat1 += p.first; mhat2 += p.second; }
