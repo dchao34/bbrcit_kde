@@ -4,8 +4,7 @@ import numpy as np
 import cvxopt as cvx
 from iopro import genfromtxt
 
-p = genfromtxt('cached_kde.1.csv')
-#p = genfromtxt('cached_kde.csv')
+p = genfromtxt('cached_kde.csv')
 N, D = p.shape
 
 I = np.random.choice(N, N)
@@ -50,42 +49,17 @@ if __name__ == '__main__':
     sys.stdout.write('Setting up the problem...\n\n')
     sys.stdout.flush()
 
-    #G = np.vstack((np.diag(-np.ones(D)),
-    #               np.array([0.0,0.0,-1.0,10.0,0.0]),
-    #               np.array([0.0,10.0,-1.0,0.0,0.0]),
-    #               np.array([0.0,1.0,0.0,-1.0,0.0]),
-    #               np.array([1.0,0.0,0.0,-1.0,0.0])
-    #               ))
-    #G = cvx.matrix(G)
-    #h = cvx.matrix(np.zeros(D+4))
-    #dims = { 'l': D+4, 'q': [], 's': [] }
-
-    #A = cvx.matrix(np.array([ [1.0,1.0,1.0,1.0,1.0],
-    #                          [0.00888265, -0.00458365 ],
-    #                          [0.0,0.0,0.0,0.0,1.0] ]))
-    #b = cvx.matrix([1.0, 0.0, 0.49553516])
-
+    G = cvx.matrix(np.diag(-np.ones(D)))
+    h = cvx.matrix(np.zeros(D))
+    #A = cvx.matrix(np.ones(D), (1, D))
+    #b = cvx.matrix(1.0)
     #A = cvx.matrix(np.array([ [1.0,1.0,1.0,1.0,1.0],
     #                          [0.0,0.0,0.0,0.0,1.0] ]))
     #b = cvx.matrix([1.0, 0.49553516])
-    #A = cvx.matrix(np.array([ [1.0,1.0,1.0,1.0,1.0],
-    #                          [0.0,0.0,0.0,1.0,0.0],
-    #                          [0.0,0.0,0.0,0.0,1.0] ]))
-    #b = cvx.matrix([1.0, 0.07378726, 0.49553516])
-    #A = cvx.matrix(np.array([ [1.0,1.0,1.0,1.0,1.0],
-    #                          [0.0,0.0,1.0,0.0,0.0],
-    #                          [0.0,0.0,0.0,1.0,0.0],
-    #                          [0.0,0.0,0.0,0.0,1.0] ]))
-    #b = cvx.matrix([1.0, 0.41721128, 0.07378726, 0.49553516])
-    #A = cvx.matrix(np.array([ [1.0,1.0,1.0,1.0,1.0],
-    #                          [0.0,0.0,1.0,0.0,0.0],
-    #                          [0.0,0.0,0.0,1.0,0.0] ]))
-    #b = cvx.matrix([1.0, 0.41721128, 0.07378726])
-
-    G = cvx.matrix(np.diag(-np.ones(D)))
-    h = cvx.matrix(np.zeros(D))
-    A = cvx.matrix(np.ones(D), (1, D))
-    b = cvx.matrix(1.0)
+    A = cvx.matrix(np.array([ [1.0,1.0,1.0,1.0,1.0],
+                              [0.0,0.0,1.0,0.0,0.0],
+                              [0.0,0.0,0.0,0.0,1.0] ]))
+    b = cvx.matrix([1.0, 0.41721128, 0.49553516])
     dims = { 'l': D, 'q': [], 's': [] }
 
     sys.stdout.write('Solving the problem...\n\n')

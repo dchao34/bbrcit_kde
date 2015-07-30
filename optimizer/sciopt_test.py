@@ -4,11 +4,13 @@ import numpy as np
 import scipy.optimize as optimize
 from iopro import genfromtxt
 
-#p = genfromtxt('cached_kde.csv')
-p = genfromtxt('cached_kde.course.csv')
+p = genfromtxt('cached_kde.csv')
 N, D = p.shape
 
-s = 1e-8
+I = np.random.choice(N, N)
+p = p[I]
+
+s = 1e-7
 
 def f(x):
     return -np.sum(np.log(np.dot(p,x))) * s
