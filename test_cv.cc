@@ -106,7 +106,6 @@ int main(int argc, char *argv[]) {
   os << "h2: " << endl;
   cross_validate_scan(kde4, x2_candidates, false, os);
   os << endl;
-  
 
   // evttype5
   input_fname = "data/evttype5_sub.dat";
@@ -121,7 +120,91 @@ int main(int argc, char *argv[]) {
   os << "h2: " << endl;
   cross_validate_scan(kde5, x2_candidates, false, os);
   os << endl;
+
   */
+
+// DITHER TESTS
+
+  // evttype1
+  /*
+  input_fname = "data/evttype1.dither.csv";
+  x1_candidates = { 2.0e-3, 1.9e-3, 1.8e-3, 1.7e-3 };
+  x2_candidates = { 5e-2, 3e-2, 1e-2 };
+  ProdKde2d kde1(input_fname);
+
+  os << "cross validating " << input_fname << ": "<< endl;
+  os << "h1: " << endl;
+  cross_validate_scan(kde1, x1_candidates, true, os);
+  os << endl;
+  //os << "h2: " << endl;
+  //cross_validate_scan(kde1, x2_candidates, false, os);
+  //os << endl;
+  */
+
+  /*
+  // evttype2
+  input_fname = "data/evttype2.dither.csv";
+  x1_candidates = { 2.3e-3, 2.1e-3, 1.9e-3 };
+  x2_candidates = { 3e-2, 2e-2, 1e-2 };
+  ProdKde2d kde2(input_fname);
+
+  os << "cross validating " << input_fname << ": "<< endl;
+  os << "h1: " << endl;
+  cross_validate_scan(kde2, x1_candidates, true, os);
+  os << endl;
+  //os << "h2: " << endl;
+  //cross_validate_scan(kde2, x2_candidates, false, os);
+  //os << endl;
+  */
+
+/*
+  // evttype3
+  input_fname = "data/evttype3.dither.csv";
+  x1_candidates = { 1.21e-3, 1.15e-3, 1.1e-3 };
+  x2_candidates = { 2e-2, 1.8e-2, 1.6e-2 };
+  ProdKde2d kde3(input_fname);
+
+  os << "cross validating " << input_fname << ": "<< endl;
+  os << "h1: " << endl;
+  cross_validate_scan(kde3, x1_candidates, true, os);
+  os << endl;
+  //os << "h2: " << endl;
+  //cross_validate_scan(kde3, x2_candidates, false, os);
+  //os << endl;
+  */
+
+ /*
+  // evttype4
+  input_fname = "data/evttype4.dither.csv";
+  x1_candidates = { 1.45e-3, 1.43e-3, 1.41e-3, 1.39e-3, 1.37e-3};
+  x2_candidates = { 5e-2, 2e-2, 1e-2};
+  ProdKde2d kde4(input_fname);
+
+  os << "cross validating " << input_fname << ": "<< endl;
+  os << "h1: " << endl;
+  cross_validate_scan(kde4, x1_candidates, true, os);
+  os << endl;
+  //os << "h2: " << endl;
+  //cross_validate_scan(kde4, x2_candidates, false, os);
+  //os << endl;
+  */
+  
+
+  // evttype5
+  input_fname = "data/evttype5.dither.csv";
+  //x1_candidates = { 5e-4, 4.35e-4, 4.1e-4, 4e-4, 3.5e-4, 2.5e-4, 1.5e-4, 1e-5, 1e-6 }; 
+  x1_candidates = { 4.5e-4, 3e-4, 1.7e-4, 1.67e-4, 1.6e-4, 1.5e-4, 1e-4 }; 
+  x2_candidates = { 2e-2, 1e-2, 8e-3};
+  ProdKde2d kde5(input_fname);
+
+  os << "cross validating " << input_fname << ": "<< endl;
+  os << "h1: " << endl;
+  cross_validate_scan(kde5, x1_candidates, true, os);
+  os << endl;
+  //os << "h2: " << endl;
+  //cross_validate_scan(kde5, x2_candidates, false, os);
+  //os << endl;
+
 
 
   if (fout.is_open()) {

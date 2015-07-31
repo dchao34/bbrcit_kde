@@ -24,7 +24,12 @@ Data source
         is given, then the result is `evttype{t}.csv`, where `t` is
         the specified event type. 
 
-5. Subsample data for KDE cross validation. 
+5. Dither the values in each column.
+   + Program: `dither.cc`. 
+   + Input: `train.kde.csv`, `test.kde.csv`, and `evettype{t}.csv`. 
+   + Output: `train.dither.csv`, `test.dither.csv`, and `evttype{t}.dither.csv`.
+
+6. Subsample data for KDE cross validation. 
    + Program: `subsample.cc`. 
-   + Input: `evttype{t}.csv`, `t`=1, 2, 3, 4, or 5. 
+   + Input: `evttype{t}.dither.csv`, `t`=1, 2, 3, 4, or 5. 
    + Output: `evttype{t}.cv.csv`. 
