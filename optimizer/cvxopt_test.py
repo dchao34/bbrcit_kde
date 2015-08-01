@@ -51,15 +51,19 @@ if __name__ == '__main__':
 
     G = cvx.matrix(np.diag(-np.ones(D)))
     h = cvx.matrix(np.zeros(D))
-    #A = cvx.matrix(np.ones(D), (1, D))
-    #b = cvx.matrix(1.0)
+    A = cvx.matrix(np.ones(D), (1, D))
+    b = cvx.matrix(1.0)
     #A = cvx.matrix(np.array([ [1.0,1.0,1.0,1.0,1.0],
     #                          [0.0,0.0,0.0,0.0,1.0] ]))
     #b = cvx.matrix([1.0, 0.49553516])
-    A = cvx.matrix(np.array([ [1.0,1.0,1.0,1.0,1.0],
-                              [0.0,0.0,1.0,0.0,0.0],
-                              [0.0,0.0,0.0,0.0,1.0] ]))
-    b = cvx.matrix([1.0, 0.41721128, 0.49553516])
+    #A = cvx.matrix(np.array([ [1.0,1.0,1.0,1.0,1.0],
+    #                          [0.0,0.0,1.0,0.0,0.0],
+    #                          [0.0,0.0,0.0,0.0,1.0] ]))
+    #b = cvx.matrix([1.0, 0.41721128, 0.49553516])
+    #A = cvx.matrix(np.array([ [1.0,1.0,1.0,1.0,1.0],
+    #                          [0.0,0.0,1.0,-5.658,0.0],
+    #                          [0.0,0.0,0.0,0.0,1.0] ]))
+    #b = cvx.matrix([1.0, 0.41721128, 0.49553516])
     dims = { 'l': D, 'q': [], 's': [] }
 
     sys.stdout.write('Solving the problem...\n\n')
