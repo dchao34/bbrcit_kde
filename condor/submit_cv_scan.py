@@ -11,7 +11,7 @@ def write_condor_submit_file(
   data_dir = os.getcwd() + '/' + data_dir
   dirname = os.getcwd() + '/' + dirname
   result_fname = dirname + '/evttype{0}.col{1}.txt'.format(evttype, colnum)
-  sample_fname = data_dir + '/evttype{0}.cv.dat'.format(evttype)
+  sample_fname = data_dir + '/evttype{0}.cv.csv'.format(evttype)
   out_fname = '{0}/job.out'.format(dirname)
   err_fname = '{0}/job.err'.format(dirname)
   log_fname = '{0}/job.log'.format(dirname)
@@ -23,7 +23,7 @@ def write_condor_submit_file(
   f.write('output = {0}\n'.format(out_fname))
   f.write('error = {0}\n'.format(err_fname))
   f.write('log = {0}\n'.format(log_fname))
-  f.write('accounting_group = babar\n')
+  f.write('accounting_group = group_babar\n')
   f.write('accounting_group_user = dchao\n')
   f.write('getenv = True\n')
   f.write('\n')

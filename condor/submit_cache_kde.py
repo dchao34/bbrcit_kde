@@ -20,7 +20,7 @@ def write_condor_submit_file(
   f.write('output = {0}\n'.format(out_fname))
   f.write('error = {0}\n'.format(err_fname))
   f.write('log = {0}\n'.format(log_fname))
-  f.write('accounting_group = babar\n')
+  f.write('accounting_group = group_babar\n')
   f.write('accounting_group_user = dchao\n')
   f.write('getenv = True\n')
   f.write('\n')
@@ -49,7 +49,7 @@ if __name__ == '__main__':
     os.makedirs(dirname + '/' + dir) 
 
   total = 0
-  with open('kde_data/test.c0c1.csv') as f:
+  with open('kde_data/test.dither.csv') as f:
     for line in f: total += 1
 
   per_node = total / args.nodes

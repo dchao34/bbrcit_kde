@@ -23,18 +23,18 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  ProdKde2d kde1(string(argv[1]) + "/evttype1.dat");
-  kde1.set_h1(0.008); kde1.set_h2(0.065);
-  ProdKde2d kde2(string(argv[1]) + "/evttype2.dat");
-  kde2.set_h1(0.009); kde2.set_h2(0.065);
-  ProdKde2d kde3(string(argv[1]) + "/evttype3.dat");
-  kde3.set_h1(0.0055); kde3.set_h2(0.07);
-  ProdKde2d kde4(string(argv[1]) + "/evttype4.dat");
-  kde4.set_h1(0.0057); kde4.set_h2(0.055);
-  ProdKde2d kde5(string(argv[1]) + "/evttype5.dat");
-  kde5.set_h1(0.000435); kde5.set_h2(0.04);
+  ProdKde2d kde1(string(argv[1]) + "/evttype1.dither.csv");
+  kde1.set_h1(2.29e-3); kde1.set_h2(2.16e-2);
+  ProdKde2d kde2(string(argv[1]) + "/evttype2.dither.csv");
+  kde2.set_h1(2.10e-3); kde2.set_h2(1.64e-2);
+  ProdKde2d kde3(string(argv[1]) + "/evttype3.dither.csv");
+  kde3.set_h1(1.24e-3); kde3.set_h2(1.91e-2);
+  ProdKde2d kde4(string(argv[1]) + "/evttype4.dither.csv");
+  kde4.set_h1(1.42e-3); kde4.set_h2(1.63e-2);
+  ProdKde2d kde5(string(argv[1]) + "/evttype5.dither.csv");
+  kde5.set_h1(1.65e-4); kde5.set_h2(1.44e-2);
 
-  ifstream fin; open_for_reading(fin, string(argv[1]) + "/test.c0c1.csv");
+  ifstream fin; open_for_reading(fin, string(argv[1]) + "/test.dither.csv");
   vp points;
   double x1, x2;
   while (fin >> x1 >> x2) {
