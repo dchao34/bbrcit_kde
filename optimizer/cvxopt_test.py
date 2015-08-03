@@ -4,7 +4,7 @@ import numpy as np
 import cvxopt as cvx
 from iopro import genfromtxt
 
-p = genfromtxt('cached_kde.csv')
+p = genfromtxt('cached_kde/cached_kde.csv')
 N, D = p.shape
 
 I = np.random.choice(N, N)
@@ -12,10 +12,15 @@ p = p[I]
 
 s = 1e-8
 
+# Truth proportions:
+# 0.004597168626601867
+# 0.009011011183443553
+# 0.41817119150694954
+# 0.07374540140202024
+# 0.49265798277959727
 def F(x=None, z=None):
 
     if x is None:
-        # return 0, cvx.matrix([0.00458365, 0.00888265, 0.41721128, 0.07378726, 0.49553516], (D,1))
         return 0, cvx.matrix(0.2, (D, 1))
 
     x_arr = np.array(x.trans()).reshape(-1)
@@ -53,13 +58,17 @@ if __name__ == '__main__':
     h = cvx.matrix(np.zeros(D))
     #A = cvx.matrix(np.ones(D), (1, D))
     #b = cvx.matrix(1.0)
-    #A = cvx.matrix(np.array([ [1.0,1.0,1.0,1.0,1.0],
-    #                          [0.0,0.0,0.0,0.0,1.0] ]))
-    #b = cvx.matrix([1.0, 0.49553516])
     A = cvx.matrix(np.array([ [1.0,1.0,1.0,1.0,1.0],
-                              [0.0,0.0,1.0,0.0,0.0],
                               [0.0,0.0,0.0,0.0,1.0] ]))
-    b = cvx.matrix([1.0, 0.41721128, 0.49553516])
+    b = cvx.matrix([1.0, 0.49553516])
+    #A = cvx.matrix(np.array([ [1.0,1.0,1.0,1.0,1.0],
+    #                          [0.0,0.0,1.0,0.0,0.0],
+    #                          [0.0,0.0,0.0,0.0,1.0] ]))
+    #b = cvx.matrix([1.0, 0.41721128, 0.49553516])
+    #A = cvx.matrix(np.array([ [1.0,1.0,1.0,1.0,1.0],
+    #                          [0.0,0.0,1.0,-5.658,0.0],
+    #                          [0.0,0.0,0.0,0.0,1.0] ]))
+    #b = cvx.matrix([1.0, 0.0, 0.49553516])
     dims = { 'l': D, 'q': [], 's': [] }
 
     sys.stdout.write('Solving the problem...\n\n')
