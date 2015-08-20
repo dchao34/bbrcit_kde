@@ -1,7 +1,16 @@
+#ifndef _USE_MATH_DEFINES
+#define _USE_MATH_DEFINES
+#endif
+
+#include <cmath>
 #include <vector>
 #include <limits>
+#include <complex>
+#include <algorithm>
+#include <cassert>
 
 #include "ProdKde2d.h"
+#include "fft.h"
 
 using namespace std;
 
@@ -114,4 +123,78 @@ void ProdKde2d::cv(ostream &os, const vector<double> &candidates, bool cv_h1) {
     os << ", cv = " << cv << endl;
   }
   os << "best cv = " << cv_min << ", best h = " << cv_argmin << endl;
+}
+
+void ProdKde2d::fcv(vector<double> &results, double h, unsigned r, bool cv_x1) {
+
+  using cplex = complex<double>;
+  using vc_size_t = vector<cplex>::size_type;
+  using vp_size_t = vector<pair<double,double>>::size_type;
+
+  decltype(get_first) *f = cv_x1 ? get_first : get_second;
+
+  // cache constants 
+  vc_size_t M = 0x1 << r;
+  vp_size_t N = sample.size();
+
+  double a, b;
+  a = f(sample.begin()); b = a;
+  for (auto it = sample.begin(); it != sample.end(); ++it) {
+    double x = f(it);
+    if (x < a) a = x;
+    if (x > b) b = x;
+  }
+  a -= 4*h; b += 4*h;
+
+  double delta = (b - a) / M;
+
+  // discretize data 
+  vector<double> t(M);
+  for (vc_size_t k = 0; k < M; ++k) {
+    t[k] = a + k * delta;
+  }
+
+  vector<double> x_disc(M);
+  for (auto is = sample.begin(); is != sample.end(); ++is) {
+
+    double x = f(is);
+    auto it = lower_bound(t.begin(), t.end(), x);
+    if (it != t.end()) {
+      assert(it != t.begin());
+      vc_size_t k = static_cast<vc_size_t>(it - t.begin()) - 1;
+      x_disc[k] += (t[k+1] - x)/(N*delta*delta);
+      x_disc[k+1] += (x - t[k])/(N*delta*delta);
+    } else {
+      x_disc[M-1] += (b - x)/(N*delta*delta);
+    }
+  }
+  for (vector<double>::size_type k = 0; k < x_disc.size(); ++k) {
+    if (k % 2) x_disc[k] *= -1;
+  }
+
+  vector<cplex> x_cplex(M);
+  for (vc_size_t i = 0; i < M; ++i) {
+    x_cplex[i] = cplex(x_disc[i], 0.0);
+  }
+
+  // fft
+  vector<cplex> y(M);
+  fft(x_cplex, y, r);
+  for (auto &c : y) { c /= M; }
+
+  // compute cv score
+  double sum = 0.0;
+  for (vc_size_t l = 1; l <= M/2; ++l) {
+    double s = 2*M_PI*l/(b-a);
+    double t = exp(-0.5*h*h*s*s);
+    sum += (t*t-2*t)*norm(y[M/2-l]);
+  }
+  double cv = (b-a) * sum + 1/(N*h*sqrt(2*M_PI));
+  cv = 2 * cv -1;
+
+  results.clear();
+  results.push_back(h);
+  results.push_back(sum);
+  results.push_back(cv);
+
 }
