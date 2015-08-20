@@ -1,5 +1,5 @@
 #include <iostream>
-#include "fft.h"
+#include <fft.h>
 
 using namespace std;
 

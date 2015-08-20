@@ -3,9 +3,9 @@
 
 #include <iostream>
 
-#include "gauss_legendre.h"
-#include "Kde2d.h"
-#include "ProdKde2d.h"
+#include <gauss_legendre.h>
+#include <Kde2d.h>
+#include <ProdKde2d.h>
 
 using namespace std;
 
