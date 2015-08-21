@@ -88,8 +88,7 @@ void ProdKde2d::cv(vector<double> &results, double h, bool cv_x1) {
       sum += gauss_kernel_star((f(it1) - f(it2)) / h);
     }
   }
-  cv = 1/(h*n*n)*sum + 2/(n*h)/sqrt(2*M_PI);
-  //cout << 1/(h*n*n)*sum << " " << 2/(n*h)/sqrt(2*M_PI) << endl;
+  cv = 1/(h*n*n)*sum + 2/(n*h*sqrt(2*M_PI));
 
   results.clear();
   results.push_back(h);
@@ -97,6 +96,7 @@ void ProdKde2d::cv(vector<double> &results, double h, bool cv_x1) {
   results.push_back(cv);
 }
 
+// TODO: score of fcv and cv differ by ~1
 void ProdKde2d::fcv(vector<double> &results, double h, unsigned r, bool cv_x1) {
 
   using cplex = complex<double>;
@@ -109,6 +109,7 @@ void ProdKde2d::fcv(vector<double> &results, double h, unsigned r, bool cv_x1) {
   vc_size_t M = 0x1 << r;
   vp_size_t N = sample.size();
 
+  // TODO: choice of a and b are important. may need to let the user set this. 
   double a, b;
   a = f(sample.begin()); b = a;
   for (auto it = sample.begin(); it != sample.end(); ++it) {
@@ -118,7 +119,7 @@ void ProdKde2d::fcv(vector<double> &results, double h, unsigned r, bool cv_x1) {
   }
   //a -= 3*h; b += 3*h;
   a -= 10*1.0; b += 10*1.0;
-  //cout << b - a << endl;
+  //a -= 1/h; b += 1/h;
 
   double delta = (b - a) / M;
 
@@ -163,9 +164,8 @@ void ProdKde2d::fcv(vector<double> &results, double h, unsigned r, bool cv_x1) {
     double t = exp(-0.5*h*h*s*s);
     sum += (t*t-2*t)*norm(y[M/2-l]);
   }
-  double cv = (b-a) * sum + 1/(N*h*sqrt(2*M_PI));
-  cv = 2 * cv - 1;
-  //cout << 2*(b-a)*sum -1 << " " << 2/(N*h*sqrt(2*M_PI)) << endl;
+  double cv = 2* (b-a) * sum - 1;
+  cv += 2/(N*h*sqrt(2*M_PI));
 
   results.clear();
   results.push_back(h);
