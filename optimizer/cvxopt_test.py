@@ -4,7 +4,7 @@ import numpy as np
 import cvxopt as cvx
 from iopro import genfromtxt
 
-p = genfromtxt('cached_kde/cached_kde.csv')
+p = genfromtxt('cached_kde/cached_kde.fine6.csv')
 N, D = p.shape
 
 I = np.random.choice(N, N)
@@ -39,12 +39,20 @@ def F(x=None, z=None):
     if z is None:
         return f, Df
 
-    arg_m2 = np.power(arg, -2.0)
+    # avoiding numerical difficulties...
+    arg_m2 = -2 * np.log(arg)
     H = np.zeros((D, D))
     for b in range(D):
         for c in range(D):
-            H[b, c] = np.sum(arg_m2 * p[:,b] * p[:,c]) * z[0]
+            H[b, c] = np.sum(np.exp(arg_m2 + np.log(p[:,b]) + np.log(p[:,c]))) * z[0]
     H = cvx.matrix(H) * s
+
+    #arg_m2 = np.power(arg, -2.0)
+    #H = np.zeros((D, D))
+    #for b in range(D):
+    #    for c in range(D):
+    #        H[b, c] = np.sum(arg_m2 * p[:,b] * p[:,c]) * z[0]
+    #H = cvx.matrix(H) * s
 
     return f, Df, H
 
@@ -59,8 +67,10 @@ if __name__ == '__main__':
     A = cvx.matrix(np.ones(D), (1, D))
     b = cvx.matrix(1.0)
     #A = cvx.matrix(np.array([ [1.0,1.0,1.0,1.0,1.0],
+    #                          [0.0,0.0,1.0,0.0,0.0],
+    #                          [0.0,0.0,0.0,1.0,0.0],
     #                          [0.0,0.0,0.0,0.0,1.0] ]))
-    #b = cvx.matrix([1.0, 0.49553516])
+    #b = cvx.matrix([1.0, 0.41817119150694954, 0.07374540140202024, 0.49265798277959727 ])
     dims = { 'l': D, 'q': [], 's': [] }
 
     sys.stdout.write('Solving the problem...\n\n')
