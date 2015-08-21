@@ -15,8 +15,8 @@ datadir = 'data'
 #opt_h1 = [ 2.29e-3, 2.10e-3, 1.24e-3, 1.42e-3, 1.65e-4 ]
 #opt_h2 = [ 2.16e-2, 1.64e-2, 1.91e-2, 1.63e-2, 1.44e-2 ]
 # fft cv
-opt_h1 = [ 8.76e-3, 7.33e-3, 2.81e-3, 2.92e-3, 1.49e-5 ]
-opt_h2 = [ 7.84e-2, 8.04e-2, 8.05e-2, 5.41e-2, 3.85e-2 ]
+opt_h1 = [ 1.97e-3, 1.75e-3, 3.92e-4, 5.75e-4, 1.09e-4 ]
+opt_h2 = [ 1.95e-2, 1.23e-2, 6.46e-3, 7.66e-3, 4.33e-3 ]
 
 for i, (h1, h2) in enumerate(zip(opt_h1, opt_h2)):
     sys.stdout.write('Scanning evttype{0}...\n'.format(i+1))

@@ -8,7 +8,13 @@ UTILDIR = data
 INCDIR = $(UTILDIR)
 LIBDIR = $(UTILDIR)
 
-all : cache_kde_score cv_scan fcv_scan kde_scan
+all : cache_kde_score cv_scan fcv_scan kde_scan test_fcv2 test_cv2
+
+test_fcv2 : test_fcv2.cc gauss_legendre.o Kde2d.o ProdKde2d.o fft.o $(UTILDIR)/file_io_utils.o
+	$(CXX) $(CXXFLAGS) -I$(INCDIR) $^ -o $@
+
+test_cv2 : test_cv2.cc gauss_legendre.o Kde2d.o ProdKde2d.o fft.o $(UTILDIR)/file_io_utils.o
+	$(CXX) $(CXXFLAGS) -I$(INCDIR) $^ -o $@
 
 kde_scan : kde_scan.cc gauss_legendre.o Kde2d.o ProdKde2d.o fft.o $(UTILDIR)/file_io_utils.o
 	$(CXX) $(CXXFLAGS) -I$(INCDIR) $^ -o $@

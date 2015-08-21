@@ -89,40 +89,12 @@ void ProdKde2d::cv(vector<double> &results, double h, bool cv_x1) {
     }
   }
   cv = 1/(h*n*n)*sum + 2/(n*h)/sqrt(2*M_PI);
+  //cout << 1/(h*n*n)*sum << " " << 2/(n*h)/sqrt(2*M_PI) << endl;
 
   results.clear();
   results.push_back(h);
   results.push_back(sum);
   results.push_back(cv);
-}
-
-void ProdKde2d::cv(ostream &os, const vector<double> &candidates, bool cv_h1) {
-
-  decltype(get_first) *f = cv_h1 ? get_first : get_second;
-  if (cv_h1) {
-    os << "cross validating h1:" << endl;
-  } else {
-    os << "cross validating h2:" << endl;
-  }
-
-  double cv_min = 0.0, cv_argmin = 0.0;
-  for (auto &h : candidates) {
-    double sum = 0.0, cv = 0.0;
-    auto n = sample.size();
-    for (auto it1 = sample.begin(); it1 != sample.end(); ++it1) {
-      for (auto it2 = sample.begin(); it2 != sample.end(); ++it2) {
-        sum += gauss_kernel_star((f(it1) - f(it2)) / h);
-      }
-    }
-
-    cv = 1/(h*n*n)*sum + 2/(n*h)/sqrt(2*M_PI);
-    if (cv < cv_min) { cv_min = cv; cv_argmin = h; }
-
-    os << "h = " << h;
-    os << ", sum = " << sum;
-    os << ", cv = " << cv << endl;
-  }
-  os << "best cv = " << cv_min << ", best h = " << cv_argmin << endl;
 }
 
 void ProdKde2d::fcv(vector<double> &results, double h, unsigned r, bool cv_x1) {
@@ -144,7 +116,9 @@ void ProdKde2d::fcv(vector<double> &results, double h, unsigned r, bool cv_x1) {
     if (x < a) a = x;
     if (x > b) b = x;
   }
-  a -= 4*h; b += 4*h;
+  //a -= 3*h; b += 3*h;
+  a -= 10*1.0; b += 10*1.0;
+  //cout << b - a << endl;
 
   double delta = (b - a) / M;
 
@@ -190,7 +164,8 @@ void ProdKde2d::fcv(vector<double> &results, double h, unsigned r, bool cv_x1) {
     sum += (t*t-2*t)*norm(y[M/2-l]);
   }
   double cv = (b-a) * sum + 1/(N*h*sqrt(2*M_PI));
-  cv = 2 * cv -1;
+  cv = 2 * cv - 1;
+  //cout << 2*(b-a)*sum -1 << " " << 2/(N*h*sqrt(2*M_PI)) << endl;
 
   results.clear();
   results.push_back(h);
