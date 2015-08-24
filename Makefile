@@ -8,15 +8,12 @@ UTILDIR = data
 INCDIR = $(UTILDIR)
 LIBDIR = $(UTILDIR)
 
-all : cache_kde_score cv_scan fcv_scan kde_scan test_fcv2 test_cv2
-
-test_fcv2 : test_fcv2.cc gauss_legendre.o Kde2d.o ProdKde2d.o fft.o $(UTILDIR)/file_io_utils.o
-	$(CXX) $(CXXFLAGS) -I$(INCDIR) $^ -o $@
-
-test_cv2 : test_cv2.cc gauss_legendre.o Kde2d.o ProdKde2d.o fft.o $(UTILDIR)/file_io_utils.o
-	$(CXX) $(CXXFLAGS) -I$(INCDIR) $^ -o $@
+all : cache_kde_score cv_scan fcv_scan akde_scan kde_scan test_ada test_fcv2 test_eval test_acv
 
 kde_scan : kde_scan.cc gauss_legendre.o Kde2d.o ProdKde2d.o fft.o $(UTILDIR)/file_io_utils.o
+	$(CXX) $(CXXFLAGS) -I$(INCDIR) $^ -o $@
+
+akde_scan : akde_scan.cc gauss_legendre.o Kde2d.o ProdKde2d.o ProdAdaKde2d.o fft.o $(UTILDIR)/file_io_utils.o
 	$(CXX) $(CXXFLAGS) -I$(INCDIR) $^ -o $@
 
 fcv_scan : fcv_scan.cc gauss_legendre.o Kde2d.o ProdKde2d.o fft.o $(UTILDIR)/file_io_utils.o
@@ -41,6 +38,9 @@ Kde2d.o : Kde2d.cc Kde2d.h gauss_legendre.h $(UTILDIR)/file_io_utils.h
 	$(CXX) $(CXXFLAGS) -I$(INCDIR) -c $< -o $@
 
 ProdKde2d.o : ProdKde2d.cc ProdKde2d.h Kde2d.h fft.h
+	$(CXX) $(CXXFLAGS) -I$(INCDIR) -c $< -o $@
+
+ProdAdaKde2d.o : ProdAdaKde2d.cc ProdAdaKde2d.h ProdKde2d.h Kde2d.h fft.h
 	$(CXX) $(CXXFLAGS) -I$(INCDIR) -c $< -o $@
 
 clean:

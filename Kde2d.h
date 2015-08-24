@@ -18,7 +18,7 @@ class Kde2d {
   public:
 
     // name of the file containing the data sample. 
-    Kde2d(std::string);
+    Kde2d(std::string, double bw1 = 1.0, double bw2 = 1.0);
     Kde2d() = default;
     virtual ~Kde2d() = default;
 

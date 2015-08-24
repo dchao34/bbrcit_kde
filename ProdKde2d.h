@@ -5,25 +5,37 @@
 #include <cmath>
 
 #include <string>
+#include <vector>
+#include <utility>
+#include <complex>
 
 #include "Kde2d.h"
 
 class ProdKde2d : public Kde2d {
 
+  protected:
+    using vp_it = std::vector<std::pair<double,double>>::iterator;
+    using cplex = std::complex<double>;
+    using vc_size_t = std::vector<cplex>::size_type;
+    using vp_size_t = std::vector<std::pair<double,double>>::size_type;
+
   public:
 
     // name of the file containing the data sample. 
-    ProdKde2d(std::string fname) : Kde2d(fname) { compute_sample_stats(); };
+    ProdKde2d(std::string fname, double bw1=1.0, double bw2=1.0) 
+      : Kde2d(fname, bw1, bw2) { compute_sample_stats(); };
 
     ProdKde2d() = default;
-    ~ProdKde2d() override = default;
+    virtual ~ProdKde2d() override = default;
 
     // evaluate the density estimate at a new point
-    double operator()(double x1, double x2) override;
-    double f1(double x) { return evaluate_marginal(x, true); }
-    double f2(double x) { return evaluate_marginal(x, false); }
+    virtual double operator()(double x1, double x2) override;
+    virtual double f1(double x) { return evaluate_marginal(x, true); }
+    virtual double f2(double x) { return evaluate_marginal(x, false); }
     double f1_se(double x) { return evaluate_marginal_se(x, true); }
     double f2_se(double x) { return evaluate_marginal_se(x, false); }
+    void grid_evaluate_marginal(std::vector<std::pair<double,double>> &results, 
+                                bool dim1, unsigned r=20);
 
     // compute silverman's bandwidth
     double silverman_h1() const { return pow(sample.size(), -1/6.0) * shat1; }
@@ -33,17 +45,26 @@ class ProdKde2d : public Kde2d {
     void cv(std::vector<double> &results, double h, bool cv_x1=true);
     void fcv(std::vector<double> &results, double h, unsigned r, bool cv_x1=true);
 
-  private:
 
-    double mhat1 = 0; double mhat2 = 0;
-    double shat1 = 0; double shat2 = 0;
-    
+  protected:
     double gauss_kernel_1d(double x, double s=1);
     double gauss_kernel_star(double x);
-    void compute_sample_stats();
+
+  private:
 
     double evaluate_marginal(double x, bool dim1);
     double evaluate_marginal_se(double x, bool dim1);
+
+    // silverman bandwidth helpers
+    double mhat1 = 0; double mhat2 = 0;
+    double shat1 = 0; double shat2 = 0;
+    void compute_sample_stats();
+
+    // fft helpers
+    void deduce_fft_grid_constants(double&, double&, double&, vc_size_t, double, bool);
+    void discretize_data(std::vector<double>&, double, double, double,
+                         vc_size_t, vc_size_t, bool);
+    void fft_forward(const std::vector<double>&, std::vector<cplex>&, unsigned);
 
 };
 
@@ -56,5 +77,8 @@ inline double ProdKde2d::gauss_kernel_1d(double x, double s) {
 inline double ProdKde2d::gauss_kernel_star(double x) {
   return gauss_kernel_1d(x, sqrt(2)) - 2 * gauss_kernel_1d(x, 1);
 }
+
+inline double get_first(std::vector<std::pair<double,double>>::iterator p) { return p->first; }
+inline double get_second(std::vector<std::pair<double,double>>::iterator p) { return p->first; }
 
 #endif
