@@ -16,7 +16,9 @@
 
 using namespace std;
 
-Kde2d::Kde2d(string data_fname) {
+Kde2d::Kde2d(string data_fname, double bw1, double bw2) {
+
+  h1 = bw1; h2 = bw2;
 
   ifstream fin;
   open_for_reading(fin, data_fname);

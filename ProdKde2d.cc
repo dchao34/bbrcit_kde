@@ -1,13 +1,18 @@
+#ifndef _USE_MATH_DEFINES
+#define _USE_MATH_DEFINES
+#endif
+
+#include <cmath>
 #include <vector>
 #include <limits>
+#include <complex>
+#include <algorithm>
+#include <cassert>
 
 #include "ProdKde2d.h"
+#include "fft.h"
 
 using namespace std;
-
-using vp_it = vector<pair<double,double>>::iterator;
-double get_first(vp_it p) { return p->first; }
-double get_second(vp_it p) { return p->second; }
 
 double ProdKde2d::operator()(double x1, double x2) {
 
@@ -79,7 +84,7 @@ void ProdKde2d::cv(vector<double> &results, double h, bool cv_x1) {
       sum += gauss_kernel_star((f(it1) - f(it2)) / h);
     }
   }
-  cv = 1/(h*n*n)*sum + 2/(n*h)/sqrt(2*M_PI);
+  cv = 1/(h*n*n)*sum + 2/(n*h*sqrt(2*M_PI));
 
   results.clear();
   results.push_back(h);
@@ -87,31 +92,152 @@ void ProdKde2d::cv(vector<double> &results, double h, bool cv_x1) {
   results.push_back(cv);
 }
 
-void ProdKde2d::cv(ostream &os, const vector<double> &candidates, bool cv_h1) {
+void ProdKde2d::deduce_fft_grid_constants(
+  double &a, double &b, double &delta, 
+  vc_size_t M, double margin, bool cv_x1) {
 
-  decltype(get_first) *f = cv_h1 ? get_first : get_second;
-  if (cv_h1) {
-    os << "cross validating h1:" << endl;
-  } else {
-    os << "cross validating h2:" << endl;
+  decltype(get_first) *f = cv_x1 ? get_first : get_second;
+
+  // find lower and upper bounds on the data sample
+  a = f(sample.begin()); b = a;
+  for (auto it = sample.begin(); it != sample.end(); ++it) {
+    double x = f(it);
+    if (x < a) a = x;
+    if (x > b) b = x;
   }
 
-  double cv_min = 0.0, cv_argmin = 0.0;
-  for (auto &h : candidates) {
-    double sum = 0.0, cv = 0.0;
-    auto n = sample.size();
-    for (auto it1 = sample.begin(); it1 != sample.end(); ++it1) {
-      for (auto it2 = sample.begin(); it2 != sample.end(); ++it2) {
-        sum += gauss_kernel_star((f(it1) - f(it2)) / h);
-      }
+  a -= margin; b += margin;
+  delta = (b - a) / M;
+}
+
+void ProdKde2d::discretize_data(
+  vector<double> &x_disc,
+  double a, double b, double delta, 
+  vc_size_t M, vc_size_t N, bool cv_x1) {
+
+  decltype(get_first) *f = cv_x1 ? get_first : get_second;
+
+  // create bins
+  vector<double> t(M);
+  for (vc_size_t k = 0; k < M; ++k) {
+    t[k] = a + k * delta;
+  }
+
+  // fill the histogram 
+  x_disc.clear(); x_disc = vector<double>(M, 0.0);
+  for (auto is = sample.begin(); is != sample.end(); ++is) {
+    double x = f(is);
+    auto it = lower_bound(t.begin(), t.end(), x);
+    if (it != t.end()) {
+      assert(it != t.begin());
+      vc_size_t k = static_cast<vc_size_t>(it - t.begin()) - 1;
+      x_disc[k] += (t[k+1] - x)/(N*delta*delta);
+      x_disc[k+1] += (x - t[k])/(N*delta*delta);
+    } else {
+      x_disc[M-1] += (b - x)/(N*delta*delta);
     }
-
-    cv = 1/(h*n*n)*sum + 2/(n*h)/sqrt(2*M_PI);
-    if (cv < cv_min) { cv_min = cv; cv_argmin = h; }
-
-    os << "h = " << h;
-    os << ", sum = " << sum;
-    os << ", cv = " << cv << endl;
   }
-  os << "best cv = " << cv_min << ", best h = " << cv_argmin << endl;
+}
+
+// In Silverman's notation:
+// Input: discretized data x_disc[k], k=0,...,M-1.
+// Ouput: Y_l's, where Y_l = y[M/2+l], l=-M/2,...,M/2-1.
+void ProdKde2d::fft_forward(
+    const vector<double> &x_disc,
+    vector<cplex> &y, unsigned r) {
+
+  vc_size_t M = x_disc.size();
+
+  // preprocess x_disc by shifting. this is necessary since the fft
+  // routine used is in a different convention (CLRS). 
+  vector<cplex> x_cplex(M);
+  for (vector<double>::size_type k = 0; k < M; ++k) {
+    double sign = 1.0;
+    if (k % 2) sign *= -1.0;
+    x_cplex[k] = cplex(sign*x_disc[k], 0.0);
+  }
+
+  y.clear(); y = vector<cplex>(M);
+  fft(x_cplex, y, r);
+  for (auto &c : y) { c /= M; }
+}
+
+void ProdKde2d::grid_evaluate_marginal(
+    vector<pair<double,double>> &results, 
+    bool dim1, unsigned r) {
+
+  const double &h = dim1 ? h1 : h2;
+
+  // cache constants 
+  vc_size_t M = 0x1 << r; 
+  vp_size_t N = sample.size();
+
+  // choice of a and b are important. may need to let the user set `margin`
+  double a, b, delta;
+  deduce_fft_grid_constants(a, b, delta, M, 3*h, dim1);
+
+  // discretize data 
+  vector<double> x_disc;
+  discretize_data(x_disc, a, b, delta, M, N, dim1);
+
+  // fft
+  vector<cplex> y;
+  fft_forward(x_disc, y, r);
+
+  // ifft
+  for (vc_size_t l = 1; l <= M/2; ++l) {
+    double s = 2*M_PI*l/(b-a);
+    double t = exp(-0.5*h*h*s*s);
+    y[M/2-l] *= t;
+    if (l < M/2) 
+      y[M/2+l] *= t;
+  }
+  vector<cplex> f(M);
+  ifft(y, f, r);
+
+  // save results
+  results.clear(); results = vector<pair<double, double>>(M);
+  for (vc_size_t k = 0; k < M; ++k) {
+    double sign = 1.0;
+    if (k % 2) sign *= -1.0;
+    f[k] *= sign * M;
+    results[k] = { a + k*delta, f[k].real() };
+  }
+
+}
+
+// TODO: score of fcv and cv differ by ~1
+void ProdKde2d::fcv(vector<double> &results, double h, unsigned r, bool cv_x1) {
+
+  // cache constants 
+  vc_size_t M = 0x1 << r; 
+  vp_size_t N = sample.size();
+
+  // choice of a and b are important. may need to let the user set `margin`
+  double a, b, delta;
+  deduce_fft_grid_constants(a, b, delta, M, 10.0, cv_x1);
+
+  // discretize data 
+  vector<double> x_disc;
+  discretize_data(x_disc, a, b, delta, M, N, cv_x1);
+
+  // fft
+  vector<cplex> y;
+  fft_forward(x_disc, y, r);
+
+  // compute cv score
+  double sum = 0.0;
+  for (vc_size_t l = 1; l <= M/2; ++l) {
+    double s = 2*M_PI*l/(b-a);
+    double t = exp(-0.5*h*h*s*s);
+    sum += (t*t-2*t)*norm(y[M/2-l]);
+  }
+  double cv = 2* (b-a) * sum - 1;
+  cv += 2/(N*h*sqrt(2*M_PI));
+
+  results.clear();
+  results.push_back(h);
+  results.push_back(sum);
+  results.push_back(cv);
+
 }
