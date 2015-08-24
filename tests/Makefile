@@ -8,16 +8,16 @@ INCFLAGS += -I../data
 OBJ = gauss_legendre.o fft.o Kde2d.o ProdKde2d.o ProdAdaKde2d.o data/file_io_utils.o
 OBJECTS = $(addprefix ../, $(OBJ))
 
-all : test_gauss test_kde test_cv test_fcv test_fft test_fcv2
+all : test_gauss test_kde test_cv test_fcv test_fft test_fcv2 test_eval test_ada test_acv
 
 test_acv : test_acv.cc 
-	$(CXX) $(CXXFLAGS) -I$(INCDIR) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(INCFLAGS) $^ $(OBJECTS) -o $@
 
 test_ada : test_ada.cc
-	$(CXX) $(CXXFLAGS) -I$(INCDIR) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(INCFLAGS) $^ $(OBJECTS) -o $@
 
 test_eval : test_eval.cc
-	$(CXX) $(CXXFLAGS) -I$(INCDIR) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(INCFLAGS) $^ $(OBJECTS) -o $@
 
 test_cv : test_cv.cc
 	$(CXX) $(CXXFLAGS) $(INCFLAGS) $^ $(OBJECTS) -o $@
