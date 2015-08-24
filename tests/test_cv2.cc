@@ -4,8 +4,8 @@
 
 #include <file_io_utils.h>
 
-#include "Kde2d.h"
-#include "ProdKde2d.h"
+#include <Kde2d.h>
+#include <ProdKde2d.h>
 
 using namespace std;
 
