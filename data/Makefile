@@ -2,7 +2,9 @@ CXX ?= g++
 
 CXXFLAGS = -Wall -std=c++11
 
-all : dither prepare_kde_data subsample weighted_down_sample split_generic
+BINARIES = dither prepare_kde_data subsample weighted_down_sample split_generic
+
+all : $(BINARIES)
 
 prepare_kde_data : prepare_kde_data.o file_io_utils.o
 	$(CXX) $(CXXFLAGS) $^ -o $@
@@ -38,4 +40,4 @@ file_io_utils.o : file_io_utils.cc file_io_utils.h
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	@rm -f *~ *.o `find . -perm +100 -type f`
+	@rm -f *~ *.o $(BINARIES)

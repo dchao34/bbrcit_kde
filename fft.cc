@@ -34,12 +34,12 @@ void bit_reverse_copy(const vector<cplex> &a, vector<cplex> &y, unsigned r) {
 
 void fft(const vector<cplex> &a, vector<cplex> &y, unsigned r) {
   vc_size_t n = a.size();
-  assert(n == (0x1 << r));
+  assert(n == (0x1ull << r));
   assert(a.size() == y.size());
 
   bit_reverse_copy(a, y, r);
   for (unsigned s = 1; s <= r; ++s) {
-    vc_size_t m = 0x1 << s;
+    vc_size_t m = 0x1ull << s;
     cplex w_p = exp(2*M_PI/m*I);
     for (vc_size_t k = 0; k < n; k += m) {
       cplex w = cplex(1.0, 0.0);
@@ -56,7 +56,7 @@ void fft(const vector<cplex> &a, vector<cplex> &y, unsigned r) {
 
 void ifft(const vector<cplex> &a, vector<cplex> &y, unsigned r) {
   vc_size_t n = a.size();
-  assert(n == (0x1 << r));
+  assert(n == (0x1ull << r));
   assert(a.size() == y.size());
 
   bit_reverse_copy(a, y, r);

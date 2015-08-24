@@ -54,7 +54,14 @@ int main(int argc, char *argv[]) {
     fout << results[1] << " ";
     fout << results[2] << endl;
 
+    cout << h << " ";
+    cout << results[1] << " ";
+    cout << results[2] << endl;
+
   }
+
+  cout << "best cv = " << cv_min << ", best h = " << cv_argmin << endl;
+
   fout.close();
 
   return 0;
