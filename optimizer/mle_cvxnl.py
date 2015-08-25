@@ -67,12 +67,11 @@ if __name__ == '__main__':
                 return f, Df
 
             # Handle call signature F(x, z)
-            x_arr = np.array(x.trans()).reshape(-1)
-            arg_m2 = np.power(arg, -2.0)
+            arg_m2 = -2 * np.log(arg)
             H = np.zeros((D, D))
             for b in range(D):
                 for c in range(D):
-                    H[b, c] = np.sum(arg_m2 * p[:,b] * p[:,c]) * z[0]
+                    H[b, c] = np.sum(np.exp(arg_m2 + np.log(p[:,b]) + np.log(p[:,c]))) * z[0]
             H = cvx.matrix(H) * s
 
             return f, Df, H
@@ -82,20 +81,8 @@ if __name__ == '__main__':
         h = cvx.matrix(np.zeros(D))
 
         # Specify the equality constraints
-        # a. Float all
-        #A = cvx.matrix(np.ones(D), (1, D))
-        #b = cvx.matrix(1.0)
-
-        # b. Float all but continuum
-        A = cvx.matrix(np.array([ [1.0,1.0,1.0,1.0,1.0],
-                                [0.0,0.0,0.0,0.0,1.0] ]))
-        b = cvx.matrix([1.0, 0.49265798277959727])
-
-        # c. Float all but continuum, and also fix ratio between SL and Had.
-        #A = cvx.matrix(np.array([ [1.0,1.0,1.0,1.0,1.0],
-        #                          [0.0,0.0,1.0,-5.6705,0.0],
-        #                          [0.0,0.0,0.0,0.0,1.0] ]))
-        #b = cvx.matrix([1.0, 0.0, 0.49553516])
+        A = cvx.matrix(np.ones(D), (1, D))
+        b = cvx.matrix(1.0)
 
         # Specify required metadata
         dims = { 'l': D, 'q': [], 's': [] }

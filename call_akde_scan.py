@@ -12,10 +12,9 @@ datadir = 'data'
 
 # optimal cv bandwidths
 # fft cv
-#opt_h1 = [ 1.97e-3, 1.75e-3 ]
-#opt_h2 = [ 1.95e-2, 1.23e-2 ]
 opt_h1 = [ 1.97e-3, 1.75e-3, 3.92e-4, 5.75e-4, 1.09e-4 ]
 opt_h2 = [ 1.95e-2, 1.23e-2, 6.46e-3, 7.66e-3, 4.33e-3 ]
+a1, a2 = 0.5, 0.5
 
 for i, (h1, h2) in enumerate(zip(opt_h1, opt_h2)):
     sys.stdout.write('Scanning evttype{0}...\n'.format(i+1))
@@ -26,7 +25,6 @@ for i, (h1, h2) in enumerate(zip(opt_h1, opt_h2)):
 
     subprocess.check_call(['./akde_scan', out2d, out1d, in_data,
                            str(h1), str(h2),
-                           #'0.5', '0.5', '20',
-                           '1.0', '1.0', '20',
+                           str(a1), str(a2), '20',
                            str(b1), str(e1), str(s1),
                            str(b2), str(e2), str(s2)])

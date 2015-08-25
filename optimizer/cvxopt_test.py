@@ -4,7 +4,9 @@ import numpy as np
 import cvxopt as cvx
 from iopro import genfromtxt
 
-p = genfromtxt('cached_kde/cached_kde.fine6.csv')
+#p = genfromtxt('cached_kde/cached_kde.ada.0p5.csv')
+#p = genfromtxt('cached_kde/cached_kde.ada.hack4.csv')
+p = genfromtxt('cached_kde/cached_kde.ada.hack7.csv')
 N, D = p.shape
 
 I = np.random.choice(N, N)
@@ -64,13 +66,20 @@ if __name__ == '__main__':
 
     G = cvx.matrix(np.diag(-np.ones(D)))
     h = cvx.matrix(np.zeros(D))
+
     A = cvx.matrix(np.ones(D), (1, D))
     b = cvx.matrix(1.0)
+
+    #A = cvx.matrix(np.array([ [1.0,1.0,1.0,1.0,1.0],
+    #                          [0.0,0.0,0.0,0.0,1.0] ]))
+    #b = cvx.matrix([1.0, 0.49265798277959727 ])
+
     #A = cvx.matrix(np.array([ [1.0,1.0,1.0,1.0,1.0],
     #                          [0.0,0.0,1.0,0.0,0.0],
     #                          [0.0,0.0,0.0,1.0,0.0],
     #                          [0.0,0.0,0.0,0.0,1.0] ]))
     #b = cvx.matrix([1.0, 0.41817119150694954, 0.07374540140202024, 0.49265798277959727 ])
+
     dims = { 'l': D, 'q': [], 's': [] }
 
     sys.stdout.write('Solving the problem...\n\n')
