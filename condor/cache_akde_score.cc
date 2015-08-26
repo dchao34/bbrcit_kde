@@ -6,7 +6,7 @@
 
 #include <file_io_utils.h>
 
-#include "ProdKde2d.h"
+#include "ProdAdaKde2d.h"
 
 using namespace std;
 
@@ -16,23 +16,18 @@ using sample_no = vp::size_type;
 int main(int argc, char *argv[]) {
 
   if (argc < 5) {
-    cerr << "usage: ./cache_kde_score datadir output_file_name first_idx last_idx" << endl;
+    cerr << "usage: ./cache_akde_score datadir output_file_name first_idx last_idx" << endl;
     cerr << endl;
     cerr << "first_idx and last_idx are 0 indexed." << endl;
     cerr << "processes the inclusive range [first_idx, last_idx]." << endl;
     return 1;
   }
 
-  ProdKde2d kde1(string(argv[1]) + "/evttype1.dither.csv");
-  kde1.set_h1(1.97e-3); kde1.set_h2(1.95e-2);
-  ProdKde2d kde2(string(argv[1]) + "/evttype2.dither.csv");
-  kde2.set_h1(1.75e-3); kde2.set_h2(1.23e-2);
-  ProdKde2d kde3(string(argv[1]) + "/evttype3.dither.csv");
-  kde3.set_h1(3.92e-4); kde3.set_h2(6.46e-3);
-  ProdKde2d kde4(string(argv[1]) + "/evttype4.dither.csv");
-  kde4.set_h1(5.75e-4); kde4.set_h2(7.66e-3);
-  ProdKde2d kde5(string(argv[1]) + "/evttype5.dither.csv");
-  kde5.set_h1(1.09e-4); kde5.set_h2(4.33e-3);
+  ProdAdaKde2d kde1(string(argv[1]) + "/evttype1.dither.csv", 1.97e-3, 1.95e-2, 0.375, 0.375, 20);
+  ProdAdaKde2d kde2(string(argv[1]) + "/evttype2.dither.csv", 1.75e-3, 1.23e-2, 0.375, 0.375, 20);
+  ProdAdaKde2d kde3(string(argv[1]) + "/evttype3.dither.csv", 3.92e-4, 6.46e-3, 0.375, 0.375, 20);
+  ProdAdaKde2d kde4(string(argv[1]) + "/evttype4.dither.csv", 5.75e-4, 7.66e-3, 0.375, 0.375, 20);
+  ProdAdaKde2d kde5(string(argv[1]) + "/evttype5.dither.csv", 1.09e-4, 4.33e-3, 0.375, 0.375, 20);
 
   ifstream fin; open_for_reading(fin, string(argv[1]) + "/test.dither.csv");
   vp points;
