@@ -23,11 +23,11 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  ProdAdaKde2d kde1(string(argv[1]) + "/evttype1.dither.csv", 1.97e-3, 1.95e-2, 0.375, 0.375, 20);
-  ProdAdaKde2d kde2(string(argv[1]) + "/evttype2.dither.csv", 1.75e-3, 1.23e-2, 0.375, 0.375, 20);
-  ProdAdaKde2d kde3(string(argv[1]) + "/evttype3.dither.csv", 3.92e-4, 6.46e-3, 0.375, 0.375, 20);
-  ProdAdaKde2d kde4(string(argv[1]) + "/evttype4.dither.csv", 5.75e-4, 7.66e-3, 0.375, 0.375, 20);
-  ProdAdaKde2d kde5(string(argv[1]) + "/evttype5.dither.csv", 1.09e-4, 4.33e-3, 0.375, 0.375, 20);
+  ProdAdaKde2d kde1(string(argv[1]) + "/evttype1.dither.csv", 1.97e-3, 1.95e-2, 0.28125, 0.28125, 20);
+  ProdAdaKde2d kde2(string(argv[1]) + "/evttype2.dither.csv", 1.75e-3, 1.23e-2, 0.28125, 0.28125, 20);
+  ProdAdaKde2d kde3(string(argv[1]) + "/evttype3.dither.csv", 3.92e-4, 6.46e-3, 0.28125, 0.28125, 20);
+  ProdAdaKde2d kde4(string(argv[1]) + "/evttype4.dither.csv", 5.75e-4, 7.66e-3, 0.28125, 0.28125, 20);
+  ProdAdaKde2d kde5(string(argv[1]) + "/evttype5.dither.csv", 1.09e-4, 4.33e-3, 0.28125, 0.28125, 20);
 
   ifstream fin; open_for_reading(fin, string(argv[1]) + "/test.dither.csv");
   vp points;

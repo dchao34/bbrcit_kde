@@ -18,6 +18,7 @@ def write_condor_submit_file(f, dirname, node_idx, cached_kde_fname, bags):
   f.write('output = {0}\n'.format(out_fname))
   f.write('error = {0}\n'.format(err_fname))
   f.write('log = {0}\n'.format(log_fname))
+  f.write('request_memory = 2000\n')
   f.write('accounting_group = group_babar\n')
   f.write('accounting_group_user = dchao\n')
   f.write('getenv = True\n')
