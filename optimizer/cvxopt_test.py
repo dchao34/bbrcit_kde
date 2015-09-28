@@ -4,9 +4,8 @@ import numpy as np
 import cvxopt as cvx
 from iopro import genfromtxt
 
-#p = genfromtxt('cached_kde/cached_kde.ada.0p5.csv')
-#p = genfromtxt('cached_kde/cached_kde.ada.hack4.csv')
-p = genfromtxt('cached_kde/cached_kde.ada.hack7.csv')
+#p = genfromtxt('cached_kde/cached_kde.ada.0p28125.csv')
+p = genfromtxt('cached_kde/cached_kde.ada.hack10.csv')
 N, D = p.shape
 
 I = np.random.choice(N, N)

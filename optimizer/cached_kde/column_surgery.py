@@ -1,8 +1,7 @@
 import iopro
 import numpy as np
 
-a_0p0 = iopro.genfromtxt('cached_kde.ada.0p0.csv')
-a_0p25 = iopro.genfromtxt('cached_kde.ada.0p25.csv')
+a_0p28125 = iopro.genfromtxt('cached_kde.ada.0p28125.csv')
 a_0p50 = iopro.genfromtxt('cached_kde.ada.0p5.csv')
 N, D = a_0p50.shape
 
@@ -17,12 +16,12 @@ N, D = a_0p50.shape
 
 # !!
 # mildly adapting c0?
-a = np.hstack((a_0p0[:,0].reshape((N, 1)),
-               a_0p50[:,1].reshape((N, 1)),
-               a_0p50[:,2].reshape((N, 1)),
-               a_0p50[:,3].reshape((N, 1)),
-               a_0p50[:,4].reshape((N, 1))))
-np.savetxt("cached_kde.ada.hack4.csv", a, delimiter=" ")
+#a = np.hstack((a_0p0[:,0].reshape((N, 1)),
+#               a_0p50[:,1].reshape((N, 1)),
+#               a_0p50[:,2].reshape((N, 1)),
+#               a_0p50[:,3].reshape((N, 1)),
+#               a_0p50[:,4].reshape((N, 1))))
+#np.savetxt("cached_kde.ada.hack4.csv", a, delimiter=" ")
 
 # over-adaptation = bad
 #a = np.hstack((a5[:,0].reshape((N, 1)),
@@ -40,12 +39,36 @@ np.savetxt("cached_kde.ada.hack4.csv", a, delimiter=" ")
 #np.savetxt("cached_kde.ada.hack6.csv", a, delimiter=" ")
 
 # !!
-#a = np.hstack((a25[:,0].reshape((N, 1)),
-#               a50[:,1].reshape((N, 1)),
-#               a50[:,2].reshape((N, 1)),
-#               a50[:,3].reshape((N, 1)),
-#               a50[:,4].reshape((N, 1))))
+#a = np.hstack((a_0p25[:,0].reshape((N, 1)),
+#               a_0p50[:,1].reshape((N, 1)),
+#               a_0p50[:,2].reshape((N, 1)),
+#               a_0p50[:,3].reshape((N, 1)),
+#               a_0p50[:,4].reshape((N, 1))))
 #np.savetxt("cached_kde.ada.hack7.csv", a, delimiter=" ")
+
+# !!
+#a = np.hstack((a_0p375[:,0].reshape((N, 1)),
+#               a_0p50[:,1].reshape((N, 1)),
+#               a_0p50[:,2].reshape((N, 1)),
+#               a_0p50[:,3].reshape((N, 1)),
+#               a_0p50[:,4].reshape((N, 1))))
+#np.savetxt("cached_kde.ada.hack8.csv", a, delimiter=" ")
+
+# !!
+#a = np.hstack((a_0p3125[:,0].reshape((N, 1)),
+#               a_0p50[:,1].reshape((N, 1)),
+#               a_0p50[:,2].reshape((N, 1)),
+#               a_0p50[:,3].reshape((N, 1)),
+#               a_0p50[:,4].reshape((N, 1))))
+#np.savetxt("cached_kde.ada.hack9.csv", a, delimiter=" ")
+
+# !!
+a = np.hstack((a_0p28125[:,0].reshape((N, 1)),
+               a_0p50[:,1].reshape((N, 1)),
+               a_0p50[:,2].reshape((N, 1)),
+               a_0p50[:,3].reshape((N, 1)),
+               a_0p50[:,4].reshape((N, 1))))
+np.savetxt("cached_kde.ada.hack10.csv", a, delimiter=" ")
 
 # !!
 # alpha smaller => c0 larger?
