@@ -1,5 +1,5 @@
-#ifndef __PRODKDE2D_H__
-#define __PRODKDE2D_H__
+#ifndef BBRCITKDE_PRODKDE2D_H__
+#define BBRCITKDE_PRODKDE2D_H__
 
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -9,7 +9,7 @@
 #include <utility>
 #include <complex>
 
-#include "Kde2d.h"
+#include <Kde2d.h>
 
 class ProdKde2d : public Kde2d {
 

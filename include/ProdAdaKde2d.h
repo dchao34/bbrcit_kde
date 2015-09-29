@@ -1,5 +1,5 @@
-#ifndef __PRODADAKDE2D_H__
-#define __PRODADAKDE2D_H__
+#ifndef BBRCITKDE_PRODADAKDE2D_H__
+#define BBRCITKDE_PRODADAKDE2D_H__
 
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -8,7 +8,7 @@
 #include <vector>
 #include <utility>
 
-#include "ProdKde2d.h"
+#include <ProdKde2d.h>
 
 class ProdAdaKde2d : public ProdKde2d {
 

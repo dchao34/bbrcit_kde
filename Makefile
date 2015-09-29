@@ -11,7 +11,7 @@ INCFLAGS = -I$(IDIR)
 LDFLAGS = -L$(LDIR) -lbbrcit_kde
 
 # Object files to package into the library. 
-LIBOBJS = fft.o file_io_utils.o
+LIBOBJS = Kde2d.o ProdKde2d.o ProdAdaKde2d.o fft.o file_io_utils.o
 
 # Unit tests
 TESTBINS = test_fft generate_bimodal_gauss

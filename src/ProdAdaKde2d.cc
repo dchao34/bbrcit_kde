@@ -5,7 +5,7 @@
 #include <cassert>
 #include <cmath>
 
-#include "ProdAdaKde2d.h"
+#include <ProdAdaKde2d.h>
 
 using namespace std;
 

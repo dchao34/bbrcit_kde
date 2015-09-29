@@ -9,8 +9,8 @@
 #include <algorithm>
 #include <cassert>
 
-#include "ProdKde2d.h"
-#include "fft.h"
+#include <ProdKde2d.h>
+#include <fft.h>
 
 using namespace std;
 

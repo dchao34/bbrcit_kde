@@ -1,5 +1,5 @@
-#ifndef __KDE2D_H__
-#define __KDE2D_H__
+#ifndef BBRCITKDE_KDE2D_H__
+#define BBRCITKDE_KDE2D_H__
 
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -29,12 +29,6 @@ class Kde2d {
     // evaluate the density estimate at a new point
     virtual double operator()(double x1, double x2);
 
-    // perform cross validation
-    void cv(std::ostream &os, 
-            const std::vector<std::pair<double, double>> &candidates, 
-            double x_low, double x_high, double y_low, double y_high,
-            int qgauss_n);
-
   protected:
 
     double h1 = 1.0; double h2 = 1.0;
@@ -43,10 +37,6 @@ class Kde2d {
   private:
 
     double gauss2d(double, double, double, double);
-    double excluded_eval(double x1, double x2, sample_no bidx, sample_no eidx);
-    double eval2(double x1, double x2);
-
-    friend double f2(double x1, double x2, void *kde_obj_addr);
 
 };
 
@@ -62,17 +52,6 @@ inline double Kde2d::gauss2d(
               (x2-m2) * (x2-m2) / (h2 * h2)
             )
         );
-}
-
-// wrapper to conform to the API required by the gaussian quadrature 
-// code written by Pavel Holoborodko:
-// http://www.holoborodko.com/pavel/numerical-methods/numerical-integration/
-double f2(double x1, double x2, void *kde_obj_addr);
-
-// evaluate the square of the  estimate at a new point
-inline double Kde2d::eval2(double x1, double x2) { 
-  double res = (*this)(x1, x2); 
-  return res * res; 
 }
 
 #endif
