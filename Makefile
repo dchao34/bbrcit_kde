@@ -1,35 +1,41 @@
+# Object files to package into the library. 
+LIBOBJS := Kde2d.o ProdKde2d.o ProdAdaKde2d.o fft.o file_io_utils.o
+
+# Library name
+LIBNAME := bbrcit_kde
+
+# Remainder of this file controls the compilation process
+
+IDIR := ./include
+LDIR := ./lib
+SDIR := ./src
+ODIR := ./build
+DDIR := .d
+
 CXX ?= g++
 CXXFLAGS = -Wall -Werror -pedantic -std=c++11
-
-IDIR = ./include
-LDIR = ./lib
-SDIR = ./src
-ODIR = ./build
-TDIR = ./test
-
 INCFLAGS = -I$(IDIR)
-LDFLAGS = -L$(LDIR) -lbbrcit_kde
+LDFLAGS = -L$(LDIR) -l$(LIBNAME)
 
-# Object files to package into the library. 
-LIBOBJS = Kde2d.o ProdKde2d.o ProdAdaKde2d.o fft.o file_io_utils.o
+$(shell mkdir -p $(DDIR) > /dev/null)
+DEPFLAGS = -MT $@ -MMD -MP -MF $(DDIR)/$*.Td
+POSTCOMPILE = @mv -f $(DDIR)/$*.Td $(DDIR)/$*.d
+SRCS = $(addsuffix .cc, $(basename $(LIBOBJS)))
 
-# Unit tests
-TESTBINS = test_fft generate_bimodal_gauss
+.PHONY : all lib clean
 
-.PHONY : all lib test clean
-
-all : lib test
+all : lib
 
 lib : $(addprefix $(ODIR)/, $(LIBOBJS))
-	ar rcs $(LDIR)/libbbrcit_kde.a $^
+	@ar rcs $(LDIR)/lib$(LIBNAME).a $^
 
-test : lib $(addprefix $(TDIR)/, $(TESTBINS))
+$(ODIR)/%.o : $(SDIR)/%.cc $(DDIR)/%.d
+	$(CXX) $(DEPFLAGS) $(CXXFLAGS) $(INCFLAGS) -c $< -o $@
+	$(POSTCOMPILE)
 
-$(TDIR)/% : $(TDIR)/%.cc lib
-	$(CXX) $(CXXFLAGS) $(INCFLAGS) $(LDFLAGS) $< -o $@
+$(DDIR)/%.d : ;
 
-$(ODIR)/%.o : $(SDIR)/%.cc $(IDIR)/%.h
-	$(CXX) $(CXXFLAGS) $(INCFLAGS) -c $< -o $@
+include $(patsubst %,$(DDIR)/%.d,$(basename $(SRCS)))
 
 clean:
-	@rm -f *~ $(ODIR)/*.o $(LDIR)/* $(addprefix $(TDIR)/, $(TESTBINS))
+	@rm -rf *~ $(ODIR)/*.o $(LDIR)/*
