@@ -1,49 +1,35 @@
-CC ?= gcc
 CXX ?= g++
+CXXFLAGS = -Wall -Werror -pedantic -std=c++11
 
-CXXFLAGS = -Wall -std=c++11
+IDIR = ./include
+LDIR = ./lib
+SDIR = ./src
+ODIR = ./build
+TDIR = ./test
 
-UTILDIR = data
+INCFLAGS = -I$(IDIR)
+LDFLAGS = -L$(LDIR) -lbbrcit_kde
 
-INCDIR = $(UTILDIR)
-LIBDIR = $(UTILDIR)
+# Object files to package into the library. 
+LIBOBJS = fft.o file_io_utils.o
 
-BINARIES = cache_kde_score cv_scan fcv_scan akde_scan kde_scan
+# Unit tests
+TESTBINS = test_fft
 
-all : $(BINARIES)
+.PHONY : all lib test clean
 
-kde_scan : kde_scan.cc gauss_legendre.o Kde2d.o ProdKde2d.o fft.o $(UTILDIR)/file_io_utils.o
-	$(CXX) $(CXXFLAGS) -I$(INCDIR) $^ -o $@
+all : lib test
 
-akde_scan : akde_scan.cc gauss_legendre.o Kde2d.o ProdKde2d.o ProdAdaKde2d.o fft.o $(UTILDIR)/file_io_utils.o
-	$(CXX) $(CXXFLAGS) -I$(INCDIR) $^ -o $@
+lib : $(addprefix $(ODIR)/, $(LIBOBJS))
+	ar rcs $(LDIR)/libbbrcit_kde.a $^
 
-fcv_scan : fcv_scan.cc gauss_legendre.o Kde2d.o ProdKde2d.o fft.o $(UTILDIR)/file_io_utils.o
-	$(CXX) $(CXXFLAGS) -I$(INCDIR) $^ -o $@
+test : lib $(addprefix $(TDIR)/, $(TESTBINS))
 
-cv_scan : cv_scan.cc gauss_legendre.o Kde2d.o ProdKde2d.o fft.o $(UTILDIR)/file_io_utils.o
-	$(CXX) $(CXXFLAGS) -I$(INCDIR) $^ -o $@
+$(TDIR)/% : $(TDIR)/%.cc lib
+	$(CXX) $(CXXFLAGS) $(INCFLAGS) $(LDFLAGS) $< -o $@
 
-gauss_legendre.o : gauss_legendre.c gauss_legendre.h
-	$(CC) -Wall -c $< -o $@
-
-fft.o : fft.cc fft.h
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-
-cache_kde_score : cache_kde_score.o gauss_legendre.o Kde2d.o ProdKde2d.o fft.o $(UTILDIR)/file_io_utils.o
-	$(CXX) $(CXXFLAGS) $^ -o $@
-
-cache_kde_score.o : cache_kde_score.cc ProdKde2d.h $(UTILDIR)/file_io_utils.o
-	$(CXX) $(CXXFLAGS) -I$(INCDIR) -c $< -o $@
-
-Kde2d.o : Kde2d.cc Kde2d.h gauss_legendre.h $(UTILDIR)/file_io_utils.h
-	$(CXX) $(CXXFLAGS) -I$(INCDIR) -c $< -o $@
-
-ProdKde2d.o : ProdKde2d.cc ProdKde2d.h Kde2d.h fft.h
-	$(CXX) $(CXXFLAGS) -I$(INCDIR) -c $< -o $@
-
-ProdAdaKde2d.o : ProdAdaKde2d.cc ProdAdaKde2d.h ProdKde2d.h Kde2d.h fft.h
-	$(CXX) $(CXXFLAGS) -I$(INCDIR) -c $< -o $@
+$(ODIR)/%.o : $(SDIR)/%.cc $(IDIR)/%.h
+	$(CXX) $(CXXFLAGS) $(INCFLAGS) -c $< -o $@
 
 clean:
-	@rm -f *~ *.o $(BINARIES)
+	@rm -f *~ $(ODIR)/*.o $(LDIR)/* $(addprefix $(TDIR)/, $(TESTBINS))

@@ -1,5 +1,5 @@
-#ifndef __FFT_H__
-#define __FFT_H__
+#ifndef BBRCITKDE_FFT_H__
+#define BBRCITKDE_FFT_H__
 
 #include <vector>
 #include <complex>
