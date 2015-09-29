@@ -14,7 +14,7 @@ LDFLAGS = -L$(LDIR) -lbbrcit_kde
 LIBOBJS = fft.o file_io_utils.o
 
 # Unit tests
-TESTBINS = test_fft
+TESTBINS = test_fft generate_bimodal_gauss
 
 .PHONY : all lib test clean
 
