@@ -18,7 +18,7 @@ Example
   ./prodkde2d_fftcv bimodal_gaussian.csv 2
   ```
 
-  I got 0.074 for the first dimension and 0.022 for the second. 
+  I got `0.074` for the first dimension and `0.022` for the second. 
 
 + Scan the product kde's:
 
