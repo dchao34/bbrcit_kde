@@ -79,6 +79,6 @@ inline double ProdKde2d::gauss_kernel_star(double x) {
 }
 
 inline double get_first(std::vector<std::pair<double,double>>::iterator p) { return p->first; }
-inline double get_second(std::vector<std::pair<double,double>>::iterator p) { return p->first; }
+inline double get_second(std::vector<std::pair<double,double>>::iterator p) { return p->second; }
 
 #endif

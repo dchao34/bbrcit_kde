@@ -1,3 +1,1 @@
-Code to do 2d gaussian kernel density estimation with 1D product kernels 
-
-It also does cross validation.
+Library for kernel density estimation. Currently supports only 2D using 1D product kernels 

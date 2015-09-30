@@ -1,5 +1,5 @@
 # Unit tests
-TESTBINS := test_fft generate_bimodal_gauss
+TESTBINS := test_fft generate_bimodal_gauss prodkde2d_scan prodkde2d_fftcv prodadakde2d_scan
 
 # Remainder of this file controls the compilation process
 
@@ -17,7 +17,7 @@ DEPFLAGS = -MT $@ -MMD -MP -MF $(DDIR)/$*.Td
 POSTCOMPILE = @mv -f $(DDIR)/$*.Td $(DDIR)/$*.d
 SRCS = $(addsuffix .cc, $(TESTBINS))
 
-.PHONY : all clean
+.PHONY : all clean cleanall
 
 all : $(TESTBINS)
 
@@ -31,3 +31,6 @@ include $(patsubst %,$(DDIR)/%.d,$(basename $(SRCS)))
 
 clean:
 	@rm -rf *~ *.o $(TESTBINS)
+
+cleanall:
+	@rm -rf *~ *.o $(TESTBINS) *.dat *.csv
