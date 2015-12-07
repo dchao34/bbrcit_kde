@@ -1,5 +1,5 @@
 # Object files to package into the library. 
-LIBOBJS := Kde2d.o ProdKde2d.o ProdAdaKde2d.o fft.o file_io_utils.o
+LIBOBJS := Point.o Kde2d.o ProdKde2d.o ProdAdaKde2d.o fft.o file_io_utils.o
 
 # Library name
 LIBNAME := bbrcit_kde
