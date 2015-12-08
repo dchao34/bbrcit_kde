@@ -1,3 +1,6 @@
+#ifndef BBRCITKDE_POINT_H__
+#define BBRCITKDE_POINT_H__
+
 #include <cmath>
 
 class Point {
@@ -53,3 +56,5 @@ bool operator<(const Point1d&, const Point1d&);
 bool operator<=(const Point1d&, const Point1d&);
 bool operator>(const Point1d&, const Point1d&);
 bool operator>=(const Point1d&, const Point1d&);
+
+#endif
