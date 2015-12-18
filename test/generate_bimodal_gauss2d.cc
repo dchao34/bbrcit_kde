@@ -6,7 +6,7 @@
 using namespace std;
 
 void print_usage() {
-  cout << "usage: ./generate_bimodal_gauss sample_size" << endl;
+  cout << "usage: ./generate_bimodal_gauss2d sample_size" << endl;
 }
 
 int main(int argc, char *argv[]) {
