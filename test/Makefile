@@ -1,5 +1,6 @@
 # Unit tests
-TESTBINS := test_kernel test_point test_fft generate_bimodal_gauss2d \
+TESTBINS := test_kernel test_point test_fft \
+						generate_bimodal_gauss1d generate_bimodal_gauss2d \
 	          prodkde2d_scan prodkde2d_fftcv prodadakde2d_scan
 
 # Remainder of this file controls the compilation process

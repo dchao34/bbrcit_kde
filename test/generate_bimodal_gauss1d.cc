@@ -6,7 +6,7 @@
 using namespace std;
 
 void print_usage() {
-  cout << "usage: ./generate_bimodal_gauss2d sample_size" << endl;
+  cout << "usage: ./generate_bimodal_gauss1d sample_size" << endl;
 }
 
 int main(int argc, char *argv[]) {
@@ -17,7 +17,7 @@ int main(int argc, char *argv[]) {
   }
   int sample_size = atoi(argv[1]);
 
-  ofstream fout("bimodal_gauss2d.csv");
+  ofstream fout("bimodal_gauss1d.csv");
 
   random_device rd;
   default_random_engine e(rd());
@@ -25,17 +25,15 @@ int main(int argc, char *argv[]) {
   normal_distribution<> g(0.0, 1.0);
 
   for (int i = 0; i < sample_size; ++i) {
-    double x = g(e), y = g(e);
-    if (u(e) < 0.5) {
-      x *= 0.5; y *= 0.1;
-      x += 0.1; y += 1.0;
+    double x = g(e);
+    if (u(e) < 0.8) {
+      x *= 0.3;
+      x -= 0.5;
     } else {
-      x *= 0.3; y *= 0.25;
-      x = 0.8660254 * x + 0.5 * y;
-      y = -0.5 * x + 0.8660254 * y;
-      x += 0.8; y += 0.4;
+      x *= 0.2;
+      x += 0.7;
     }
-    fout << x << " " << y << endl;
+    fout << x << endl;
   }
 
   return 0;
