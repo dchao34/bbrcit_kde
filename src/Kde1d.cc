@@ -17,10 +17,7 @@ Kde1d::Kde1d(const vector<Point1d> &data, double bw, const Kernel1d &kernel) :
 double Kde1d::eval(const Point1d &target) const {
 
   double val = 0.0;
-  for (auto p : data_) {
-    auto x = (target - p) / bandwidth_; 
-    val += (*pkern_)(x);
-  }
+  for (const auto &p : data_) { val += (*pkern_)((target-p)/bandwidth_); }
   val /= bandwidth_ * data_.size();
 
   return val;
