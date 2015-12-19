@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 #include <vector>
 #include <Point.h>
 
@@ -173,32 +174,32 @@ int main() {
   p1[0] = 1.0; p2[0] = 1.0; p3[0] = 2.0;
 
 
-  // 5.1 operator==
+  // 6.1 operator==
   status_c = (p1 == p1 && p1 == p2 && !(p2 == p3) ) ? '.' : 'x';
   cout << status_c << flush;
 
 
-  // 5.2 operator!=
+  // 6.2 operator!=
   status_c = (!(p1 != p1) && !(p1 != p2) && p2 != p3) ? '.' : 'x';
   cout << status_c << flush;
 
 
-  // 5.3 operator<
+  // 6.3 operator<
   status_c = (!(p1 < p1) && !(p3 < p2) && p2 < p3) ? '.' : 'x';
   cout << status_c << flush;
 
 
-  // 5.4 operator<=
+  // 6.4 operator<=
   status_c = (p1 <= p1 && !(p3 <= p2) && p2 <= p3) ? '.' : 'x';
   cout << status_c << flush;
 
 
-  // 5.5 operator>
+  // 6.5 operator>
   status_c = (!(p1 > p1) && p3 > p2 && !(p2 > p3)) ? '.' : 'x';
   cout << status_c << flush;
 
 
-  // 5.6 operator<=
+  // 6.6 operator<=
   status_c = (p1 >= p1 && p3 >= p2 && !(p2 >= p3)) ? '.' : 'x';
   cout << status_c << flush;
 
@@ -219,7 +220,7 @@ int main() {
 
   cout << "Test 8: Container compliance. " << endl;
 
-  // 7.1 sort in vector
+  // 8.1 sort in vector
   p1[0] = 1.0; p2[0] = 2.0; p3[0] = 3.0; // p4 already 4.0
   p5[0] = 5.0; p6[0] = 6.0;
   vector<Point1d> v;
@@ -229,6 +230,29 @@ int main() {
   sort(v.begin(), v.end());
   int i; for (i = 1; i < v.size() && v[i][0] > v[i-1][0]; ++i) ;
   status_c = (i == v.size()) ? '.' : 'x';
+  cout << status_c << flush;
+
+  cout << endl;
+
+  cout << "Test 9: Input/Output. " << endl;
+
+  // 9.1 operator>>
+  Point1d p8; istringstream sin("3.141 abc 2.718"); 
+  sin >> p8; status_c = (p8[0] == 3.141) ? '.' : 'x';
+  cout << status_c << flush;
+
+  sin >> p8; status_c = (p8[0] == 0.0 && !sin) ? '.' : 'x';
+  cout << status_c << flush;
+
+  sin.clear();
+  sin >> p8; status_c = (p8[0] == 2.718) ? '.' : 'x';
+  cout << status_c << flush;
+
+  // 9.2 operator<<
+  ostringstream sout;
+  p8 = 3.141; sout << p8; sout << " ";
+  p8 = 2.718; sout << p8;
+  status_c = (sout.str() == "3.141 2.718") ? '.' : 'x';
   cout << status_c << flush;
 
   

@@ -1,6 +1,8 @@
+#include <iostream>
+#include <fstream>
+
 #include <Kernel.h>
 #include <Point.h>
-#include <iostream>
 
 using namespace std;
 
@@ -8,13 +10,20 @@ int main() {
 
   GaussKernel1d k;
 
-  // 0.398942
-  Point1d p;
-  cout << k(p) << endl;
+  cout << "Test 1: Single point evaluations. " << endl;
+  Point1d p; cout << k(p) << " (should be close to 0.398942) " << endl;
+  p = 1.5; cout << k(p) << " (should be close to 0.129518) " << endl;
 
-  // 0.129518
-  p[0] = 1.5;
-  cout << k(p) << endl;
+  cout << endl;
+
+  string fname("gauss_kernel_trace.csv");
+  ofstream fout(fname);
+  int n = 1000; double bound = 5.0;
+  for (int i = 0; i < n; ++i) {
+    p = -bound + i * 2 * bound / n;
+    fout << p[0] << " " << k(p) << endl;
+  }
+  cout << "Test 2: Kernel trace saved to " << fname << endl;
 
   return 0;
 }

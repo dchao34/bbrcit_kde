@@ -2,6 +2,8 @@
 #define BBRCITKDE_POINT_H__
 
 #include <cmath>
+#include <ostream>
+#include <istream>
 
 class Point {
   public:
@@ -13,6 +15,9 @@ class Point {
 };
 
 class Point1d : public Point {
+
+  friend std::istream& operator>>(std::istream&, Point1d&);
+
   public:
 
     Point1d() = default;
@@ -45,6 +50,8 @@ class Point1d : public Point {
     double x_ = 0.0;
 };
 
+std::ostream& operator<<(std::ostream&, const Point1d&);
+std::istream& operator>>(std::istream&, Point1d&);
 Point1d operator*(const Point1d&, double);
 Point1d operator*(double, const Point1d&);
 Point1d operator/(const Point1d&, double);

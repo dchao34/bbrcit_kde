@@ -18,10 +18,10 @@ double Kde1d::eval(const Point1d &target) const {
 
   double val = 0.0;
   for (auto p : data_) {
-    p -= target; p /= bandwidth_;
-    val += (*pkern_)(p);
+    auto x = (target - p) / bandwidth_; 
+    val += (*pkern_)(x);
   }
-  val /= bandwidth_;
+  val /= bandwidth_ * data_.size();
 
   return val;
 }

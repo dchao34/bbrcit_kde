@@ -1,4 +1,6 @@
 #include <stdexcept>
+#include <ostream>
+#include <istream>
 #include <Point.h>
 
 Point1d::Point1d(double s) : x_(s) {}
@@ -34,6 +36,13 @@ Point1d operator/(const Point1d &p, double c) {
   Point1d result(p); result /= c; return result;
 }
 
+std::istream& operator>>(std::istream &is, Point1d &p) { 
+  is >> p.x_;
+  if (!is) { p = Point1d(); }
+  return is;
+}
+
+std::ostream& operator<<(std::ostream &os, const Point1d &p) { os << p[0]; return os; }
 bool operator==(const Point1d &lhs, const Point1d &rhs) { return lhs.x() == rhs.x(); }
 bool operator!=(const Point1d &lhs, const Point1d &rhs) { return !(lhs == rhs); }
 bool operator<(const Point1d &lhs, const Point1d &rhs) { return lhs.x() < rhs.x(); }
