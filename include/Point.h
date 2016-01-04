@@ -1,29 +1,175 @@
 #ifndef BBRCITKDE_POINT_H__
 #define BBRCITKDE_POINT_H__
 
-#include <array>
+#include <vector>
 #include <utility>
+#include <exception>
+#include <initializer_list>
 #include <iostream>
+
+// API
+// ---
+
+template <int D, typename T> 
+class Point;
+
+template <int D, typename T> 
+void swap(Point<D,T>&, Point<D,T>&);
+
+template <int D, typename T> 
+std::istream& operator>>(std::istream&, Point<D,T>&);
+
+template <int D, typename T> 
+std::ostream& operator>>(std::ostream&, const Point<D,T>&);
+
+template <int D, typename T> 
+Point<D,T> operator+(const Point<D,T>&, const Point<D,T>&);
+
+template <int D, typename T> 
+Point<D,T> operator-(const Point<D,T>&, const Point<D,T>&);
+
+template <int D, typename T> 
+Point<D,T> operator*(const Point<D,T>&, double);
+
+template <int D, typename T> 
+Point<D,T> operator*(double, const Point<D,T>&);
+
+template <int D, typename T> 
+Point<D,T> operator/(const Point<D,T>&, double);
 
 template <int D, typename T = double>
 class Point {
 
+  friend void swap<>(Point<D,T>&, Point<D,T>&);
+
   public: 
 
-    Point() = default;
-    template <typename ...E> Point(E&&... elems);
+    // constructors
+    Point();
+    Point(const std::initializer_list<T>&);
 
-    ~Point() = default;
-    Point(const Point<D,T>&) = default;
+    // copy-control
+    Point(const Point<D,T>&);
+    Point<D,T>& operator=(const Point<D,T>&);
+    Point(Point<D,T>&&) noexcept;
+    Point<D,T>& operator=(Point<D,T> &&rhs) noexcept;
+    ~Point();
 
-    Point<D,T>& operator=(const Point<D,T>&) = default;
-
+    // access coordinate values by indexing. 
     const T& operator[](int) const;
     T& operator[](int);
 
+    // scaler multiplication and division
+    Point<D,T>& operator*=(double);
+    Point<D,T>& operator/=(double);
+
+    // vector addition and subtraction
+    Point<D,T>& operator+=(const Point<D,T>&);
+    Point<D,T>& operator-=(const Point<D,T>&);
+
   private:
-    std::array<T, D> coord;
+    std::vector<T> coord;
 };
+
+
+// Implementations
+// ---------------
+
+template <int D, typename T> 
+Point<D,T> operator/(const Point<D,T> &lhs, double rhs) {
+  Point<D,T> result(lhs);
+  result /= rhs;
+  return result;
+}
+
+template <int D, typename T> 
+Point<D,T> operator*(double lhs, const Point<D,T> &rhs) {
+  Point<D,T> result(rhs);
+  result *= lhs;
+  return result;
+}
+
+template <int D, typename T> 
+Point<D,T> operator*(const Point<D,T> &lhs, double rhs) {
+  Point<D,T> result(lhs);
+  result *= rhs;
+  return result;
+}
+
+template <int D, typename T> 
+Point<D,T> operator+(const Point<D,T> &lhs, const Point<D,T> &rhs) {
+  Point<D,T> result(lhs);
+  result += rhs;
+  return result;
+}
+
+template <int D, typename T> 
+Point<D,T> operator-(const Point<D,T> &lhs, const Point<D,T> &rhs) {
+  Point<D,T> result(lhs);
+  result -= rhs;
+  return result;
+}
+
+template<int D, typename T>
+Point<D,T>& Point<D,T>::operator+=(const Point<D,T> &rhs) {
+  for (int i = 0; i < D; ++i) { coord[i] += (rhs.coord)[i]; }
+  return *this;
+}
+
+template<int D, typename T>
+Point<D,T>& Point<D,T>::operator-=(const Point<D,T> &rhs) {
+  for (int i = 0; i < D; ++i) { coord[i] -= (rhs.coord)[i]; }
+  return *this;
+}
+
+template<int D, typename T>
+Point<D,T>& Point<D,T>::operator*=(double c) {
+  for (auto &e : coord) { e *= c; }
+  return *this;
+}
+
+template<int D, typename T>
+Point<D,T>& Point<D,T>::operator/=(double c) {
+  if (!c) { 
+    throw std::domain_error("Point<>: operator/=(): division by zero. ");
+  }
+  for (auto &e : coord) { e /= c; }
+  return *this;
+}
+
+template<int D, typename T>
+inline void swap(Point<D,T> &lhs, Point<D,T> &rhs) {
+  using std::swap; swap(lhs.coord, rhs.coord); return; 
+}
+
+template<int D, typename T>
+Point<D,T>::Point() : coord(D) {}
+
+template<int D, typename T>
+Point<D,T>::Point(const std::initializer_list<T> &li) : coord(li) {}
+
+template<int D, typename T>
+Point<D,T>::~Point() {}
+
+template<int D, typename T>
+Point<D,T>::Point(const Point<D,T> &rhs) : coord(rhs.coord) {}
+
+template<int D, typename T>
+Point<D,T>::Point(Point<D,T> &&t) noexcept : coord(std::move(t.coord)) {}
+
+template<int D, typename T>
+Point<D,T>& Point<D,T>::operator=(const Point<D,T> &rhs) {
+  if (this == &rhs) { return *this; }
+  coord = rhs.coord;
+  return *this;
+}
+
+template<int D, typename T>
+Point<D,T>& Point<D,T>::operator=(Point<D,T> &&rhs) noexcept {
+  if (this == &rhs) { return *this; }
+  coord = std::move(rhs.coord);
+  return *this;
+}
 
 template<int D, typename T>
 std::istream& operator>>(std::istream &is, Point<D, T> &p) {
@@ -37,14 +183,6 @@ std::ostream& operator<<(std::ostream &os, const Point<D, T> &p) {
   os << p[0]; for (int i = 1; i < D; ++i) { os << " " << p[i]; }
   return os;
 }
-
-// Is there a better solution for list initialization? 
-// (current implementation based on stack overflow question 6893700)
-// Forwarding is great, but brace initializers forbids narrowing; 
-// e.g. can't do Point<3, double> = { 1, 2.0, 3.0 }.
-template <int D, typename T>
-template <typename ...E> 
-Point<D,T>::Point(E&&... elems) : coord{{std::forward<E>(elems)...}} {};
 
 template <int D, typename T>
 inline const T& Point<D,T>::operator[](int i) const {
