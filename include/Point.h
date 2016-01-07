@@ -10,6 +10,8 @@
 // API
 // ---
 
+namespace bbrcit {
+
 template <int D, typename T> 
 class Point;
 
@@ -192,6 +194,8 @@ inline const T& Point<D,T>::operator[](int i) const {
 template <int D, typename T>
 inline T& Point<D,T>::operator[](int i) {
   return const_cast<T&>(static_cast<const Point<D,T>&>(*this)[i]);
+}
+
 }
 
 #endif

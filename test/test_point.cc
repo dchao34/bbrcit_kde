@@ -7,6 +7,7 @@
 #include <Point.h>
 
 using namespace std;
+using bbrcit::Point;
 
 Point<3> f() {
   return Point<3>{1,2,3};
