@@ -92,12 +92,11 @@ typename Kdtree<D,T>::Node* Kdtree<D,T>::construct_tree(int i, int j, int d) {
 template<int D, typename T>
 void Kdtree<D,T>::delete_tree(Node *p) {
   if (p == nullptr) { return; }
-  if (p->is_leaf()) { 
-    delete p; 
-  } else {
+  if (!p->is_leaf()) { 
     delete_tree(p->left);
     delete_tree(p->right);
   }
+  delete p; 
 }
 
 }
