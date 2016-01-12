@@ -14,43 +14,153 @@ Point<3> f() {
 }
 
 int main() {
-  Point<3> p1, p2 = { 1, 2.0, 3.2 };
-  cout << p1 << ", "; cout << p2 << endl;
-  swap(p1, p2);
-  cout << p1 << ", "; cout << p2 << endl;
+
   cout << endl;
 
-  istringstream sin("1.414 2.718 3.141 abc def, ghi");
-  Point<3> p3, p4;
-  sin >> p3; sin >> p4;
-  cout << p3 << endl; cout << p4 << endl; 
+  Point<2> p0, p1, p2, p3, p4, p5, p6;
+  const Point<2> cp0({0.0,0.0}), cp1({1.0,1.0}), cp2({2.0,1.0});
+
+  // test: default constructor
+  cout << "+ Default constructor gives: " << p0 << " (should be 0.0, 0.0). " << endl;
   cout << endl;
 
-  Point<3> p5{1, 1, 1};
-  p5 *= 3; cout << p5 << endl;
-  p5 /= 2; cout << p5 << endl;
-  try {
-    p5 /= 0; 
+  // test: initializer list constructor
+  Point<2> test_p1({0.0, 1.0});
+  Point<2> test_p2 = {0.0, 2.0};
+  Point<2> test_p8({1.0});
+  cout << "+ Initilizer list constructor (1): " << test_p1 << " (should be (0.0, 1.0)). " << endl;
+  cout << "+ Initilizer list constructor (2): " << test_p2 << " (should be (0.0, 2.0)). " << endl;
+  cout << "+ Initilizer list constructor (3): " << test_p8 << " (should be (1.0, 0.0)). " << endl;
+  cout << endl;
+
+  // test: copy/move constructor
+  Point<2> test_p3 = { 0.0, 1.0 };
+  Point<2> test_p4 = { 0.0, 2.0 };
+  Point<2> test_p5(test_p3);
+  Point<2> test_p6(std::move(test_p4));
+  cout << "+ Copy constructor: " << test_p5 << ", " << test_p3 << " (should both be (0.0, 1.0)). " << endl;
+  cout << "+ Move constructor: " << test_p6 << " (should be (0.0, 2.0)). " << endl;
+  cout << endl;
+
+  // test: copy/move assignment
+  p0 = { 0.0, 1.0 };
+  cout << "+ Copy/Move assignment (1): " << p0 << " (should be (0.0, 1.0)). " << endl;
+  p0 = p0;
+  cout << "+ Copy/Move assignment (2): " << p0 << " (should be (0.0, 1.0)). " << endl;
+  p1 = p0;
+  cout << "+ Copy/Move assignment (3): " << p1 << " (should be (0.0, 1.0)). " << endl;
+  Point<2> test_p7 = { 1.0, 2.0 };
+  p0 = std::move(test_p7);
+  cout << "+ Copy/Move assignment (4): " << p0 << " (should be (1.0, 2.0)). " << endl;
+  cout << endl;
+
+  // test: swap()
+  p0 = { 0.0, 1.0 }; p1 = { 1.0, 0.0 };
+  swap(p0, p0);
+  cout << "+ swap(): " << p0 << " " << p1 << " (should be (0.0, 1.0), (1.0, 0.0). " << endl;
+  swap(p0, p1);
+  cout << "+ swap(): " << p0 << " " << p1 << " (should be (1.0, 0.0), (0.0, 1.0). " << endl;
+  cout << endl;
+
+  // test: reset().
+  p0.reset({1.0, 1.0});
+  cout << "+ reset() (1): " << p0 << " (should be (1.0, 1.0)). " << endl;
+  p0.reset({1.0});
+  cout << "+ reset() (2): " << p0 << " (should be (1.0, 0.0)). " << endl;
+  p0.reset({});
+  cout << "+ reset() (3): " << p0 << " (should be (0.0, 0.0)). " << endl;
+  cout << endl; 
+
+  // test: operator>>
+  p0.reset({});
+  istringstream sin("3.0 2.0 1.0 abc 3.0 3.0");
+  sin >> p0;
+  cout << "+ operator>>() (1): " << p0 << " (should be (3.0, 2.0)). " << endl;
+  sin >> p0;
+  cout << "+ operator>>() (2): " << p0 << " (should be (0.0, 0.0)). " << endl;
+  sin.clear();
+  sin >> p0;
+  cout << "+ operator>>() (3): " << p0 << " (should be (3.0, 3.0)). " << endl;
+  sin >> p0;
+  cout << "+ operator>>() (3): " << p0 << " (should be (0.0, 0.0)). " << endl;
+  sin.clear();
+  cout << endl; 
+
+  // test: operator[]
+  p0.reset({1.0, 2.0});
+  cout << "+ operator[] (1): " << p0[0] << ", " << p0[1] << " (should be 1.0, 2.0). " << endl;
+  cout << "+ operator[] (2): " << cp2[0] << ", " << cp2[1] << " (should be 2.0, 1.0). " << endl;
+  p0[0] = 3.0; p0[1] = 3.0; 
+  cout << "+ operator[] (3): " << p0[0] << ", " << p0[1] << " (should be 3.0, 3.0). " << endl;
+  cout << endl; 
+
+  // test: operator*=
+  p0.reset({1.0, 2.0});
+  p0 *= 3.0;
+  cout << "+ operator*= (1): " << p0 << " (should be (3.0, 6.0)). " << endl;
+  cout << endl; 
+
+  // test: operator/=
+  p0.reset({3.0, 6.0});
+  p0 /= 3.0;
+  cout << "+ operator/= (1): " << p0 << " (should be (1.0, 2.0)). " << endl;
+  try { 
+    p0 /= 0.0;
+    cout << "+ operator/= (2): ERROR: mishandled division by zero. " << endl;
   } catch (exception &e) {
-    cout << e.what() << endl;
+    cout << "+ operator/= (2): passed: division by zero. " << endl;
   }
-  cout << endl;
+  cout << endl; 
 
-  Point<3> p6({2, 2, 2}), ones{1,1,1};
-  p6 += ones; cout << p6 << ", " << ones << endl;
-  p6 -= ones; cout << p6 << ", " << ones << endl;
-  cout << endl;
+  // test: operator+=
+  p0.reset({1.0, 2.0}); p1.reset({2.0, 1.0});
+  p0 += p1;
+  cout << "+ operator+= (1): " << p0 << " (should be (3.0, 3.0)). " << endl;
+  p0 += p0;
+  cout << "+ operator+= (2): " << p0 << " (should be (6.0, 6.0)). " << endl;
+  cout << endl; 
 
-  Point<3> twos{2,2,2};
-  Point<3> p7 = twos + ones; Point<3> p8 = twos - ones;
-  cout << p7 << ", " << p8 << endl;
-  cout << endl;
+  // test: operator-=
+  p0.reset({3.0, 2.0}); p1.reset({1.0, 1.0});
+  p0 -= p1;
+  cout << "+ operator-= (1): " << p0 << " (should be (2.0, 1.0)). " << endl;
+  p0 -= p0;
+  cout << "+ operator-= (2): " << p0 << " (should be (0.0, 0.0)). " << endl;
+  cout << endl; 
 
-  Point<3> p9 = 2 * twos; Point<3> p10 = twos * 3; 
-  cout << p9 << ", " << p10 << endl;
+  // test: operator*
+  p0.reset({1.0, 2.0});
+  p1 = p0 * 2;
+  cout << "+ operator* (1): " << p1 << " (should be (2.0, 4.0)). " << endl;
+  p1 = p1 * 2;
+  cout << "+ operator* (2): " << p1 << " (should be (4.0, 8.0)). " << endl;
+  p1 = 0.5 * p1;
+  cout << "+ operator* (3): " << p1 << " (should be (2.0, 4.0)). " << endl;
+  cout << endl; 
 
-  Point<3> p11 = twos / 3; Point<3> p12 = 2 * (twos - ones) / 3;
-  cout << p11 << ", " << p12 << endl;
+  // test: operator/
+  p0.reset({4.0, 8.0});
+  p1 = p0 / 2.0;
+  cout << "+ operator/ (1): " << p1 << " (should be (2.0, 4.0)). " << endl;
+  p1 = p1 / 2;
+  cout << "+ operator/ (2): " << p1 << " (should be (1.0, 2.0)). " << endl;
+  cout << endl; 
+
+  // test: operator+
+  p0.reset({1.0, 1.0}); p1.reset({-1.0, -1.0});
+  p2 = p0 + p0;
+  cout << "+ operator+ (1): " << p2 << " (should be (2.0, 2.0)). " << endl;
+  p2 = p2 + p1;
+  cout << "+ operator+ (1): " << p2 << " (should be (1.0, 1.0)). " << endl;
+  cout << endl; 
+
+  // test: operator-
+  p0.reset({1.0, 1.0}); p1.reset({-1.0, -1.0});
+  p2 = p1 - p0;
+  cout << "+ operator- (1): " << p2 << " (should be (-2.0, -2.0)). " << endl;
+  p2 = p2 - p2;
+  cout << "+ operator- (2): " << p2 << " (should be (0.0, 0.0)). " << endl;
+  cout << endl; 
 
 
   return 0;
