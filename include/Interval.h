@@ -12,13 +12,15 @@ namespace bbrcit {
 
 template <typename T> class Interval;
 
+// prints Interval<> as "(lower, upper)" to output stream. 
 template <typename T> 
 std::ostream& operator<<(std::ostream&, const Interval<T>&);
 
-// test whether two Interval<>'s intersect.
+// returns true if the Interval<>'s in the argument intersect.
 template <typename T> 
 bool intersect(const Interval<T>&, const Interval<T>&);
 
+// Interval<> represents a closed 1d interval. 
 template <typename T=double>
 class Interval {
 
@@ -58,6 +60,16 @@ class Interval {
 // Implementations
 // ---------------
 
+template <typename T>
+void Interval<T>::resize(const T &low, const T &high) {
+  if (high < low) {
+    throw std::logic_error("Interval<>: resize(const T &low, const T &high): "
+                           "Arguments must satisfy low <= high. ");
+  }
+  lower_ = low; 
+  upper_ = high;
+}
+
 template <typename T> 
 std::ostream& operator<<(std::ostream &os, const Interval<T> &i) {
   os << "(" << i.lower() << ", " << i.upper() << ")";
@@ -69,8 +81,10 @@ Interval<T>::Interval() : lower_(T()), upper_(T()) {}
 
 template <typename T>
 Interval<T>::Interval(const T &l, const T &u) : lower_(l), upper_(u) {
-  using std::swap;
-  if (upper_ < lower_) { swap(lower_, upper_); }
+  if (upper_ < lower_) {
+    throw std::logic_error("Interval<>: resize(const T &low, const T &high): "
+                           "Arguments must satisfy low <= high. ");
+  }
 }
 
 template <typename T>
