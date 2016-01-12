@@ -22,7 +22,7 @@ template <int D, typename T>
 std::istream& operator>>(std::istream&, Point<D,T>&);
 
 template <int D, typename T> 
-std::ostream& operator>>(std::ostream&, const Point<D,T>&);
+std::ostream& operator<<(std::ostream&, const Point<D,T>&);
 
 template <int D, typename T> 
 Point<D,T> operator+(const Point<D,T>&, const Point<D,T>&);

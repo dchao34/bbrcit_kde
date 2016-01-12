@@ -12,12 +12,14 @@
 // API
 // ---
 
+// TODO list: 
+// + Preprocess for bounding rectangle.
+// + Handle duplicate keys. 
+
 namespace bbrcit {
 
 template <int D, typename T>
 class Kdtree {
-
-  // TODO: Handle duplicate keys. 
 
   using point_type = Point<D,T>;
 
