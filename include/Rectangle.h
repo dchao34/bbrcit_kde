@@ -19,12 +19,15 @@ template <int D, typename T> class Rectangle;
 template <int D, typename T> 
 void swap(Rectangle<D,T>&, Rectangle<D,T>&);
 
+// prints Rectangle<>'s as { e1, e2, ..., eD } and ei's are the printed edges. 
 template <int D, typename T> 
 std::ostream& operator<<(std::ostream&, const Rectangle<D,T>&);
 
+// returns true if the arguments intersect.
 template <int D, typename T> 
 bool intersect(const Rectangle<D,T>&, const Rectangle<D,T>&);
 
+// Rectangle<>'s model rectangle's in D-dim euclidean space. 
 template <int D, typename T=double>
 class Rectangle {
 
