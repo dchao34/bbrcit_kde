@@ -54,6 +54,10 @@ class Rectangle {
     // resize this Rectangle<> to that defined by the Point<>'s in the argument.
     void resize(const Point<D,T>&, const Point<D,T>&);
 
+    // resize the interval of the d'th dimension to e.
+    Rectangle<D,T> lower_halfspace(size_t, const T&) const;
+    Rectangle<D,T> upper_halfspace(size_t, const T&) const;
+
     // returns true if the argument is fully contained in this Rectangle<>. 
     bool contains(const Point<D,T>&) const;
     bool contains(const Rectangle<D,T>&) const;
@@ -71,6 +75,28 @@ class Rectangle {
 
 // Implementations
 // ---------------
+
+template <int D, typename T>
+Rectangle<D,T> Rectangle<D,T>::lower_halfspace(size_t d, const T &v) const {
+  if (!intervals_[d].contains(v)) {
+    throw std::length_error("Rectangle<>: lower_halfspace(size_t d, const T &v): "
+                            "partition point v must be contained in edge d. ");
+  }
+  Rectangle<D,T> r(*this);
+  r.resize(d, EdgeT(intervals_[d].lower(), v));
+  return r;
+}
+
+template <int D, typename T>
+Rectangle<D,T> Rectangle<D,T>::upper_halfspace(size_t d, const T &v) const {
+  if (!intervals_[d].contains(v)) {
+    throw std::length_error("Rectangle<>: upper_halfspace(size_t d, const T &v): "
+                            "partition point v must be contained in edge d. ");
+  }
+  Rectangle<D,T> r(*this);
+  r.resize(d, EdgeT(v, intervals_[d].upper()));
+  return r;
+}
 
 template <int D, typename T>
 void swap(Rectangle<D,T> &lhs, Rectangle<D,T> &rhs) {

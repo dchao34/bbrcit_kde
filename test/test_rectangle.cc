@@ -52,6 +52,16 @@ int main() {
   cout << "+ resize() (2): " << r6 << " (cf. { (1.0, 3.0), (1.0, 3.0) }) " << endl;
   cout << endl;
 
+  // test: lower_halfspace(), upper_halfspace()
+  r0.resize({0,0}, {4,4});
+  r1 = r0.lower_halfspace(0, 1); r2 = r0.upper_halfspace(0, 1);
+  cout << "+ lower_halfspace() (1): " << r1 << " (cf. { (0.0, 1.0), (0.0, 4.0) }) " << endl;
+  cout << "+ upper_halfspace() (1): " << r2 << " (cf. { (1.0, 4.0), (0.0, 4.0) }) " << endl;
+  r1 = r0.lower_halfspace(1, 3); r2 = r0.upper_halfspace(1, 3);
+  cout << "+ lower_halfspace() (1): " << r1 << " (cf. { (0.0, 4.0), (0.0, 3.0) }) " << endl;
+  cout << "+ upper_halfspace() (1): " << r2 << " (cf. { (0.0, 4.0), (3.0, 4.0) }) " << endl;
+  cout << endl;
+
   // test: swap()
   r0.resize({1,1}, {3,3}); r1.resize({0,0}, {1,1});
   swap(r0, r1);
