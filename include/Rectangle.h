@@ -3,6 +3,8 @@
 
 #include <cmath>
 #include <vector>
+#include <sstream>
+#include <string>
 #include <utility>
 #include <algorithm>
 
@@ -78,10 +80,15 @@ class Rectangle {
 
 template <int D, typename T>
 Rectangle<D,T> Rectangle<D,T>::lower_halfspace(size_t d, const T &v) const {
+
   if (!intervals_[d].contains(v)) {
-    throw std::length_error("Rectangle<>: lower_halfspace(size_t d, const T &v): "
-                            "partition point v must be contained in edge d. ");
+    std::ostringstream sout;
+    sout << "Rectangle<>: lower_halfspace(size_t d, const T &v): ";
+    sout << "partition point " << v << " must be contained in edge " << intervals_[d] << " of ";
+    sout << "Rectangle<> " << *this << std::endl;
+    throw std::length_error(sout.str());
   }
+
   Rectangle<D,T> r(*this);
   r.resize(d, EdgeT(intervals_[d].lower(), v));
   return r;
@@ -89,10 +96,15 @@ Rectangle<D,T> Rectangle<D,T>::lower_halfspace(size_t d, const T &v) const {
 
 template <int D, typename T>
 Rectangle<D,T> Rectangle<D,T>::upper_halfspace(size_t d, const T &v) const {
+
   if (!intervals_[d].contains(v)) {
-    throw std::length_error("Rectangle<>: upper_halfspace(size_t d, const T &v): "
-                            "partition point v must be contained in edge d. ");
+    std::ostringstream sout;
+    sout << "Rectangle<>: upper_halfspace(size_t d, const T &v): ";
+    sout << "partition point " << v << " must be contained in edge " << intervals_[d] << " of ";
+    sout << "Rectangle<> " << *this << std::endl;
+    throw std::length_error(sout.str());
   }
+
   Rectangle<D,T> r(*this);
   r.resize(d, EdgeT(v, intervals_[d].upper()));
   return r;

@@ -15,7 +15,6 @@
 // ---
 
 // TODO list: 
-// + Preprocess for bounding rectangle.
 // + Handle duplicate keys. 
 
 namespace bbrcit {
@@ -35,7 +34,7 @@ class Kdtree {
     bool empty() const;
     void report_leaves(std::ostream&) const;
     void report_leaves(std::vector<PointT>&) const;
-    //void print_leaves() const;
+    void range_search(std::vector<PointT>&, const RectangleT&) const;
 
   private:
 
@@ -47,6 +46,7 @@ class Kdtree {
     };
 
     std::vector<PointT> points_;
+    RectangleT bbox_;
     Node *root_;
 
     Node* construct_tree(int, int, int);
@@ -54,10 +54,73 @@ class Kdtree {
 
     RectangleT compute_bounding_box() const;
     void retrieve_leaves(const Node*, std::vector<IndexT>&) const;
+    void retrieve_range(const Node*, int, 
+                        const RectangleT&, const RectangleT&, 
+                        std::vector<IndexT>&) const;
 };
 
 // Implementations
 // ---------------
+
+template<int D, typename T>
+void Kdtree<D,T>::range_search(std::vector<PointT> &result, const RectangleT &query_range) const {
+
+  std::vector<IndexT> result_indices;
+  retrieve_range(root_, 0, bbox_, query_range, result_indices);
+
+  result.reserve(result_indices.size());
+  for (auto i : result_indices) { result.emplace_back(points_[i]); }
+}
+
+template<int D, typename T>
+typename Kdtree<D,T>::Node* Kdtree<D,T>::construct_tree(int i, int j, int d) {
+  Node *p = new Node();
+  if (i == j) { 
+    p->point_idx_ = i;
+  } else {
+    int m = i + (j-i) / 2;
+    std::nth_element(points_.begin()+i, points_.begin()+m, points_.begin()+j+1, 
+                    [d] (const PointT &p1, const PointT &p2) { return p1[d] < p2[d]; });
+    p->split_ = points_[m][d];
+    p->left = construct_tree(i, m, (d+1)%D);
+    p->right = construct_tree(m+1, j, (d+1)%D);
+  }
+  return p;
+}
+
+template<int D, typename T>
+void Kdtree<D,T>::retrieve_range(
+    const Node *v, int d,
+    const RectangleT &data_range, 
+    const RectangleT &query_range, 
+    std::vector<IndexT> &result) const {
+
+  if (v == nullptr) { return; }
+
+  if (v->is_leaf()) { 
+    if (query_range.contains(points_[v->point_idx_])) {
+      result.push_back(v->point_idx_);
+    }
+  } else {
+
+    // left halfspace
+    RectangleT left_halfspace = data_range.lower_halfspace(d, v->split_);
+    if (query_range.contains(left_halfspace)) {
+      retrieve_leaves(v->left, result);
+    } else {
+      retrieve_range(v->left, (d+1)%D, left_halfspace, query_range, result);
+    }
+
+    // right halfspace
+    RectangleT right_halfspace = data_range.upper_halfspace(d, v->split_);
+    if (query_range.contains(right_halfspace)) {
+      retrieve_leaves(v->right, result);
+    } else {
+      retrieve_range(v->right, (d+1)%D, right_halfspace, query_range, result);
+    }
+
+  }
+}
 
 template<int D, typename T>
 typename Kdtree<D,T>::RectangleT Kdtree<D,T>::compute_bounding_box() const {
@@ -124,33 +187,20 @@ void Kdtree<D,T>::retrieve_leaves(const Node *r, std::vector<IndexT> &result) co
 }
 
 template<int D, typename T>
-Kdtree<D,T>::Kdtree() : points_(0), root_(nullptr) {}
+Kdtree<D,T>::Kdtree() : points_(0), bbox_(), root_(nullptr) {}
 
 template<int D, typename T>
 Kdtree<D,T>::~Kdtree() { delete_tree(root_); }
 
 template<int D, typename T>
-Kdtree<D,T>::Kdtree(const std::vector<PointT> &points) : points_(points), root_(nullptr) {
-  RectangleT r = compute_bounding_box();
+Kdtree<D,T>::Kdtree(const std::vector<PointT> &points) : points_(points), bbox_(), root_(nullptr) {
+
+  bbox_ = compute_bounding_box();
+
   if (!points_.empty()) {
     root_ = construct_tree(0, points_.size()-1, 0);
   }
-}
 
-template<int D, typename T>
-typename Kdtree<D,T>::Node* Kdtree<D,T>::construct_tree(int i, int j, int d) {
-  Node *p = new Node();
-  if (i == j) { 
-    p->point_idx_ = i;
-  } else {
-    int m = i + (j-i) / 2;
-    std::nth_element(points_.begin()+i, points_.begin()+m, points_.end(), 
-                    [d] (const PointT &p1, const PointT &p2) { return p1[d] < p2[d]; });
-    p->split_ = points_[m][d];
-    p->left = construct_tree(i, m, (d+1)%D);
-    p->right = construct_tree(m+1, j, (d+1)%D);
-  }
-  return p;
 }
 
 template<int D, typename T>
