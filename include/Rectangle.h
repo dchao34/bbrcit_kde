@@ -52,9 +52,8 @@ class Rectangle {
     void resize(const Point<D,T>&, const Point<D,T>&);
 
     // returns true if the argument is fully contained in this Rectangle<>. 
-    // specific choices for M include Point<>, Rectangle<>
-    template <template <int D1, typename T1> class M> 
-      bool contains(const M<D,T>&) const;
+    bool contains(const Point<D,T>&) const;
+    bool contains(const Rectangle<D,T>&) const;
 
     // returns the (min, max) L2 distance from the Point<> to this Rectangle<>. 
     T min_dist(const Point<D,T>&) const;
@@ -132,11 +131,19 @@ T Rectangle<D,T>::max_dist(const Point<D,T> &p) const {
 }
 
 template <int D, typename T>
-  template <template <int D1, typename T1> class M>
-bool Rectangle<D,T>::contains(const M<D,T> &obj) const {
+bool Rectangle<D,T>::contains(const Rectangle<D,T> &r) const {
   bool is_contained = true;
   for (int i = 0; i < D && is_contained; ++i) {
-    is_contained = intervals_[i].contains(obj[i]);
+    is_contained = intervals_[i].contains(r[i]);
+  }
+  return is_contained;
+}
+
+template <int D, typename T>
+bool Rectangle<D,T>::contains(const Point<D,T> &p) const {
+  bool is_contained = true;
+  for (int i = 0; i < D && is_contained; ++i) {
+    is_contained = intervals_[i].contains(p[i]);
   }
   return is_contained;
 }
