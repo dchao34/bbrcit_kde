@@ -1,5 +1,5 @@
 # Unit tests
-TESTBINS := test_interval test_rectangle test_kdtree test_point #test_fft generate_bimodal_gauss prodkde2d_scan prodkde2d_fftcv prodadakde2d_scan
+TESTBINS := test_kdtree1 test_interval test_rectangle test_kdtree test_point #test_fft generate_bimodal_gauss prodkde2d_scan prodkde2d_fftcv prodadakde2d_scan
 
 # Remainder of this file controls the compilation process
 
@@ -33,4 +33,4 @@ clean:
 	@rm -rf *~ *.o $(TESTBINS)
 
 cleanall:
-	@rm -rf *~ *.o $(TESTBINS) *.dat *.csv
+	@rm -rf *~ *.o $(TESTBINS) *.dat *.csv *.out
