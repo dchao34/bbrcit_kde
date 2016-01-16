@@ -50,6 +50,8 @@ class Point {
 
   public: 
 
+    using FloatType = T;
+
     // default constructor: gives the zero element 
     Point();
 

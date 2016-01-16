@@ -8,7 +8,6 @@
 #include <iostream>
 
 #include <Point.h>
-#include <PointAttributes.h>
 
 namespace bbrcit {
 

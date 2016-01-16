@@ -15,8 +15,9 @@ using bbrcit::Kdtree;
 
 int main() {
 
-  using PointT = Point<2, double>;
-  using RectangleT = Rectangle<2, double>;
+  using Kdtree2d = Kdtree<2>;
+  using PointT = typename Kdtree2d::PointT;
+  using RectangleT = typename Kdtree2d::RectangleT;
 
   random_device rd;
   default_random_engine e(rd());
@@ -34,7 +35,7 @@ int main() {
       x = 0.8660254 * x + 0.5 * y;
       y = -0.5 * x + 0.8660254 * y;
     }
-    data.push_back({x, y});
+    data.push_back({{x, y}, 1});
   }
 
   ofstream fout1("kdtree2_leaves.out");
@@ -42,7 +43,7 @@ int main() {
   ofstream fout3("kdtree2_query_rectangle.out");
   ofstream fout4("kdtree2_partitions.out");
 
-  Kdtree<2,double> tree(data);
+  Kdtree2d tree(data);
   tree.report_leaves(fout1);
   RectangleT query({0.5,0.5}, {1.2,1.2});
   tree.range_search(query, fout2);
