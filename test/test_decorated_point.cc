@@ -13,7 +13,7 @@ using bbrcit::Point;
 
 int main() {
 
-  using DecoratedPoint2d = DecoratedPoint<2,MinimalAttributes<double>,double>;
+  using DecoratedPoint2d = DecoratedPoint<2,MinimalAttributes<double,double>>;
 
   cout << endl;
 
@@ -106,6 +106,8 @@ int main() {
   cout << "(c.f. { (3.0, 2.0), (0.1) })" << endl;
   cout << "\t " << p1 << " ";
   cout << "(c.f. { (1.0, 2.0), (0.3) })" << endl;
+
+  cout << endl;
   
   return 0;
 }
