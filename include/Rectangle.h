@@ -35,7 +35,9 @@ class Rectangle {
 
   public: 
 
-    using EdgeT = Interval<T>;
+    using FloatType = T;
+    using EdgeType = Interval<T>;
+
     friend void swap<>(Rectangle<D,T>&, Rectangle<D,T>&);
 
     Rectangle();
@@ -47,11 +49,11 @@ class Rectangle {
     ~Rectangle();
 
     // index access to edge intervals. 
-    const EdgeT& operator[](int) const;
-    EdgeT& operator[](int);
+    const EdgeType& operator[](int) const;
+    EdgeType& operator[](int);
 
     // resize the interval of the d'th dimension to e.
-    void resize(size_t d, const EdgeT &e);
+    void resize(size_t d, const EdgeType &e);
 
     // resize this Rectangle<> to that defined by the Point<>'s in the argument.
     void resize(const Point<D,T>&, const Point<D,T>&);
@@ -72,7 +74,7 @@ class Rectangle {
 
     // Rectangle<D,T>'s are represented as a list of pair<T,T>'s of length D.
     // each pair<> represents the closed interval [lower, upper], where upper >= lower. 
-    std::vector<EdgeT> intervals_;
+    std::vector<EdgeType> intervals_;
 };
 
 // Implementations
@@ -90,7 +92,7 @@ Rectangle<D,T> Rectangle<D,T>::lower_halfspace(size_t d, const T &v) const {
   }
 
   Rectangle<D,T> r(*this);
-  r.resize(d, EdgeT(intervals_[d].lower(), v));
+  r.resize(d, EdgeType(intervals_[d].lower(), v));
   return r;
 }
 
@@ -106,7 +108,7 @@ Rectangle<D,T> Rectangle<D,T>::upper_halfspace(size_t d, const T &v) const {
   }
 
   Rectangle<D,T> r(*this);
-  r.resize(d, EdgeT(v, intervals_[d].upper()));
+  r.resize(d, EdgeType(v, intervals_[d].upper()));
   return r;
 }
 
@@ -116,7 +118,7 @@ void swap(Rectangle<D,T> &lhs, Rectangle<D,T> &rhs) {
 }
 
 template <int D, typename T>
-Rectangle<D,T>::Rectangle() : intervals_(D, EdgeT(T(), T()) ) {}
+Rectangle<D,T>::Rectangle() : intervals_(D, EdgeType(T(), T()) ) {}
 
 template <int D, typename T>
 Rectangle<D,T>::~Rectangle() {}
@@ -190,13 +192,13 @@ bool Rectangle<D,T>::contains(const Point<D,T> &p) const {
 }
 
 template <int D, typename T>
-inline void Rectangle<D,T>::resize(size_t d, const EdgeT &e) { (*this)[d] = e; }
+inline void Rectangle<D,T>::resize(size_t d, const EdgeType &e) { (*this)[d] = e; }
 
 template <int D, typename T>
 void Rectangle<D,T>::resize(const Point<D,T> &p1, const Point<D,T> &p2) { 
   for (int i = 0; i < D; ++i) { 
     auto p = std::minmax(p1[i], p2[i]);
-    intervals_[i] = EdgeT(p.first, p.second);
+    intervals_[i] = EdgeType(p.first, p.second);
   }
 }
 
@@ -218,13 +220,13 @@ std::ostream& operator<<(std::ostream &os, const Rectangle<D,T> &r) {
 }
 
 template <int D, typename T>
-inline const typename Rectangle<D,T>::EdgeT& 
+inline const typename Rectangle<D,T>::EdgeType& 
 Rectangle<D,T>::operator[](int i) const { return intervals_.at(i); }
 
 template <int D, typename T>
-inline typename Rectangle<D,T>::EdgeT& 
+inline typename Rectangle<D,T>::EdgeType& 
 Rectangle<D,T>::operator[](int i) { 
-  return const_cast<EdgeT&>(static_cast<const Rectangle&>(*this)[i]);
+  return const_cast<EdgeType&>(static_cast<const Rectangle&>(*this)[i]);
 }
 
 

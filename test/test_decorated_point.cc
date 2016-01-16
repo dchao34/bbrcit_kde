@@ -13,7 +13,7 @@ using bbrcit::Point;
 
 int main() {
 
-  using DecoratedPoint2d = DecoratedPoint<2,MinimalAttributes<double,double>>;
+  using DecoratedPoint2d = DecoratedPoint<2,MinimalAttributes<double>>;
 
   cout << endl;
 
@@ -43,7 +43,7 @@ int main() {
   DecoratedPoint2d p5({2.0,2.0}, 3.0);
   cout << "+ DecoratedPoint<> constructors (5): " << p5 << " (c.f. { (2.0, 2.0), (3.0) }) " << endl;
 
-  DecoratedPoint2d::AttributesT attr0(3.0);
+  DecoratedPoint2d::AttributesType attr0(3.0);
   DecoratedPoint2d p6(ep0, attr0);
   cout << "+ DecoratedPoint<> constructors (6): " << p6 << " (c.f. { (1.0, 1.0), (3.0) }) " << endl;
 

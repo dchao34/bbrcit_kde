@@ -16,15 +16,15 @@ using bbrcit::Kdtree;
 int main() {
 
   using Kdtree2d = Kdtree<2>;
-  using PointT = typename Kdtree2d::PointT;
-  using RectangleT = typename Kdtree2d::RectangleT;
+  using PointType = typename Kdtree2d::PointType;
+  using RectangleType = typename Kdtree2d::RectangleType;
 
   random_device rd;
   default_random_engine e(rd());
   normal_distribution<> g(0.0, 1.0);
   uniform_real_distribution<> u(0, 1);
 
-  vector<PointT> data;
+  vector<PointType> data;
   for (int i = 0; i < 10000; ++i) {
     double x = g(e), y = g(e);
     if (u(e) < 0.2) {
@@ -45,7 +45,7 @@ int main() {
 
   Kdtree2d tree(data);
   tree.report_leaves(fout1);
-  RectangleT query({0.5,0.5}, {1.2,1.2});
+  RectangleType query({0.5,0.5}, {1.2,1.2});
   tree.range_search(query, fout2);
   fout3 << query << endl;
 

@@ -12,8 +12,8 @@ int main() {
 
   cout << endl;
 
-  using MinAttDouble = MinimalAttributes<double,double>;
-  using MinAttInt = MinimalAttributes<int,double>;
+  using MinAttDouble = MinimalAttributes<double>;
+  using MinAttInt = MinimalAttributes<int>;
 
   // test: default constructor
   MinAttDouble d0;

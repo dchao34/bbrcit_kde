@@ -13,7 +13,7 @@ using bbrcit::DecoratedPoint;
 using bbrcit::Kdtree;
 
 using Kdtree2d = Kdtree<2>;
-using Point2d = typename Kdtree2d::PointT;
+using Point2d = typename Kdtree2d::PointType;
 
 vector<Point2d> generate_grid(
     double start_x, double end_x, 

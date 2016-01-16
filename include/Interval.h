@@ -25,6 +25,9 @@ template <typename T=double>
 class Interval {
 
   public:
+
+    using FloatType = T;
+
     Interval();
     Interval(const T&, const T&);
     Interval(const Interval<T>&) = default;
