@@ -8,6 +8,7 @@
 #include <iostream>
 
 #include <Point.h>
+#include <PointAttributes.h>
 
 namespace bbrcit {
 
@@ -29,7 +30,9 @@ template <int Dim, typename AttrT, typename FloatT>
 void swap(DecoratedPoint<Dim,AttrT,FloatT>&, DecoratedPoint<Dim,AttrT,FloatT>&);
 
 // DecoratedPoint<> models a point in Dim-dimensional space with additional attributes attached.
-template <int Dim, typename AttrT, typename FloatT=double> 
+template<int Dim, 
+         typename AttrT=MinimalAttributes<int>, 
+         typename FloatT=double> 
 class DecoratedPoint {
 
   public:

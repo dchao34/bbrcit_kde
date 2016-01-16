@@ -2,10 +2,12 @@
 #include <utility>
 #include <Rectangle.h>
 #include <Point.h>
+#include <DecoratedPoint.h>
 
 using namespace std;
 using bbrcit::Point;
 using bbrcit::Rectangle;
+using bbrcit::DecoratedPoint;
 
 int main() {
 
@@ -86,6 +88,14 @@ int main() {
   cout << r0.contains(r3) << ", ";
   cout << r0.contains(r4);
   cout << " (cf. 1, 1, 1, 0, 0)" << endl;
+
+  DecoratedPoint<2> dp0, dp1({-3,0}), dp2({0, 3});
+  r0.resize({-2,-2}, {2,2}); 
+  cout << "+ contains() (3): "; 
+  cout << r0.contains(dp0) << ", ";
+  cout << r0.contains(dp1) << ", ";
+  cout << r0.contains(dp2);
+  cout << " (cf. 1, 0, 0)" << endl;
   cout << endl;
 
   // test: intersect()

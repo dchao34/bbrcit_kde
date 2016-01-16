@@ -195,7 +195,7 @@ void Kdtree<D,AttrT,FloatT>::retrieve_range(
   if (v == nullptr) { return; }
 
   if (v->is_leaf()) { 
-    if (query_range.contains(points_[v->point_idx_].get_point())) {
+    if (query_range.contains(points_[v->point_idx_])) {
       result.push_back(v->point_idx_);
     }
   } else {

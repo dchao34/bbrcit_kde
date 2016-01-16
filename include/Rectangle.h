@@ -63,8 +63,10 @@ class Rectangle {
     Rectangle<D,T> upper_halfspace(size_t, const T&) const;
 
     // returns true if the argument is fully contained in this Rectangle<>. 
-    bool contains(const Point<D,T>&) const;
+    // (1) Specific case for containing other Rectangle<>'s
+    // (2) General Point type objects. operator[] accesses coordinate values.
     bool contains(const Rectangle<D,T>&) const;
+    template<typename PointT> bool contains(const PointT&) const;
 
     // returns the (min, max) L2 distance from the Point<> to this Rectangle<>. 
     T min_dist(const Point<D,T>&) const;
@@ -183,7 +185,8 @@ bool Rectangle<D,T>::contains(const Rectangle<D,T> &r) const {
 }
 
 template <int D, typename T>
-bool Rectangle<D,T>::contains(const Point<D,T> &p) const {
+template <typename PointT>
+bool Rectangle<D,T>::contains(const PointT &p) const {
   bool is_contained = true;
   for (int i = 0; i < D && is_contained; ++i) {
     is_contained = intervals_[i].contains(p[i]);
