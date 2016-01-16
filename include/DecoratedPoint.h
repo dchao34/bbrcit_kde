@@ -29,8 +29,8 @@ std::istream& operator>>(std::istream&, DecoratedPoint<Dim,AttrT,FloatT>&);
 template <int Dim, typename AttrT, typename FloatT>
 void swap(DecoratedPoint<Dim,AttrT,FloatT>&, DecoratedPoint<Dim,AttrT,FloatT>&);
 
-// DecoratedPoint<> models a weighted point in Dim-dimensional space. 
-template <int Dim, typename AttrT=MinimalAttributes<int>, typename FloatT=double> 
+// DecoratedPoint<> models a point in Dim-dimensional space with additional attributes attached.
+template <int Dim, typename AttrT, typename FloatT=double> 
 class DecoratedPoint {
 
   public:
@@ -63,7 +63,7 @@ class DecoratedPoint {
     const AttrT& get_attributes() const;
     const PointT& get_point() const;
 
-    // set the weight or point
+    // set the attributes or point
     void set_attributes(const AttrT&);
     void set_point(const PointT&);
 

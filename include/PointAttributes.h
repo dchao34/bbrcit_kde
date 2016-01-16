@@ -8,12 +8,15 @@ namespace bbrcit {
 
 template<typename WeightT> class MinimalAttributes;
 
+// prints MinimalAttributes<> as { (weight) } to os. 
 template<typename WeightT> 
 std::istream& operator>>(std::istream&, MinimalAttributes<WeightT>&);
 
+// reads in a single token
 template<typename WeightT> 
 std::ostream& operator<<(std::ostream&, const MinimalAttributes<WeightT>&);
 
+// MinimalAttributes<> contains the minimal attributes required of a Kdtree data point. 
 template<typename WeightT>
 class MinimalAttributes {
 
@@ -23,7 +26,10 @@ class MinimalAttributes {
 
     using WeightType = WeightT;
 
+    // default constructor: weight equal to 1.
     MinimalAttributes();
+
+    // one-argument constructor: user configured weight. 
     MinimalAttributes(const WeightT&);
     ~MinimalAttributes();
 
