@@ -51,6 +51,7 @@ class Point {
   public: 
 
     using FloatType = T;
+    static int dim() { return D; }
 
     // default constructor: gives the zero element 
     Point();

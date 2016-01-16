@@ -45,6 +45,8 @@ class DecoratedPoint {
     friend std::ostream& operator<<<>(std::ostream&, const DecoratedPoint<Dim,AttrT,FloatT>&);
     friend void swap<>(DecoratedPoint<Dim,AttrT,FloatT>&, DecoratedPoint<Dim,AttrT,FloatT>&);
 
+    static int dim() { return Dim; }
+
     // default constructor: creates point at the origin with default attributes.
     DecoratedPoint();
 
