@@ -1,5 +1,5 @@
 # Unit tests
-TESTBINS := test_pointw test_kdtree1 test_kdtree2 
+TESTBINS := test_attributes test_decorated_point #test_kdtree1 test_kdtree2 
 #test_interval test_rectangle test_point test_fft generate_bimodal_gauss prodkde2d_scan prodkde2d_fftcv prodadakde2d_scan
 
 # Remainder of this file controls the compilation process
