@@ -6,6 +6,9 @@
 
 namespace bbrcit {
 
+// Attribute type definitions
+// --------------------------
+
 template<typename WeightT> class MinimalAttributes;
 
 // prints MinimalAttributes<> as { (weight) } to os. 
@@ -31,6 +34,11 @@ class MinimalAttributes {
 
     // one-argument constructor: user configured weight. 
     MinimalAttributes(const WeightT&);
+
+    MinimalAttributes(const MinimalAttributes&) = default;
+    MinimalAttributes(MinimalAttributes&&) = default;
+    MinimalAttributes& operator=(const MinimalAttributes&) = default;
+    MinimalAttributes& operator=(MinimalAttributes&&) = default;
     ~MinimalAttributes();
 
     const WeightT& get_weight() const;
@@ -74,6 +82,17 @@ inline const WeightT& MinimalAttributes<WeightT>::get_weight() const {
 template<typename WeightT>
 inline void MinimalAttributes<WeightT>::set_weight(const WeightT &w) {
   weight_ = w;
+}
+
+// Attribute type functions
+// ------------------------
+
+// return a AttrT object whose weight is the sum of the arguments' weights.
+template<typename AttrT> 
+AttrT add_weights(const AttrT &lhs, const AttrT &rhs) {
+  AttrT result = lhs; 
+  result.set_weight(lhs.get_weight() + rhs.get_weight());
+  return result;
 }
 
 }

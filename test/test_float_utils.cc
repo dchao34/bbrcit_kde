@@ -35,22 +35,31 @@ int main() {
   vector<Point2d> points = generate_grid<Point2d>(0, 1, 0, 1, 3, 3);
   default_random_engine e;
   shuffle(points.begin(), points.end(), e);
-  sort(points.begin(), points.end(), bbrcit::LexCompare<Point2d>);
+  sort(points.begin(), points.end(), bbrcit::ExactLexicoLess<Point2d>);
   for (auto const &e : points) { cout << e << endl; }
 
   cout << endl;
 
   vector<WPoint2d> wpoints = generate_grid<WPoint2d>(0, 1, 0, 1, 3, 3);
   shuffle(wpoints.begin(), wpoints.end(), e);
-  sort(wpoints.begin(), wpoints.end(), bbrcit::LexCompare<WPoint2d>);
+  sort(wpoints.begin(), wpoints.end(), bbrcit::ExactLexicoLess<WPoint2d>);
   for (auto const &e : wpoints) { cout << e << endl; }
 
   cout << endl;
 
-  WPoint2d p = {{ 0.0, 1.0 } , 2.0 };
-  cout << p << endl;
-  WPoint2d q = {{1.0, 1.0}};
-  cout << q << endl;
+  WPoint2d wp0 = {{ 0.0, 1.0 } , 2.0 };
+  WPoint2d wp1 = {{0.0, 1.0}};
+  cout << ExactEqual(wp0, wp1) << ", (c.f. 1)" << endl;
+
+  double v = 0; for (int i = 0; i < 10; ++i) { v += 0.1; }
+  Point2d p0 = {{ 0.0, v }};
+  Point2d p1 = {{0.0, 1.0}};
+  cout << ExactEqual(p0, p1) << ", (c.f. 0)" << endl;
+
+  cout << (v == 1.0) << ", (c.f. 0)" << endl;
+  cout << bbrcit::almost_equal(v, 1.0) << ", (c.f. 1)" << endl;
+
+  cout << endl;
 
   return 0; 
 }

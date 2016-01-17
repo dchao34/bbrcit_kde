@@ -38,10 +38,16 @@ almost_equal(T lhs, T rhs) {
   return diff <= std::numeric_limits<T>::epsilon() * std::max(std::abs(lhs), std::abs(rhs));
 }
 
+template<typename PointT> 
+bool ExactEqual(const PointT &lhs, const PointT &rhs) {
+  int i = 0; while (i < lhs.dim() && lhs[i] == rhs[i]) { ++i; }
+  return i == lhs.dim();
+}
+
 // lexicographic comparison of PointT objects. note that the 
 // equality comparison is == even for floats; this is intentional. 
 template<typename PointT> 
-bool LexCompare(const PointT &lhs, const PointT &rhs) {
+bool ExactLexicoLess(const PointT &lhs, const PointT &rhs) {
   int i = 0; while (i < lhs.dim() && lhs[i] == rhs[i]) { ++i; }
   return i != lhs.dim() && lhs[i] < rhs[i];
 }

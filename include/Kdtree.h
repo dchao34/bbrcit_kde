@@ -11,12 +11,10 @@
 #include <PointAttributes.h>
 #include <DecoratedPoint.h>
 #include <Rectangle.h>
+#include <FloatUtils.h>
 
 // API
 // ---
-
-// TODO list: 
-// + Handle duplicate keys. 
 
 namespace bbrcit {
 
@@ -37,6 +35,7 @@ class Kdtree {
     using PointType = DecoratedPoint<D,AttrT,FloatT>;
     using FloatType = FloatT;
     using RectangleType = Rectangle<D,FloatType>;
+    static int dim() { return D; }
 
   private:
     using IndexType = typename std::vector<PointType>::size_type;
@@ -115,11 +114,13 @@ class Kdtree {
 
     // helper functions
     void initialize();
-    void delete_tree(Node*);
-
+    void combine_duplicates();
     RectangleType compute_bounding_box() const;
     Node* construct_tree(int, int, int);
+
     Node* tree_deep_copy(const Node*) const;
+
+    void delete_tree(Node*);
 
     void retrieve_leaves(const Node*, std::vector<IndexType>&) const;
     void retrieve_range(const Node*, int, 
@@ -294,7 +295,14 @@ Kdtree<D,AttrT,FloatT>::~Kdtree() { delete_tree(root_); }
 
 template<int D, typename AttrT, typename FloatT>
 void Kdtree<D,AttrT,FloatT>::initialize() {
+
+  // combine duplicate keys
+  combine_duplicates();
+
+  // compute a minimum axis-aligned rectangle containing all the points
   bbox_ = compute_bounding_box();
+
+  // build the tree
   if (!points_.empty()) { root_ = construct_tree(0, points_.size()-1, 0); }
 }
 
@@ -307,6 +315,36 @@ template<int D, typename AttrT, typename FloatT>
 Kdtree<D,AttrT,FloatT>::Kdtree(std::vector<PointType> &&points) : points_(std::move(points)), bbox_(), root_(nullptr) {
   initialize();
 }
+
+// combine duplicate keys in the data by adding the weights. 
+template<int D, typename AttrT, typename FloatT>
+void Kdtree<D,AttrT,FloatT>::combine_duplicates() {
+
+  if (points_.empty()) { return; }
+
+  // preprocess by sorting the data points lexicographically
+  // note: exact comparison of floating point is ok for this purpose
+  std::sort(points_.begin(), points_.end(), ExactLexicoLess<PointType>);
+
+  // remove duplicates by combining weights. 
+  // algorithm is similar to the partition step in quicksort.
+  size_t i = 0;
+  for (size_t j = 1; j < points_.size(); ++j) {
+    if (!ExactEqual(points_[i], points_[j])) {
+      swap(points_[++i], points_[j]);
+    } else {
+      points_[i].set_attributes(
+          add_weights(points_[i].get_attributes(), 
+                      points_[j].get_attributes())
+      );
+    }
+  }
+
+  // with duplicates removed, ok to shrink data size
+  points_.resize(i+1);
+
+}
+
 
 // if points_ is non-empty, return the minimum area axis-aligned rectangle that 
 // containing all PointType's in points_. otherwise return a degenerate rectangle 
