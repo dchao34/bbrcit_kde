@@ -8,10 +8,10 @@
 #include <queue>
 #include <iostream>
 
-#include <PointAttributes.h>
 #include <DecoratedPoint.h>
 #include <Rectangle.h>
 #include <FloatUtils.h>
+#include <PointWeights.h>
 
 // API
 // ---
@@ -26,7 +26,7 @@ void swap(Kdtree<D,AttrT,FloatT>&, Kdtree<D,AttrT,FloatT>&);
 // Kdtree<> implements a D-dimensional kdtree. It currently supports:
 // + Range search. 
 template<int D, 
-         typename AttrT=MinimalAttributes<int>, 
+         typename AttrT=PointWeights<int>, 
          typename FloatT = double>
 class Kdtree {
 

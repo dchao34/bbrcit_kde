@@ -4,7 +4,6 @@
 #include <random>
 
 #include <Rectangle.h>
-#include <PointAttributes.h>
 #include <DecoratedPoint.h>
 #include <Kdtree.h>
 

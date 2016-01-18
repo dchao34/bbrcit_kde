@@ -3,30 +3,30 @@
 #include <vector>
 #include <exception>
 
-#include <PointAttributes.h>
+#include <PointWeights.h>
 
 using namespace std;
-using bbrcit::MinimalAttributes;
+using bbrcit::PointWeights;
 
 int main() {
 
   cout << endl;
 
-  using MinAttDouble = MinimalAttributes<double>;
-  using MinAttInt = MinimalAttributes<int>;
+  using WeightAttDouble = PointWeights<double>;
+  using WeightAttInt = PointWeights<int>;
 
   // test: default constructor
-  MinAttDouble d0;
+  WeightAttDouble d0;
   cout << "+ default constructor (1): " << d0 << " (c.f. (1.0) ) " << endl;
-  MinAttInt i0;
+  WeightAttInt i0;
   cout << "+ default constructor (2): " << d0 << " (c.f. (1) ) " << endl;
   cout << endl;
 
   // test: one argument constructors
-  MinAttDouble d1(2.1);
+  WeightAttDouble d1(2.1);
   cout << "+ one argument constructors (1): " << d1 << " (c.f. (2.1) ) " << endl;
 
-  MinAttInt i1(2);
+  WeightAttInt i1(2);
   cout << "+ one argument constructors (2): " << i1 << " (c.f. (2) ) " << endl;
 
   cout << endl;
@@ -39,12 +39,12 @@ int main() {
 
   // test: copy/move construct
   d0.set_weight(3.2); i0.set_weight(3);
-  MinAttDouble d2(d0);
-  MinAttInt i2(i0);
-  MinAttDouble temp_d0(3.2);
-  MinAttInt temp_i0(3);
-  MinAttDouble d3(std::move(temp_d0));
-  MinAttInt i3(std::move(temp_i0));
+  WeightAttDouble d2(d0);
+  WeightAttInt i2(i0);
+  WeightAttDouble temp_d0(3.2);
+  WeightAttInt temp_i0(3);
+  WeightAttDouble d3(std::move(temp_d0));
+  WeightAttInt i3(std::move(temp_i0));
   cout << "+ copy constructor (1): " << d2 << " (c.f. (3.2) ) " << endl;
   cout << "+ copy constructor (2): " << i2 << " (c.f. (3) ) " << endl;
   cout << "+ move constructor (1): " << d3 << " (c.f. (3.2) ) " << endl;

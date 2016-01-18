@@ -3,17 +3,17 @@
 #include <vector>
 #include <exception>
 
-#include <PointAttributes.h>
+#include <PointWeights.h>
 #include <DecoratedPoint.h>
 
 using namespace std;
 using bbrcit::DecoratedPoint;
-using bbrcit::MinimalAttributes;
+using bbrcit::PointWeights;
 using bbrcit::Point;
 
 int main() {
 
-  using DecoratedPoint2d = DecoratedPoint<2,MinimalAttributes<double>>;
+  using DecoratedPoint2d = DecoratedPoint<2,PointWeights<double>>;
 
   cout << endl;
 
