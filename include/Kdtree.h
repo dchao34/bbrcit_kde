@@ -12,34 +12,37 @@
 #include <Rectangle.h>
 #include <FloatUtils.h>
 #include <PointWeights.h>
+#include <EmptyNodeAttributes.h>
 
 // API
 // ---
 
 namespace bbrcit {
 
-template<int D, typename AttrT, typename FloatT> class Kdtree;
+template<int D, typename PAttrT, typename NAttrT, typename FloatT> class Kdtree;
 
-template<int D, typename AttrT, typename FloatT>
-void swap(Kdtree<D,AttrT,FloatT>&, Kdtree<D,AttrT,FloatT>&);
+template<int D, typename PAttrT, typename NAttrT, typename FloatT>
+void swap(Kdtree<D,PAttrT,NAttrT,FloatT>&, Kdtree<D,PAttrT,NAttrT,FloatT>&);
 
 // Kdtree<> implements a D-dimensional kdtree. It currently supports:
 // + Range search. 
 template<int D, 
-         typename AttrT=PointWeights<int>, 
+         typename PAttrT=PointWeights<int>, 
+         typename NAttrT=EmptyNodeAttributes<PAttrT>, 
          typename FloatT = double>
 class Kdtree {
 
   public: 
 
-    using PointType = DecoratedPoint<D,AttrT,FloatT>;
+    using PointType = DecoratedPoint<D,PAttrT,FloatT>;
     using FloatType = FloatT;
     using RectangleType = Rectangle<D,FloatType>;
+    using NodeAttributesType = NAttrT;
     static int dim() { return D; }
 
   private:
     using IndexType = typename std::vector<PointType>::size_type;
-    friend void swap<>(Kdtree<D,AttrT,FloatT>&, Kdtree<D,AttrT,FloatT>&);
+    friend void swap<>(Kdtree<D,PAttrT,NAttrT,FloatT>&, Kdtree<D,PAttrT,NAttrT,FloatT>&);
 
   public: 
 
@@ -51,9 +54,9 @@ class Kdtree {
     Kdtree(std::vector<PointType> &&data);
 
     // copy-control. operator='s use copy and swap.
-    Kdtree(const Kdtree<D,AttrT,FloatT>&);
-    Kdtree(Kdtree<D,AttrT,FloatT>&&) noexcept;
-    Kdtree<D,AttrT,FloatT>& operator=(Kdtree<D,AttrT,FloatT>);
+    Kdtree(const Kdtree<D,PAttrT,NAttrT,FloatT>&);
+    Kdtree(Kdtree<D,PAttrT,NAttrT,FloatT>&&) noexcept;
+    Kdtree<D,PAttrT,NAttrT,FloatT>& operator=(Kdtree<D,PAttrT,NAttrT,FloatT>);
     ~Kdtree();
 
     // returns true if this is a null tree. 
@@ -97,6 +100,9 @@ class Kdtree {
       // (L) links to the daughters
       IndexType point_idx_ = 0;
 
+      // (I/L) attributes associated with this node
+      NodeAttributesType attr_ = NodeAttributesType();
+      
       // returns true if this object is a leaf
       bool is_leaf() const { return left_ == nullptr && right_ == nullptr; }
 
@@ -134,21 +140,21 @@ class Kdtree {
 // Implementations
 // ---------------
 
-template<int D, typename AttrT, typename FloatT>
-void Kdtree<D,AttrT,FloatT>::report_partitions(int depth, std::ostream &os) const {
+template<int D, typename PAttrT, typename NAttrT, typename FloatT>
+void Kdtree<D,PAttrT,NAttrT,FloatT>::report_partitions(int depth, std::ostream &os) const {
   std::vector<RectangleType> result;
   retrieve_partitions(root_, 0, depth, bbox_, result);
   for (const auto &r : result) { os << r << std::endl; }
 }
 
-template<int D, typename AttrT, typename FloatT>
-inline void Kdtree<D,AttrT,FloatT>::report_partitions(int depth, std::vector<RectangleType> &result) const {
+template<int D, typename PAttrT, typename NAttrT, typename FloatT>
+inline void Kdtree<D,PAttrT,NAttrT,FloatT>::report_partitions(int depth, std::vector<RectangleType> &result) const {
   retrieve_partitions(root_, 0, depth, bbox_, result);
 }
 
 // use DFS to retrieve partitions. 
-template<int D, typename AttrT, typename FloatT>
-void Kdtree<D,AttrT,FloatT>::retrieve_partitions(
+template<int D, typename PAttrT, typename NAttrT, typename FloatT>
+void Kdtree<D,PAttrT,NAttrT,FloatT>::retrieve_partitions(
     const Node *r, int d, int depth, 
     const RectangleType &partition,
     std::vector<RectangleType> &result) const {
@@ -166,8 +172,8 @@ void Kdtree<D,AttrT,FloatT>::retrieve_partitions(
 
 }
 
-template<int D, typename AttrT, typename FloatT>
-void Kdtree<D,AttrT,FloatT>::range_search(const RectangleType &query_range, std::ostream &os) const {
+template<int D, typename PAttrT, typename NAttrT, typename FloatT>
+void Kdtree<D,PAttrT,NAttrT,FloatT>::range_search(const RectangleType &query_range, std::ostream &os) const {
 
   std::vector<IndexType> result_indices;
   retrieve_range(root_, 0, bbox_, query_range, result_indices);
@@ -175,8 +181,8 @@ void Kdtree<D,AttrT,FloatT>::range_search(const RectangleType &query_range, std:
 
 }
 
-template<int D, typename AttrT, typename FloatT>
-void Kdtree<D,AttrT,FloatT>::range_search(const RectangleType &query_range, std::vector<PointType> &result) const {
+template<int D, typename PAttrT, typename NAttrT, typename FloatT>
+void Kdtree<D,PAttrT,NAttrT,FloatT>::range_search(const RectangleType &query_range, std::vector<PointType> &result) const {
 
   std::vector<IndexType> result_indices;
   retrieve_range(root_, 0, bbox_, query_range, result_indices);
@@ -186,8 +192,8 @@ void Kdtree<D,AttrT,FloatT>::range_search(const RectangleType &query_range, std:
 }
 
 // standard range search algorithm for kdtrees. 
-template<int D, typename AttrT, typename FloatT>
-void Kdtree<D,AttrT,FloatT>::retrieve_range(
+template<int D, typename PAttrT, typename NAttrT, typename FloatT>
+void Kdtree<D,PAttrT,NAttrT,FloatT>::retrieve_range(
     const Node *v, int d,
     const RectangleType &data_range, 
     const RectangleType &query_range, 
@@ -220,8 +226,8 @@ void Kdtree<D,AttrT,FloatT>::retrieve_range(
   }
 }
 
-template<int D, typename AttrT, typename FloatT>
-void swap(Kdtree<D,AttrT,FloatT> &lhs, Kdtree<D,AttrT,FloatT> &rhs) {
+template<int D, typename PAttrT, typename NAttrT, typename FloatT>
+void swap(Kdtree<D,PAttrT,NAttrT,FloatT> &lhs, Kdtree<D,PAttrT,NAttrT,FloatT> &rhs) {
 
   using std::swap;
   
@@ -229,27 +235,27 @@ void swap(Kdtree<D,AttrT,FloatT> &lhs, Kdtree<D,AttrT,FloatT> &rhs) {
   swap(lhs.bbox_, rhs.bbox_);
 
   // simply switch the root_ pointers.
-  typename Kdtree<D,AttrT,FloatT>::Node *ptemp = lhs.root_;
+  typename Kdtree<D,PAttrT,NAttrT,FloatT>::Node *ptemp = lhs.root_;
   lhs.root_ = rhs.root_;
   rhs.root_ = ptemp;
 }
 
-template<int D, typename AttrT, typename FloatT>
-inline Kdtree<D,AttrT,FloatT>& Kdtree<D,AttrT,FloatT>::operator=(Kdtree<D,AttrT,FloatT> rhs) {
+template<int D, typename PAttrT, typename NAttrT, typename FloatT>
+inline Kdtree<D,PAttrT,NAttrT,FloatT>& Kdtree<D,PAttrT,NAttrT,FloatT>::operator=(Kdtree<D,PAttrT,NAttrT,FloatT> rhs) {
   swap(*this, rhs); return *this;
 }
 
-template<int D, typename AttrT, typename FloatT>
-inline bool Kdtree<D,AttrT,FloatT>::empty() const { return root_ == nullptr; }
+template<int D, typename PAttrT, typename NAttrT, typename FloatT>
+inline bool Kdtree<D,PAttrT,NAttrT,FloatT>::empty() const { return root_ == nullptr; }
 
-template<int D, typename AttrT, typename FloatT>
-inline typename Kdtree<D,AttrT,FloatT>::IndexType Kdtree<D,AttrT,FloatT>::size() const { return points_.size(); }
+template<int D, typename PAttrT, typename NAttrT, typename FloatT>
+inline typename Kdtree<D,PAttrT,NAttrT,FloatT>::IndexType Kdtree<D,PAttrT,NAttrT,FloatT>::size() const { return points_.size(); }
 
-template<int D, typename AttrT, typename FloatT>
-inline typename Kdtree<D,AttrT,FloatT>::RectangleType Kdtree<D,AttrT,FloatT>::get_bounding_box() const { return bbox_; }
+template<int D, typename PAttrT, typename NAttrT, typename FloatT>
+inline typename Kdtree<D,PAttrT,NAttrT,FloatT>::RectangleType Kdtree<D,PAttrT,NAttrT,FloatT>::get_bounding_box() const { return bbox_; }
 
-template<int D, typename AttrT, typename FloatT>
-void Kdtree<D,AttrT,FloatT>::report_leaves(std::vector<PointType> &result) const {
+template<int D, typename PAttrT, typename NAttrT, typename FloatT>
+void Kdtree<D,PAttrT,NAttrT,FloatT>::report_leaves(std::vector<PointType> &result) const {
 
   std::vector<IndexType> leaf_indices;
   retrieve_leaves(root_, leaf_indices);
@@ -258,8 +264,8 @@ void Kdtree<D,AttrT,FloatT>::report_leaves(std::vector<PointType> &result) const
 
 }
 
-template<int D, typename AttrT, typename FloatT>
-void Kdtree<D,AttrT,FloatT>::report_leaves(std::ostream &os) const {
+template<int D, typename PAttrT, typename NAttrT, typename FloatT>
+void Kdtree<D,PAttrT,NAttrT,FloatT>::report_leaves(std::ostream &os) const {
 
   std::vector<IndexType> leaf_indices;
   retrieve_leaves(root_, leaf_indices);
@@ -267,8 +273,8 @@ void Kdtree<D,AttrT,FloatT>::report_leaves(std::ostream &os) const {
 
 }
 
-template<int D, typename AttrT, typename FloatT>
-void Kdtree<D,AttrT,FloatT>::retrieve_leaves(const Node *r, std::vector<IndexType> &result) const {
+template<int D, typename PAttrT, typename NAttrT, typename FloatT>
+void Kdtree<D,PAttrT,NAttrT,FloatT>::retrieve_leaves(const Node *r, std::vector<IndexType> &result) const {
 
   // check for null tree
   if (r == nullptr) { return; }
@@ -287,14 +293,14 @@ void Kdtree<D,AttrT,FloatT>::retrieve_leaves(const Node *r, std::vector<IndexTyp
   }
 }
 
-template<int D, typename AttrT, typename FloatT>
-Kdtree<D,AttrT,FloatT>::Kdtree() : points_(0), bbox_(), root_(nullptr) {}
+template<int D, typename PAttrT, typename NAttrT, typename FloatT>
+Kdtree<D,PAttrT,NAttrT,FloatT>::Kdtree() : points_(0), bbox_(), root_(nullptr) {}
 
-template<int D, typename AttrT, typename FloatT>
-Kdtree<D,AttrT,FloatT>::~Kdtree() { delete_tree(root_); }
+template<int D, typename PAttrT, typename NAttrT, typename FloatT>
+Kdtree<D,PAttrT,NAttrT,FloatT>::~Kdtree() { delete_tree(root_); }
 
-template<int D, typename AttrT, typename FloatT>
-void Kdtree<D,AttrT,FloatT>::initialize() {
+template<int D, typename PAttrT, typename NAttrT, typename FloatT>
+void Kdtree<D,PAttrT,NAttrT,FloatT>::initialize() {
 
   // merge duplicate keys
   merge_duplicates();
@@ -306,19 +312,19 @@ void Kdtree<D,AttrT,FloatT>::initialize() {
   if (!points_.empty()) { root_ = construct_tree(0, points_.size()-1, 0); }
 }
 
-template<int D, typename AttrT, typename FloatT>
-Kdtree<D,AttrT,FloatT>::Kdtree(const std::vector<PointType> &points) : points_(points), bbox_(), root_(nullptr) {
+template<int D, typename PAttrT, typename NAttrT, typename FloatT>
+Kdtree<D,PAttrT,NAttrT,FloatT>::Kdtree(const std::vector<PointType> &points) : points_(points), bbox_(), root_(nullptr) {
   initialize();
 }
 
-template<int D, typename AttrT, typename FloatT>
-Kdtree<D,AttrT,FloatT>::Kdtree(std::vector<PointType> &&points) : points_(std::move(points)), bbox_(), root_(nullptr) {
+template<int D, typename PAttrT, typename NAttrT, typename FloatT>
+Kdtree<D,PAttrT,NAttrT,FloatT>::Kdtree(std::vector<PointType> &&points) : points_(std::move(points)), bbox_(), root_(nullptr) {
   initialize();
 }
 
 // merge duplicate keys in the data by merging the attributes. 
-template<int D, typename AttrT, typename FloatT>
-void Kdtree<D,AttrT,FloatT>::merge_duplicates() {
+template<int D, typename PAttrT, typename NAttrT, typename FloatT>
+void Kdtree<D,PAttrT,NAttrT,FloatT>::merge_duplicates() {
 
   if (points_.empty()) { return; }
 
@@ -349,8 +355,8 @@ void Kdtree<D,AttrT,FloatT>::merge_duplicates() {
 // if points_ is non-empty, return the minimum area axis-aligned rectangle that 
 // containing all PointType's in points_. otherwise return a degenerate rectangle 
 // (a rectangle of 0 length edges at the origin)
-template<int D, typename AttrT, typename FloatT>
-typename Kdtree<D,AttrT,FloatT>::RectangleType Kdtree<D,AttrT,FloatT>::compute_bounding_box() const {
+template<int D, typename PAttrT, typename NAttrT, typename FloatT>
+typename Kdtree<D,PAttrT,NAttrT,FloatT>::RectangleType Kdtree<D,PAttrT,NAttrT,FloatT>::compute_bounding_box() const {
 
   // handle the empty data set. 
   if (points_.empty()) { return RectangleType(); }
@@ -381,8 +387,8 @@ typename Kdtree<D,AttrT,FloatT>::RectangleType Kdtree<D,AttrT,FloatT>::compute_b
 // + this procedure rearranges points_ such that the indices stored at the leaves
 //   refer to the appropriate data point. 
 // Note: do NOT change the ordering of points_ outside of this function. 
-template<int D, typename AttrT, typename FloatT>
-typename Kdtree<D,AttrT,FloatT>::Node* Kdtree<D,AttrT,FloatT>::construct_tree(int i, int j, int d) {
+template<int D, typename PAttrT, typename NAttrT, typename FloatT>
+typename Kdtree<D,PAttrT,NAttrT,FloatT>::Node* Kdtree<D,PAttrT,NAttrT,FloatT>::construct_tree(int i, int j, int d) {
 
   Node *p = new Node();
 
@@ -390,6 +396,8 @@ typename Kdtree<D,AttrT,FloatT>::Node* Kdtree<D,AttrT,FloatT>::construct_tree(in
   // feature suggestion: allow n_max data points at leaves. 
   if (i == j) { 
     p->point_idx_ = i;
+
+    p->attr_.configure_for_leaf(points_[i]);
 
   // partition points_ by the lower median m. [i,m] go in the left subtree while 
   // [m+1,j] go in the right subtree. 
@@ -405,29 +413,31 @@ typename Kdtree<D,AttrT,FloatT>::Node* Kdtree<D,AttrT,FloatT>::construct_tree(in
     // pre-order tree walk. 
     p->left_ = construct_tree(i, m, (d+1)%D);
     p->right_ = construct_tree(m+1, j, (d+1)%D);
+
+    p->attr_ = merge(p->left_->attr_, p->right_->attr_);
   }
   return p;
 }
 
-template<int D, typename AttrT, typename FloatT>
-Kdtree<D,AttrT,FloatT>::Kdtree(Kdtree<D,AttrT,FloatT> &&obj) noexcept : 
+template<int D, typename PAttrT, typename NAttrT, typename FloatT>
+Kdtree<D,PAttrT,NAttrT,FloatT>::Kdtree(Kdtree<D,PAttrT,NAttrT,FloatT> &&obj) noexcept : 
   points_(std::move(obj.points_)), 
   bbox_(std::move(obj.bbox_)) {
   root_ = obj.root_;
   obj.root_ = nullptr;
 }
 
-template<int D, typename AttrT, typename FloatT>
-Kdtree<D,AttrT,FloatT>::Kdtree(const Kdtree<D,AttrT,FloatT> &obj) 
+template<int D, typename PAttrT, typename NAttrT, typename FloatT>
+Kdtree<D,PAttrT,NAttrT,FloatT>::Kdtree(const Kdtree<D,PAttrT,NAttrT,FloatT> &obj) 
   : points_(obj.points_), bbox_(obj.bbox_) {
   root_ = tree_deep_copy(obj.root_);
 }
 
 // return a pointer to a deep copy of the tree pointed to by the argument. 
-template<int D, typename AttrT, typename FloatT>
-typename Kdtree<D,AttrT,FloatT>::Node* 
-Kdtree<D,AttrT,FloatT>::tree_deep_copy(
-    const Kdtree<D,AttrT,FloatT>::Node *target_r) const {
+template<int D, typename PAttrT, typename NAttrT, typename FloatT>
+typename Kdtree<D,PAttrT,NAttrT,FloatT>::Node* 
+Kdtree<D,PAttrT,NAttrT,FloatT>::tree_deep_copy(
+    const Kdtree<D,PAttrT,NAttrT,FloatT>::Node *target_r) const {
   if (target_r == nullptr) { return nullptr; }
   Node *r = new Node(*target_r);
   r->left_ = tree_deep_copy(target_r->left_);
@@ -436,8 +446,8 @@ Kdtree<D,AttrT,FloatT>::tree_deep_copy(
 }
 
 // delete Kdtree<>::Nodes by a post order tree walk. 
-template<int D, typename AttrT, typename FloatT>
-void Kdtree<D,AttrT,FloatT>::delete_tree(Node *p) {
+template<int D, typename PAttrT, typename NAttrT, typename FloatT>
+void Kdtree<D,PAttrT,NAttrT,FloatT>::delete_tree(Node *p) {
   if (p == nullptr) { return; }
   if (!p->is_leaf()) { 
     delete_tree(p->left_);
