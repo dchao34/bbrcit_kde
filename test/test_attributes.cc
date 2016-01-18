@@ -60,12 +60,12 @@ int main() {
 
   cout << endl;
 
-  // test: combine_weights
+  // test: merge
   d0.set_weight(3.2); i0.set_weight(3);
   d1.set_weight(2.3); i1.set_weight(2);
-  d2 = add_weights(d0, d1); i2 = add_weights(i0, i1);
-  cout << "+ add_weights (1): " << d2 << " (c.f. (5.5) ) " << endl;
-  cout << "+ add_weights (2): " << i2 << " (c.f. (5) ) " << endl;
+  d2 = merge(d0, d1); i2 = merge(i0, i1);
+  cout << "+ merge (1): " << d2 << " (c.f. (5.5) ) " << endl;
+  cout << "+ merge (2): " << i2 << " (c.f. (5) ) " << endl;
 
   cout << endl;
   

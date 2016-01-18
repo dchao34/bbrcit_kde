@@ -114,7 +114,7 @@ class Kdtree {
 
     // helper functions
     void initialize();
-    void combine_duplicates();
+    void merge_duplicates();
     RectangleType compute_bounding_box() const;
     Node* construct_tree(int, int, int);
 
@@ -296,8 +296,8 @@ Kdtree<D,AttrT,FloatT>::~Kdtree() { delete_tree(root_); }
 template<int D, typename AttrT, typename FloatT>
 void Kdtree<D,AttrT,FloatT>::initialize() {
 
-  // combine duplicate keys
-  combine_duplicates();
+  // merge duplicate keys
+  merge_duplicates();
 
   // compute a minimum axis-aligned rectangle containing all the points
   bbox_ = compute_bounding_box();
@@ -316,9 +316,9 @@ Kdtree<D,AttrT,FloatT>::Kdtree(std::vector<PointType> &&points) : points_(std::m
   initialize();
 }
 
-// combine duplicate keys in the data by adding the weights. 
+// merge duplicate keys in the data by merging the attributes. 
 template<int D, typename AttrT, typename FloatT>
-void Kdtree<D,AttrT,FloatT>::combine_duplicates() {
+void Kdtree<D,AttrT,FloatT>::merge_duplicates() {
 
   if (points_.empty()) { return; }
 
@@ -326,7 +326,7 @@ void Kdtree<D,AttrT,FloatT>::combine_duplicates() {
   // note: exact comparison of floating point is ok for this purpose
   std::sort(points_.begin(), points_.end(), ExactLexicoLess<PointType>);
 
-  // remove duplicates by combining weights. 
+  // remove duplicates by merging attributes. 
   // algorithm is similar to the partition step in quicksort.
   size_t i = 0;
   for (size_t j = 1; j < points_.size(); ++j) {
@@ -334,8 +334,8 @@ void Kdtree<D,AttrT,FloatT>::combine_duplicates() {
       swap(points_[++i], points_[j]);
     } else {
       points_[i].set_attributes(
-          add_weights(points_[i].get_attributes(), 
-                      points_[j].get_attributes())
+          merge(points_[i].get_attributes(), 
+                points_[j].get_attributes())
       );
     }
   }

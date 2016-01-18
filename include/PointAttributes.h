@@ -35,18 +35,27 @@ class MinimalAttributes {
     // one-argument constructor: user configured weight. 
     MinimalAttributes(const WeightT&);
 
-    MinimalAttributes(const MinimalAttributes&) = default;
-    MinimalAttributes(MinimalAttributes&&) = default;
-    MinimalAttributes& operator=(const MinimalAttributes&) = default;
-    MinimalAttributes& operator=(MinimalAttributes&&) = default;
+    MinimalAttributes(const MinimalAttributes<WeightT>&) = default;
+    MinimalAttributes(MinimalAttributes<WeightT>&&) = default;
+    MinimalAttributes<WeightT>& operator=(const MinimalAttributes<WeightT>&) = default;
+    MinimalAttributes<WeightT>& operator=(MinimalAttributes<WeightT>&&) = default;
     ~MinimalAttributes();
 
     const WeightT& get_weight() const;
     void set_weight(const WeightT&);
 
+    MinimalAttributes<WeightT>& merge(const MinimalAttributes<WeightT>&);
+
   private: 
     WeightT weight_;
 };
+
+template<typename WeightT>
+MinimalAttributes<WeightT>& 
+MinimalAttributes<WeightT>::merge(const MinimalAttributes<WeightT> &rhs) {
+  weight_ += rhs.weight_;
+  return *this;
+}
 
 template<typename WeightT> 
 std::ostream& operator<<(std::ostream &os, const MinimalAttributes<WeightT> &att) {
@@ -87,11 +96,11 @@ inline void MinimalAttributes<WeightT>::set_weight(const WeightT &w) {
 // Attribute type functions
 // ------------------------
 
-// return a AttrT object whose weight is the sum of the arguments' weights.
+// return a AttrT object that is the result of merging the arguments
 template<typename AttrT> 
-AttrT add_weights(const AttrT &lhs, const AttrT &rhs) {
+AttrT merge(const AttrT &lhs, const AttrT &rhs) {
   AttrT result = lhs; 
-  result.set_weight(lhs.get_weight() + rhs.get_weight());
+  result.merge(rhs);
   return result;
 }
 
