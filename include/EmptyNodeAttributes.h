@@ -7,40 +7,40 @@
 
 namespace bbrcit {
 
-// EmptyNodeAttributes<>
+// EmptyNodeAttributes
 // ---------------------
 
-template<typename PointAttrT> class EmptyNodeAttributes;
+class EmptyNodeAttributes;
 
 // prints the attribute to ostream. 
-template<typename PointAttrT> 
-inline std::ostream& operator<<(std::ostream &os, const EmptyNodeAttributes<PointAttrT>&) { os << "()"; return os; }
+inline std::ostream& operator<<(std::ostream &os, const EmptyNodeAttributes&) { os << "()"; return os; }
 
-// EmptyNodeAttributes<> represents the empty attribute. 
-template<typename PointAttrT>
+// EmptyNodeAttributes represents the empty attribute. 
 class EmptyNodeAttributes {
 
   public: 
 
-    using PointAttributeType = PointAttrT;
+    // required function for the node attribute interface
+    template<typename PointT> 
+      static EmptyNodeAttributes extract_point_attributes(const PointT&);
 
     // default constructor
     EmptyNodeAttributes() = default;
-    EmptyNodeAttributes(const EmptyNodeAttributes<PointAttrT>&) = default;
-    EmptyNodeAttributes(EmptyNodeAttributes<PointAttrT>&&) = default;
-    EmptyNodeAttributes<PointAttrT>& operator=(const EmptyNodeAttributes<PointAttrT>&) = default;
-    EmptyNodeAttributes<PointAttrT>& operator=(EmptyNodeAttributes<PointAttrT>&&) = default;
+    EmptyNodeAttributes(const EmptyNodeAttributes&) = default;
+    EmptyNodeAttributes(EmptyNodeAttributes&&) = default;
+    EmptyNodeAttributes& operator=(const EmptyNodeAttributes&) = default;
+    EmptyNodeAttributes& operator=(EmptyNodeAttributes&&) = default;
     ~EmptyNodeAttributes() = default;
 
     // required functions for the attribute interface
-    EmptyNodeAttributes<PointAttrT>& merge(const EmptyNodeAttributes<PointAttrT>&) { return *this; }
+    EmptyNodeAttributes& merge(const EmptyNodeAttributes&) { return *this; }
 
-    // required functions for the node attribute interface
-    template<typename PointT> void configure_for_leaf(const PointT&) { return; }
-
-  private: 
-    PointAttrT attributes_;
 };
+
+template<typename PointT>
+inline EmptyNodeAttributes 
+EmptyNodeAttributes::extract_point_attributes(const PointT&) 
+{ return EmptyNodeAttributes(); }
 
 }
 

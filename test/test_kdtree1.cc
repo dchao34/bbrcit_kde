@@ -43,16 +43,14 @@ int main() {
   // test: vector constructor
   vector<Point2d> points1 = generate_grid(0, 1, 0, 1, 2, 2);
   Kdtree2d tr1(points1);
-  vector<Point2d> leaves; tr1.report_leaves(leaves);
   cout << "+ vector constructor (1): " << endl;
-  cout << "  output: { ";for (const auto &p : leaves) { cout << p << " "; } cout << "}" << endl;
+  cout << "  output: { ";for (const auto &p : tr1.points()) { cout << p << " "; } cout << "}" << endl;
   cout << "  compare:{ { (0, 0), (1) } { (0, 0.5), (1) } { (0.5, 0), (1) } { (0.5, 0.5), (1) } }" << endl;
 
   vector<Point2d> points2 = generate_grid(0, -1, 0, -1, 2, 2);
   Kdtree2d tr2(std::move(points2));
-  leaves.clear(); tr2.report_leaves(leaves);
   cout << "+ vector constructor (2): " << endl;
-  cout << "  output: { ";for (const auto &p : leaves) { cout << p << " "; } cout << "}" << endl;
+  cout << "  output: { ";for (const auto &p : tr2.points()) { cout << p << " "; } cout << "}" << endl;
   cout << "  compare:{ { (-0.5, -0.5), (1) } { (-0.5, 0), (1) } { (0, -0.5), (1) } { (0, 0), (1) } }" << endl;
 
   cout << endl;
@@ -61,37 +59,31 @@ int main() {
   Kdtree2d *p_tr = new Kdtree2d(generate_grid(0, 1, 0, -1, 2, 2));
   Kdtree2d tr3(*p_tr);
   delete p_tr;
-  leaves.clear(); tr3.report_leaves(leaves);
   cout << "+ copy constructor (1): " << endl;
-  cout << "  output: { ";for (const auto &p : leaves) { cout << p << " "; } cout << "}" << endl;
+  cout << "  output: { ";for (const auto &p : tr3.points()) { cout << p << " "; } cout << "}" << endl;
   cout << "  compare:{ { (0, -0.5), (1) } { (0, 0), (1) } { (0.5, -0.5), (1) } { (0.5, 0), (1) } }" << endl;
 
   Kdtree2d temp_tr(generate_grid(0, -1, 0, 1, 2, 2));
   Kdtree2d tr4(std::move(temp_tr));
-  leaves.clear(); tr4.report_leaves(leaves);
   cout << "+ move constructor (1): " << endl;
-  cout << "  output: { ";for (const auto &p : leaves) { cout << p << " "; } cout << "}, " << temp_tr.empty() << endl;
+  cout << "  output: { ";for (const auto &p : tr4.points()) { cout << p << " "; } cout << "}, " << temp_tr.empty() << endl;
   cout << "  compare:{ { (-0.5, 0), (1) } { (-0.5, 0.5), (1) } { (0, 0), (1) } { (0, 0.5), (1) } }, 1" << endl;
   cout << endl;
 
   // test: swap
   cout << "+ swap (1): " << endl;
   swap(tr3, tr4); 
-  leaves.clear(); tr3.report_leaves(leaves);
-  cout << "  output: { ";for (const auto &p : leaves) { cout << p << " "; } cout << "}" << endl;
+  cout << "  output: { ";for (const auto &p : tr3.points()) { cout << p << " "; } cout << "}" << endl;
   cout << "  compare:{ { (-0.5, 0), (1) } { (-0.5, 0.5), (1) } { (0, 0), (1) } { (0, 0.5), (1) } }" << endl;
 
-  leaves.clear(); tr4.report_leaves(leaves);
-  cout << "  output: { ";for (const auto &p : leaves) { cout << p << " "; } cout << "}" << endl;
+  cout << "  output: { ";for (const auto &p : tr4.points()) { cout << p << " "; } cout << "}" << endl;
   cout << "  compare:{ { (0, -0.5), (1) } { (0, 0), (1) } { (0.5, -0.5), (1) } { (0.5, 0), (1) } }" << endl;
 
   swap(tr3, tr4); 
-  leaves.clear(); tr3.report_leaves(leaves);
-  cout << "  output: { ";for (const auto &p : leaves) { cout << p << " "; } cout << "}" << endl;
+  cout << "  output: { ";for (const auto &p : tr3.points()) { cout << p << " "; } cout << "}" << endl;
   cout << "  compare:{ { (0, -0.5), (1) } { (0, 0), (1) } { (0.5, -0.5), (1) } { (0.5, 0), (1) } }" << endl;
 
-  leaves.clear(); tr4.report_leaves(leaves);
-  cout << "  output: { ";for (const auto &p : leaves) { cout << p << " "; } cout << "}" << endl;
+  cout << "  output: { ";for (const auto &p : tr4.points()) { cout << p << " "; } cout << "}" << endl;
   cout << "  compare:{ { (-0.5, 0), (1) } { (-0.5, 0.5), (1) } { (0, 0), (1) } { (0, 0.5), (1) } }" << endl;
 
   cout << endl;
@@ -100,26 +92,25 @@ int main() {
   p_tr = new Kdtree2d(generate_grid(0, 1, 0, -1, 2, 2));
   temp_tr = *p_tr;
   delete p_tr;
-  leaves.clear(); temp_tr.report_leaves(leaves);
   cout << "+ copy assignment (1): " << endl;
-  cout << "  output: { ";for (const auto &p : leaves) { cout << p << " "; } cout << "}" << endl;
+  cout << "  output: { ";for (const auto &p : temp_tr.points()) { cout << p << " "; } cout << "}" << endl;
   cout << "  compare:{ { (0, -0.5), (1) } { (0, 0), (1) } { (0.5, -0.5), (1) } { (0.5, 0), (1) } }" << endl;
 
   Kdtree2d temp_tr2(generate_grid(0, -1, 0, 1, 2, 2));
   temp_tr = std::move(temp_tr2);
-  leaves.clear(); temp_tr.report_leaves(leaves);
   cout << "+ move assignment (1): " << endl;
-  cout << "  output: { ";for (const auto &p : leaves) { cout << p << " "; } cout << "}, " << temp_tr2.empty() << endl;
+  cout << "  output: { ";for (const auto &p : temp_tr.points()) { cout << p << " "; } cout << "}, " << temp_tr2.empty() << endl;
   cout << "  compare:{ { (-0.5, 0), (1) } { (-0.5, 0.5), (1) } { (0, 0), (1) } { (0, 0.5), (1) } }, 1" << endl;
 
   cout << endl;
 
-  // test: empty(), size(), get_bounding_box():
+  // test: empty(), size(), bounding_box():
   tr1 = generate_grid(0, 1, 0, 1, 100, 100);
   cout << "+ empty() (1): " << tr1.empty() << " (c.f. 0)" << endl;
   cout << "+ size() (1): " << tr1.size() << " (c.f. 10000)" << endl;
-  cout << "+ get_bounding_box (1): " << tr1.get_bounding_box(); 
+  cout << "+ bounding_box (1): " << tr1.bounding_box(); 
   cout << " (c.f. { (0, 0.99), (0, 0.99) })" << endl;
+  cout << "+ leaf_nmax() (1): " << tr1.leaf_nmax() << " (c.f. 2)" << endl;
   cout << endl;
 
   return 0;

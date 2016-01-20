@@ -30,6 +30,12 @@ class DefaultNodeAttributes {
     using PointAttributeType = PointAttrT;
     friend void swap<>(DefaultNodeAttributes<PointAttrT>&, DefaultNodeAttributes<PointAttrT>&);
 
+    // required functions for the node attribute interface
+    // + extract_point_attributes: takes a PointT argument representing a single 
+    //   point in the Kdtree and returns an NodeAttributes<> object. 
+    template<typename PointT> 
+      static DefaultNodeAttributes extract_point_attributes(const PointT&);
+
     // default constructor: default initializes PointAttrT.
     DefaultNodeAttributes();
 
@@ -50,17 +56,16 @@ class DefaultNodeAttributes {
     // required functions for the attribute interface
     DefaultNodeAttributes<PointAttrT>& merge(const DefaultNodeAttributes<PointAttrT>&);
 
-    // required functions for the node attribute interface
-    template<typename PointT> void configure_for_leaf(const PointT&);
-
   private: 
     PointAttrT attributes_;
 };
 
 template<typename PointAttrT> 
   template<typename PointT> 
-inline void DefaultNodeAttributes<PointAttrT>::configure_for_leaf(const PointT &p) {
-  attributes_ = p.get_attributes();
+inline DefaultNodeAttributes<PointAttrT> 
+DefaultNodeAttributes<PointAttrT>::extract_point_attributes(
+    const PointT &p) {
+  return DefaultNodeAttributes(p.get_attributes());
 }
 
 template<typename PointAttrT> 

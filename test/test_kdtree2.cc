@@ -4,52 +4,67 @@
 #include <utility>
 #include <random>
 
-#include <Rectangle.h>
-#include <Point.h>
 #include <Kdtree.h>
 
 using namespace std;
-using bbrcit::Rectangle;
-using bbrcit::Point;
 using bbrcit::Kdtree;
 
+using Kdtree1d = Kdtree<1>;
+using Point1d = typename Kdtree1d::PointType;
+using Rectangle1d = typename Kdtree1d::RectangleType;
+
 int main() {
+  cout << endl;
 
-  using Kdtree2d = Kdtree<2>;
-  using PointType = typename Kdtree2d::PointType;
-  using RectangleType = typename Kdtree2d::RectangleType;
+  // test: kdtree construction using different leaf_nmax
+  cout << "+ kdtree construction with different leaf_max. " << endl;
+  cout << endl;
+  vector<Point1d> points1d;
+  for (int i = 0; i < 8; ++i) { points1d.push_back({{static_cast<double>(i)}}); }
+  Kdtree1d tr1(points1d, 2);
+  vector<pair<size_t, size_t>> leaves;
+  tr1.report_leaves(leaves);
+  cout << "  output:  ";
+  for (const auto &l : leaves) { cout << "[" << l.first << ", " << l.second << "] "; }
+  cout << endl;
+  cout << "  compare: [0, 1] [2, 3] [4, 5] [6, 7]" << endl;
+  cout << endl;
 
-  random_device rd;
-  default_random_engine e(rd());
-  normal_distribution<> g(0.0, 1.0);
-  uniform_real_distribution<> u(0, 1);
+  Kdtree1d tr2(points1d, 1);
+  leaves.clear(); tr2.report_leaves(leaves);
+  cout << "  output:  ";
+  for (const auto &l : leaves) { cout << "[" << l.first << ", " << l.second << "] "; }
+  cout << endl;
+  cout << "  compare: [0, 0] [1, 1] [2, 2] [3, 3] [4, 4] [5, 5] [6, 6] [7, 7]" << endl;
+  cout << endl;
 
-  vector<PointType> data;
-  for (int i = 0; i < 10000; ++i) {
-    double x = g(e), y = g(e);
-    if (u(e) < 0.2) {
-      x *= 0.5; y *= 0.3;
-      x += 2.0; y += 2.0;
-    } else {
-      x *= 2.0; y *= 1.0;
-      x = 0.8660254 * x + 0.5 * y;
-      y = -0.5 * x + 0.8660254 * y;
-    }
-    data.push_back({{x, y}, 1});
+  Kdtree1d tr3(points1d, 5);
+  leaves.clear(); tr3.report_leaves(leaves);
+  cout << "  output:  ";
+  for (const auto &l : leaves) { cout << "[" << l.first << ", " << l.second << "] "; }
+  cout << endl;
+  cout << "  compare: [0, 3] [4, 7]" << endl;
+  
+  cout << endl;
+
+  // test: duplicate keys
+  cout << "+ kdtree with duplicate keys. " << endl;
+  cout << endl;
+
+  cout << "  output:";
+  points1d.clear();
+  for (int i = 0; i < 4; ++i) { points1d.push_back({{static_cast<double>(i)}}); }
+  for (int i = 0; i < 4; ++i) { points1d.push_back({{static_cast<double>(i)}}); }
+  Kdtree1d tr4(points1d, 2);
+  for (const auto &p : tr4.points()) { 
+    cout << "  " << p;
   }
+  cout << endl;
 
-  ofstream fout1("kdtree2_leaves.out");
-  ofstream fout2("kdtree2_results.out");
-  ofstream fout3("kdtree2_query_rectangle.out");
-  ofstream fout4("kdtree2_partitions.out");
+  cout << "  compare: { (0), (2) }  { (1), (2) }  { (2), (2) }  { (3), (2) }";
+  cout << endl;
 
-  Kdtree2d tree(data);
-  tree.report_leaves(fout1);
-  RectangleType query({0.5,0.5}, {1.2,1.2});
-  tree.range_search(query, fout2);
-  fout3 << query << endl;
-
-  tree.report_partitions(9, fout4);
+  cout << endl;
 
 
   return 0;
