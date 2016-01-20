@@ -128,7 +128,7 @@ class Kdtree {
     // root node of the Kdtree. 
     Node *root_;
 
-    // root node of the Kdtree. 
+    // maximum number of points per leaf. 
     int leaf_nmax_;
 
     // helper functions
