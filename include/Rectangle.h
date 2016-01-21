@@ -37,6 +37,7 @@ class Rectangle {
 
     using FloatType = T;
     using EdgeType = Interval<T>;
+    static constexpr int dim() { return D; }
 
     friend void swap<>(Rectangle<D,T>&, Rectangle<D,T>&);
 

@@ -40,7 +40,7 @@ class Kdtree {
     using RectangleType = Rectangle<D,FloatType>;
     using NodeAttributesType = NAttrT;
 
-    static int dim() { return D; }
+    static constexpr int dim() { return D; }
 
   private:
     using IndexType = typename std::vector<PointType>::size_type;
