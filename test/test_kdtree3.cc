@@ -16,7 +16,7 @@ using bbrcit::Kdtree;
 int main() {
 
   using Kdtree2d = Kdtree<2>;
-  using PointType = typename Kdtree2d::PointType;
+  using DataPointType = typename Kdtree2d::DataPointType;
   using RectangleType = typename Kdtree2d::RectangleType;
 
   random_device rd;
@@ -24,7 +24,7 @@ int main() {
   normal_distribution<> g(0.0, 1.0);
   uniform_real_distribution<> u(0, 1);
 
-  vector<PointType> data;
+  vector<DataPointType> data;
   for (int i = 0; i < 10000; ++i) {
     double x = g(e), y = g(e);
     if (u(e) < 0.2) {

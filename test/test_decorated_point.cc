@@ -88,12 +88,12 @@ int main() {
   // test: operator[]
   p0 = {{ 1.0, 2.0}, 0.3};
   cout << "+ operator[] (1): "; 
-  cout << "{ (" << p0[0] << ", " << p0[1] << "), " << p0.get_attributes() << " } ";
+  cout << "{ (" << p0[0] << ", " << p0[1] << "), " << p0.attributes() << " } ";
   cout << "(c.f. " << "{ (1.0, 2.0), (0.3) })" << endl;
 
   const DecoratedPoint2d cp0({1.0, 2.0}, 0.3);
   cout << "+ operator[] (2): "; 
-  cout << "{ (" << p0[0] << ", " << p0[1] << "), " << p0.get_attributes() << " } ";
+  cout << "{ (" << p0[0] << ", " << p0[1] << "), " << p0.attributes() << " } ";
   cout << "(c.f. " << "{ (1.0, 2.0), (0.3) })" << endl;
 
   cout << endl;

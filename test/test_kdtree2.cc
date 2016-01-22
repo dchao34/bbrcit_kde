@@ -10,7 +10,7 @@ using namespace std;
 using bbrcit::Kdtree;
 
 using Kdtree1d = Kdtree<1>;
-using Point1d = typename Kdtree1d::PointType;
+using DataPoint1d = typename Kdtree1d::DataPointType;
 using Rectangle1d = typename Kdtree1d::RectangleType;
 
 int main() {
@@ -19,7 +19,7 @@ int main() {
   // test: kdtree construction using different leaf_nmax
   cout << "+ kdtree construction with different leaf_max. " << endl;
   cout << endl;
-  vector<Point1d> points1d;
+  vector<DataPoint1d> points1d;
   for (int i = 0; i < 8; ++i) { points1d.push_back({{static_cast<double>(i)}}); }
   Kdtree1d tr1(points1d, 2);
   vector<pair<size_t, size_t>> leaves;
