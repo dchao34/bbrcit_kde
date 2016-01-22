@@ -46,11 +46,20 @@ class PointWeights {
     const T& get_weight() const;
     void set_weight(const T&);
 
+    // required functions for the Attributes<> interface
     PointWeights<T>& merge(const PointWeights<T>&);
+    template<typename PointT> static PointWeights<T> extract_point_attributes(const PointT &p);
 
   private: 
     T weight_;
 };
+
+template<typename T> 
+  template<typename PointT> 
+inline PointWeights<T> 
+PointWeights<T>::extract_point_attributes(const PointT &p) {
+  return p.attributes();
+}
 
 template<typename T>
 PointWeights<T>& 
@@ -68,13 +77,13 @@ std::ostream& operator<<(std::ostream &os, const PointWeights<T> &att) {
 template<typename T>
 std::istream& operator>>(std::istream &is, PointWeights<T> &att) {
   is >> att.weight_;
-  if (!is) { att.weight_ = WeightTraits<T>::one(); }
+  if (!is) { att.weight_ = ConstantTraits<T>::one(); }
   return is;
 }
 
 template<typename T>
 PointWeights<T>::PointWeights() 
-  : weight_(WeightTraits<T>::one()) {
+  : weight_(ConstantTraits<T>::one()) {
 }
 
 template<typename T>

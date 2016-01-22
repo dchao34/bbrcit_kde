@@ -65,8 +65,8 @@ class DecoratedPoint {
     ~DecoratedPoint();
 
     // returns the attribute or point
-    const AttrT& get_attributes() const;
-    const PointType& get_point() const;
+    const AttrT& attributes() const;
+    const PointType& point() const;
 
     // set the attributes or point
     void set_attributes(const AttrT&);
@@ -128,12 +128,12 @@ std::istream& operator>>(
 
 template <int Dim, typename AttrT, typename FloatT> 
 inline const AttrT& 
-DecoratedPoint<Dim,AttrT,FloatT>::get_attributes() const 
+DecoratedPoint<Dim,AttrT,FloatT>::attributes() const 
 { return attr_; }
 
 template <int Dim, typename AttrT, typename FloatT> 
 inline const typename DecoratedPoint<Dim,AttrT,FloatT>::PointType& 
-DecoratedPoint<Dim,AttrT,FloatT>::get_point() const 
+DecoratedPoint<Dim,AttrT,FloatT>::point() const 
 { return point_; }
 
 template <int Dim, typename AttrT, typename FloatT> 

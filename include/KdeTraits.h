@@ -3,38 +3,38 @@
 
 namespace bbrcit {
 
-template<typename T> class WeightTraits;
+template<typename T> class ConstantTraits;
 
 template<> 
-class WeightTraits<double> {
+class ConstantTraits<double> {
   public: 
-    using WeightT = double;
-    static WeightT zero() { return 0; } 
-    static WeightT one() { return 1; } 
+    using Type = double;
+    static Type zero() { return 0; } 
+    static Type one() { return 1; } 
 };
 
 template<> 
-class WeightTraits<float> {
+class ConstantTraits<float> {
   public: 
-    using WeightT = float;
-    static WeightT zero() { return 0; } 
-    static WeightT one() { return 1; } 
+    using Type = float;
+    static Type zero() { return 0; } 
+    static Type one() { return 1; } 
 };
 
 template<> 
-class WeightTraits<int> {
+class ConstantTraits<int> {
   public: 
-    using WeightT = int;
-    static WeightT zero() { return 0; } 
-    static WeightT one() { return 1; } 
+    using Type = int;
+    static Type zero() { return 0; } 
+    static Type one() { return 1; } 
 };
 
 template<> 
-class WeightTraits<unsigned> {
+class ConstantTraits<unsigned> {
   public: 
-    using WeightT = unsigned;
-    static WeightT zero() { return 0; } 
-    static WeightT one() { return 1; } 
+    using Type = unsigned;
+    static Type zero() { return 0; } 
+    static Type one() { return 1; } 
 };
 
 }

@@ -59,8 +59,9 @@ class Rectangle {
     // resize this Rectangle<> to that defined by the Point<>'s in the argument.
     void resize(const Point<D,T>&, const Point<D,T>&);
 
-    // resize the interval of the d'th dimension to e.
-    Rectangle<D,T> lower_halfspace(size_t, const T&) const;
+    // return the lower/upper halfspace when splitting in the 
+    // dth dimension at value v
+    Rectangle<D,T> lower_halfspace(size_t d, const T &v) const;
     Rectangle<D,T> upper_halfspace(size_t, const T&) const;
 
     // returns true if the argument is fully contained in this Rectangle<>. 
