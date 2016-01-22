@@ -1,5 +1,5 @@
 # Unit tests
-TESTBINS := test_kdtree3 test_float_utils test_kdtree1 test_kdtree2 test_default_node_attributes #test_attributes test_decorated_point test_interval test_rectangle test_point  #test_fft generate_bimodal_gauss prodkde2d_scan prodkde2d_fftcv prodadakde2d_scan
+TESTBINS := test_kde1 test_epanechnikov test_kdtree3 test_float_utils test_kdtree1 test_kdtree2 test_point_weight_attributes test_decorated_point #test_interval test_rectangle test_point  #test_fft generate_bimodal_gauss prodkde2d_scan prodkde2d_fftcv prodadakde2d_scan
 
 # Remainder of this file controls the compilation process
 
