@@ -89,8 +89,11 @@ class Kdtree {
     void print_range_search(const RectangleType &query, std::ostream &os) const;
     void range_search(const RectangleType &query, std::vector<DataPointType>&) const;
 
-    // primarily for debugging. save ranges of point indices for every leaf. 
+    // primarily for debugging: 
+    // + report_leaves: save ranges of point indices for every leaf. 
+    // + root_attributes: returns the attributes object of the root node. 
     void report_leaves(std::vector<std::pair<IndexType,IndexType>>&) const;
+    const NAttrT& root_attributes() const { return root_->attr_; }
 
   protected:
 
