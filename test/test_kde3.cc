@@ -4,6 +4,7 @@
 #include <fstream>
 #include <cmath>
 #include <random>
+#include <chrono>
 
 #include <KernelDensity.h>
 #include <Point.h>
@@ -50,7 +51,6 @@ int main() {
   }
 
   KernelDensityType kde(data, 0.5, 64);
-  //kde.eval({0,0}, 0);
 
   cout << "generating grid/evaluating kde" << endl;
   double start_x = -2, end_x = 2;
@@ -64,6 +64,8 @@ int main() {
   for (int i = 0; i < y_steps; ++i) { fout2 << start_y + i * delta_y << " "; }
   fout2 << endl;
 
+  std::chrono::time_point<std::chrono::high_resolution_clock> start, end;
+  start = std::chrono::high_resolution_clock::now();
   for (int j = 0; j < y_steps; ++j) {
 
     double y_coord = start_y + j * delta_y;
@@ -77,6 +79,9 @@ int main() {
     }
     fout2 << endl;
   }
+  end = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> elapsed = end-start;
+  cout << "runtime: " << elapsed.count() << " seconds" << endl;
 
   return 0;
 }

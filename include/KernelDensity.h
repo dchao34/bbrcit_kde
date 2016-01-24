@@ -88,19 +88,29 @@ typename KernelDensity<D,KT,PT,NT,FT>::FloatType
 KernelDensity<D,KT,PT,NT,FT>::eval(
     const GeomPointType &p, FloatType rtol) const {
 
+  // initialize upper bound to be as if every point contributes K(0)
+  // and lower bound to be as if every point contributes 0. 
   FloatType upper_bound = (this->root_)->attr_.get_weight(); 
   FloatType lower_bound = ConstantTraits<FloatType>::zero();
 
+  // upper_bound and lower_bound are guaranteed to have the required tolerance
   this->single_tree(p, rtol, this->root_, this->bbox_, 0, upper_bound, lower_bound);
 
+  // normalize the result properly
   FloatType result = lower_bound + (upper_bound - lower_bound) / 2;
   result *= KernelType::normalization;
   result /= (std::pow(bandwidth_, D) * this->points_.size());
+
   return result;
 }
 
 
 
+// u and l are updated by amounts du and dl. it guarantees 
+// exactly one of the following:
+// 1. du and dl updates u and l such that the contribution of data points 
+//    under r to the density is evaluated exactly. 
+// 2. du and dl is such that |(u+du-l-dl)/(l+dl)| < rtol.
 template<int D, typename KT, typename PT, typename NT, typename FT>
 void KernelDensity<D,KT,PT,NT,FT>::single_tree(
     const GeomPointType &p, FloatType rtol, 
@@ -109,21 +119,29 @@ void KernelDensity<D,KT,PT,NT,FT>::single_tree(
 
   if (r == nullptr) { return; }
 
-  GeomPointType proxy; 
+  GeomPointType proxy;
 
-  proxy[0] = bounding_box.min_dist(p);
-  FloatType max_val = kernel_.unnormalized_eval(proxy/bandwidth_);
-  FloatType du = r->attr_.get_weight() * (max_val - 1);
+  // compute the upper and lower bound updates: these are 
+  // the maximum and minimum possible contributions to the density
+  // for any point in bounding_box
+  proxy[0] = bounding_box.min_dist(p) / bandwidth_;
+  FloatType max_val = kernel_.unnormalized_eval(proxy);
+  FloatType du = r->attr_.get_weight()*(max_val-1);
 
-  proxy[0] = bounding_box.max_dist(p);
-  FloatType min_val = kernel_.unnormalized_eval(proxy/bandwidth_);
-  FloatType dl = r->attr_.get_weight() * min_val;
+  proxy[0] = bounding_box.max_dist(p) / bandwidth_;
+  FloatType dl = r->attr_.get_weight()*kernel_.unnormalized_eval(proxy);
 
+  // the updates are sufficient and there's no need to explore 
+  // subtrees if
+  // 1. the maximum contribution is less than epsilon. 
+  // 2. the bound improvement already satisfies the required tolerance 
   if (max_val < std::numeric_limits<FloatType>::epsilon() ||
-      std::abs(u+du-l-dl)/std::abs(l+dl) < rtol) {
+      std::abs((u+du-l-dl)/(l+dl)) < rtol) {
     u += du; l += dl; return;
   }
 
+  // compute exact contributions if at a leaf, otherwise explore the
+  // subtree recursively
   if (r->is_leaf()) {
     for (auto i = r->start_idx_; i <= r->end_idx_; ++i) {
       FloatType delta = kernel_.unnormalized_eval(
@@ -135,17 +153,8 @@ void KernelDensity<D,KT,PT,NT,FT>::single_tree(
   } else {
     auto lower_bbox = bounding_box.lower_halfspace(depth, r->split_);
     auto upper_bbox = bounding_box.upper_halfspace(depth, r->split_);
-    proxy[0] = lower_bbox.min_dist(p);
-    FloatType lower_dist = kernel_.unnormalized_eval(proxy/bandwidth_);
-    proxy[0] = upper_bbox.min_dist(p);
-    FloatType upper_dist = kernel_.unnormalized_eval(proxy/bandwidth_);
-    if (lower_dist < upper_dist) {
-      this->single_tree(p, rtol, r->left_, lower_bbox, (depth+1)%D, u, l);
-      this->single_tree(p, rtol, r->right_, upper_bbox, (depth+1)%D, u, l);
-    } else {
-      this->single_tree(p, rtol, r->right_, upper_bbox, (depth+1)%D, u, l);
-      this->single_tree(p, rtol, r->left_, lower_bbox, (depth+1)%D, u, l);
-    }
+    this->single_tree(p, rtol, r->left_, lower_bbox, (depth+1)%D, u, l);
+    this->single_tree(p, rtol, r->right_, upper_bbox, (depth+1)%D, u, l);
   }
 
 }
