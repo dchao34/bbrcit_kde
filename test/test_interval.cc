@@ -101,5 +101,27 @@ int main() {
   cout << " (should be 5, 2, 2, 4)" << endl;
   cout << endl;
 
+  // test: min_dist(const Interval<T>&): 
+  cout << "+ min_dist(const Interval<T>&): ";
+  i1.resize(10.0, 20.0);
+  i2.resize(8, 9); cout << i1.min_dist(i2) << ", ";
+  i2.resize(8, 12); cout << i1.min_dist(i2) << ", ";
+  i2.resize(14, 16); cout << i1.min_dist(i2) << ", ";
+  i2.resize(17, 23); cout << i1.min_dist(i2) << ", ";
+  i2.resize(23, 30); cout << i1.min_dist(i2);
+  cout << " (c.f. 1, 0, 0, 0, 3)" << endl;
+  cout << endl;
+
+  // test: max_dist(const Interval<T>&): 
+  cout << "+ max_dist(const Interval<T>&): ";
+  i1.resize(10.0, 20.0);
+  i2.resize(8, 9); cout << i1.max_dist(i2) << ", ";
+  i2.resize(8, 12); cout << i1.max_dist(i2) << ", ";
+  i2.resize(14, 17); cout << i1.max_dist(i2) << ", ";
+  i2.resize(17, 24); cout << i1.max_dist(i2) << ", ";
+  i2.resize(23, 30); cout << i1.max_dist(i2);
+  cout << " (c.f. 12, 12, 7, 14, 20)" << endl;
+  cout << endl;
+
   return 0;
 }

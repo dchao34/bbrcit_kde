@@ -70,9 +70,13 @@ class Rectangle {
     bool contains(const Rectangle<D,T>&) const;
     template<typename PointT> bool contains(const PointT&) const;
 
-    // returns the (min, max) L2 distance from the Point<> to this Rectangle<>. 
-    T min_dist(const Point<D,T>&) const;
-    T max_dist(const Point<D,T>&) const;
+    // returns the min/max L2 distance from p to this Rectangle<>. 
+    T min_dist(const Point<D,T> &p) const;
+    T max_dist(const Point<D,T> &p) const;
+
+    // returns the min/max L2 distance from r to this Rectangle<>. 
+    T min_dist(const Rectangle<D,T> &r) const;
+    T max_dist(const Rectangle<D,T> &r) const;
 
   private:
 
@@ -171,6 +175,28 @@ T Rectangle<D,T>::max_dist(const Point<D,T> &p) const {
   T total = T(), curr = T();
   for (int i = 0; i < D; ++i) {
     curr = intervals_[i].max_dist(p[i]);
+    curr *= curr;
+    total += curr;
+  }
+  return std::sqrt(total);
+}
+
+template <int D, typename T>
+T Rectangle<D,T>::min_dist(const Rectangle<D,T> &r) const {
+  T total = T(), curr = T();
+  for (int i = 0; i < D; ++i) {
+    curr = intervals_[i].min_dist(r[i]);
+    curr *= curr;
+    total += curr;
+  }
+  return std::sqrt(total);
+}
+
+template <int D, typename T>
+T Rectangle<D,T>::max_dist(const Rectangle<D,T> &r) const {
+  T total = T(), curr = T();
+  for (int i = 0; i < D; ++i) {
+    curr = intervals_[i].max_dist(r[i]);
     curr *= curr;
     total += curr;
   }

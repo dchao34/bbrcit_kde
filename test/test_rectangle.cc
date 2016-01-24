@@ -109,20 +109,39 @@ int main() {
   cout << " (cf. 1, 1, 1, 0)" << endl;
   cout << endl;
 
-  // test: min_dist(), max_dist()
+  // test: min_dist(), max_dist() (Point<>)
   p0.reset({0,0});
   r1.resize({2,0}, {4,3}); 
-  cout << "+ min_dist(), max_dist() (1): " << r1.min_dist(p0) << ", " << r1.max_dist(p0) << " (c.f 2, 5)" << endl; 
+  cout << "+ min/max_dist (Point) (1): " << r1.min_dist(p0) << ", " << r1.max_dist(p0) << " (c.f 2, 5)" << endl; 
   r1.resize({1,-3}, {4,-1}); 
-  cout << "+ min_dist(), max_dist() (2): " << r1.min_dist(p0) << ", " << r1.max_dist(p0) << " (c.f 1.41421, 5)" << endl; 
+  cout << "+ min/max_dist() (Point) (2): " << r1.min_dist(p0) << ", " << r1.max_dist(p0) << " (c.f 1.41421, 5)" << endl; 
   r1.resize({-1,-1}, {1,1}); 
-  cout << "+ min_dist(), max_dist() (3): " << r1.min_dist(p0) << ", " << r1.max_dist(p0) << " (c.f 0, 1.41421)" << endl; 
+  cout << "+ min/max_dist() (Point) (3): " << r1.min_dist(p0) << ", " << r1.max_dist(p0) << " (c.f 0, 1.41421)" << endl; 
   r1.resize({0,0}, {1,1}); 
-  cout << "+ min_dist(), max_dist() (4): " << r1.min_dist(p0) << ", " << r1.max_dist(p0) << " (c.f 0, 1.41421)" << endl; 
+  cout << "+ min/max_dist() (Point) (4): " << r1.min_dist(p0) << ", " << r1.max_dist(p0) << " (c.f 0, 1.41421)" << endl; 
   r1.resize({-0.5,-0.5}, {1,1}); 
-  cout << "+ min_dist(), max_dist() (5): " << r1.min_dist(p0) << ", " << r1.max_dist(p0) << " (c.f 0, 1.41421)" << endl; 
+  cout << "+ min/max_dist() (Point) (5): " << r1.min_dist(p0) << ", " << r1.max_dist(p0) << " (c.f 0, 1.41421)" << endl; 
   cout << endl;
 
+  // test: min_dist(), max_dist() (Rectangle<>)
+  r1.resize({0,0}, {4,3}); 
+
+  r2.resize({-4,-3}, {-2,-1.5}); 
+  cout << "+ min/max_dist (Rectangle) (1): " << r1.min_dist(r2) << ", " << r1.max_dist(r2) << " (c.f 2.5, 10)" << endl; 
+
+  r2.resize({-4,-3}, {4,-1}); 
+  cout << "+ min/max_dist (Rectangle) (1): " << r1.min_dist(r2) << ", " << r1.max_dist(r2) << " (c.f 1, 10)" << endl; 
+
+  r2.resize({8,-6}, {12,-3}); 
+  cout << "+ min/max_dist (Rectangle) (1): " << r1.min_dist(r2) << ", " << r1.max_dist(r2) << " (c.f 5, 15)" << endl; 
+
+  r2.resize({5,0}, {6,3}); 
+  cout << "+ min/max_dist (Rectangle) (1): " << r1.min_dist(r2) << ", " << r1.max_dist(r2) << " (c.f 1, 6.7082)" << endl; 
+
+  r2.resize({3,0}, {6,3}); 
+  cout << "+ min/max_dist (Rectangle) (1): " << r1.min_dist(r2) << ", " << r1.max_dist(r2) << " (c.f 0, 6.7082)" << endl; 
+
+  cout << endl;
 
   return 0;
 }

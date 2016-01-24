@@ -51,9 +51,11 @@ class Interval {
     bool contains(const T&) const;
     bool contains(const Interval<T>&) const;
 
-    // returns min/max distance argument to any point in this Interval<>.
+    // returns min/max distance of the argument to this Interval<>.
     T min_dist(const T&) const;
     T max_dist(const T&) const;
+    T min_dist(const Interval<T>&) const;
+    T max_dist(const Interval<T>&) const;
 
   private:
     T lower_, upper_;
@@ -123,16 +125,23 @@ inline bool Interval<T>::contains(const Interval<T> &rhs) const {
 template <typename T> 
 T Interval<T>::min_dist(const T &p) const {
   if (this->contains(p)) { return 0; }
-  T lower_dist = std::abs(p - lower_);
-  T upper_dist = std::abs(p - upper_);
-  return lower_dist < upper_dist ? lower_dist : upper_dist;
+  return p < lower_ ? lower_ - p : p - upper_;
 }
 
 template <typename T> 
-T Interval<T>::max_dist(const T &p) const {
-  T lower_dist = std::abs(p - lower_);
-  T upper_dist = std::abs(p - upper_);
-  return lower_dist < upper_dist ? upper_dist : lower_dist;
+inline T Interval<T>::max_dist(const T &p) const {
+  return p < middle() ? upper_-p : p-lower_;
+}
+
+template <typename T> 
+T Interval<T>::min_dist(const Interval<T> &rhs) const {
+  if (intersect(*this, rhs)) { return 0; }
+  return upper_ < rhs.lower_ ? rhs.lower_ - upper_ : lower_ - rhs.upper_;
+}
+
+template <typename T> 
+inline T Interval<T>::max_dist(const Interval<T> &rhs) const {
+  return std::max(rhs.upper_-lower_, upper_-rhs.lower_);
 }
 
 }
