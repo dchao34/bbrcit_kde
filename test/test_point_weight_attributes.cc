@@ -27,7 +27,7 @@ int main() {
 
   // test: set/get_point_attribute
   d0.set_weight(3.2);
-  cout << "+ (set|get)_(point|weight) (1): " << d0.get_weight() << " (c.f. (3.2) ) " << endl;
+  cout << "+ (set|get)_(point|weight) (1): " << d0.weight() << " (c.f. (3.2) ) " << endl;
   cout << endl;
 
   // test: copy/move construct

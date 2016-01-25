@@ -90,7 +90,7 @@ KernelDensity<D,KT,PT,NT,FT>::eval(
 
   // initialize upper bound to be as if every point contributes K(0)
   // and lower bound to be as if every point contributes 0. 
-  FloatType upper_bound = (this->root_)->attr_.get_weight(); 
+  FloatType upper_bound = (this->root_)->attr_.weight(); 
   FloatType lower_bound = ConstantTraits<FloatType>::zero();
 
   // upper_bound and lower_bound are guaranteed to have the required tolerance
@@ -103,7 +103,6 @@ KernelDensity<D,KT,PT,NT,FT>::eval(
 
   return result;
 }
-
 
 
 // u and l are updated by amounts du and dl. it guarantees 
@@ -126,10 +125,10 @@ void KernelDensity<D,KT,PT,NT,FT>::single_tree(
   // for any point in bounding_box
   proxy[0] = bounding_box.min_dist(p) / bandwidth_;
   FloatType max_val = kernel_.unnormalized_eval(proxy);
-  FloatType du = r->attr_.get_weight()*(max_val-1);
+  FloatType du = r->attr_.weight()*(max_val-1);
 
   proxy[0] = bounding_box.max_dist(p) / bandwidth_;
-  FloatType dl = r->attr_.get_weight()*kernel_.unnormalized_eval(proxy);
+  FloatType dl = r->attr_.weight()*kernel_.unnormalized_eval(proxy);
 
   // the updates are sufficient and there's no need to explore 
   // subtrees if
@@ -149,7 +148,7 @@ void KernelDensity<D,KT,PT,NT,FT>::single_tree(
       );
       u+=delta; l+= delta;
     }
-    u -= r->attr_.get_weight();
+    u -= r->attr_.weight();
   } else {
     auto lower_bbox = bounding_box.lower_halfspace(depth, r->split_);
     auto upper_bbox = bounding_box.upper_halfspace(depth, r->split_);

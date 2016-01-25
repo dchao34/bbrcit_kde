@@ -68,7 +68,7 @@ int main() {
 
   // test: root attributes
   points1d.clear();
-  for (int i = 0; i < 4; ++i) { points1d.push_back({{1.0*i}, 0.1*i}); }
+  for (int i = 0; i < 4; ++i) { points1d.push_back({{1.0*i}, {0.1*i}}); }
   Kde1d tr5(points1d, 1);
   cout << "+ kde root attributes. " << endl;
   cout << endl;

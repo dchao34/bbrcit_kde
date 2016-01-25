@@ -71,7 +71,8 @@ int main() {
     double y_coord = start_y + j * delta_y;
     double x_coord = start_x;
 
-    fout2 << kde.naive_eval({x_coord, y_coord}); 
+    //fout2 << kde.naive_eval({x_coord, y_coord}); 
+    fout2 << kde.eval({x_coord, y_coord}, 1e-12); 
     for (int i = 1; i < x_steps; ++i) {
       x_coord = start_x + i * delta_x;
       //fout2 << " " << kde.naive_eval({x_coord, y_coord}); 

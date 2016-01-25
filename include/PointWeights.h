@@ -43,7 +43,7 @@ class PointWeights {
     PointWeights<T>& operator=(PointWeights<T>&&) = default;
     ~PointWeights();
 
-    const T& get_weight() const;
+    const T& weight() const;
     void set_weight(const T&);
 
     // required functions for the Attributes<> interface
@@ -70,7 +70,7 @@ PointWeights<T>::merge(const PointWeights<T> &rhs) {
 
 template<typename T> 
 std::ostream& operator<<(std::ostream &os, const PointWeights<T> &att) {
-  os << "(" << att.get_weight() << ")";
+  os << "(" << att.weight() << ")";
   return os;
 }
 
@@ -95,7 +95,7 @@ PointWeights<T>::PointWeights(const T &w)
 }
 
 template<typename T>
-inline const T& PointWeights<T>::get_weight() const {
+inline const T& PointWeights<T>::weight() const {
   return weight_;
 }
 
