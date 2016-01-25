@@ -44,13 +44,13 @@ int main() {
   vector<DataPoint2d> points1 = generate_grid(0, 1, 0, 1, 2, 2);
   Kde2d tr1(points1, 2);
   cout << "+ vector constructor (1): " << endl;
-  cout << "  output: { ";for (const auto &p : tr1.points()) { cout << p << " "; } cout << "}, " << tr1.bandwidth() << endl;
+  cout << "  output: { ";for (const auto &p : tr1.data_points()) { cout << p << " "; } cout << "}, " << tr1.bandwidth() << endl;
   cout << "  compare:{ { (0, 0), (1) } { (0, 0.5), (1) } { (0.5, 0), (1) } { (0.5, 0.5), (1) } }, 2" << endl;
 
   vector<DataPoint2d> points2 = generate_grid(0, -1, 0, -1, 2, 2);
   Kde2d tr2(std::move(points2), 2);
   cout << "+ vector constructor (2): " << endl;
-  cout << "  output: { ";for (const auto &p : tr2.points()) { cout << p << " "; } cout << "}, " << tr2.bandwidth() << endl;
+  cout << "  output: { ";for (const auto &p : tr2.data_points()) { cout << p << " "; } cout << "}, " << tr2.bandwidth() << endl;
   cout << "  compare:{ { (-0.5, -0.5), (1) } { (-0.5, 0), (1) } { (0, -0.5), (1) } { (0, 0), (1) } }, 2" << endl;
 
   cout << endl;
@@ -60,30 +60,30 @@ int main() {
   Kde2d tr3(*p_tr);
   delete p_tr;
   cout << "+ copy constructor (1): " << endl;
-  cout << "  output: { ";for (const auto &p : tr3.points()) { cout << p << " "; } cout << "}, " << tr3.bandwidth() << endl;
+  cout << "  output: { ";for (const auto &p : tr3.data_points()) { cout << p << " "; } cout << "}, " << tr3.bandwidth() << endl;
   cout << "  compare:{ { (0, -0.5), (1) } { (0, 0), (1) } { (0.5, -0.5), (1) } { (0.5, 0), (1) } }, 1" << endl;
 
   Kde2d temp_tr(generate_grid(0, -1, 0, 1, 2, 2), 2);
   Kde2d tr4(std::move(temp_tr));
   cout << "+ move constructor (1): " << endl;
-  cout << "  output: { ";for (const auto &p : tr4.points()) { cout << p << " "; } cout << "}, " << temp_tr.empty() << endl;
+  cout << "  output: { ";for (const auto &p : tr4.data_points()) { cout << p << " "; } cout << "}, " << temp_tr.empty() << endl;
   cout << "  compare:{ { (-0.5, 0), (1) } { (-0.5, 0.5), (1) } { (0, 0), (1) } { (0, 0.5), (1) } }, 1" << endl;
   cout << endl;
 
   // test: swap
   cout << "+ swap (1): " << endl;
   swap(tr3, tr4); 
-  cout << "  output: { ";for (const auto &p : tr3.points()) { cout << p << " "; } cout << "}, " << tr3.bandwidth() << endl;
+  cout << "  output: { ";for (const auto &p : tr3.data_points()) { cout << p << " "; } cout << "}, " << tr3.bandwidth() << endl;
   cout << "  compare:{ { (-0.5, 0), (1) } { (-0.5, 0.5), (1) } { (0, 0), (1) } { (0, 0.5), (1) } }, 2" << endl;
 
-  cout << "  output: { ";for (const auto &p : tr4.points()) { cout << p << " "; } cout << "}, " << tr4.bandwidth() << endl;
+  cout << "  output: { ";for (const auto &p : tr4.data_points()) { cout << p << " "; } cout << "}, " << tr4.bandwidth() << endl;
   cout << "  compare:{ { (0, -0.5), (1) } { (0, 0), (1) } { (0.5, -0.5), (1) } { (0.5, 0), (1) } }, 1" << endl;
 
   swap(tr3, tr4); 
-  cout << "  output: { ";for (const auto &p : tr3.points()) { cout << p << " "; } cout << "}, " << tr3.bandwidth() << endl;
+  cout << "  output: { ";for (const auto &p : tr3.data_points()) { cout << p << " "; } cout << "}, " << tr3.bandwidth() << endl;
   cout << "  compare:{ { (0, -0.5), (1) } { (0, 0), (1) } { (0.5, -0.5), (1) } { (0.5, 0), (1) } }, 1" << endl;
 
-  cout << "  output: { ";for (const auto &p : tr4.points()) { cout << p << " "; } cout << "}, " << tr4.bandwidth() << endl;
+  cout << "  output: { ";for (const auto &p : tr4.data_points()) { cout << p << " "; } cout << "}, " << tr4.bandwidth() << endl;
   cout << "  compare:{ { (-0.5, 0), (1) } { (-0.5, 0.5), (1) } { (0, 0), (1) } { (0, 0.5), (1) } }, 2" << endl;
 
   cout << endl;
@@ -93,13 +93,13 @@ int main() {
   temp_tr = *p_tr;
   delete p_tr;
   cout << "+ copy assignment (1): " << endl;
-  cout << "  output: { ";for (const auto &p : temp_tr.points()) { cout << p << " "; } cout << "}, " << temp_tr.bandwidth() << endl;
+  cout << "  output: { ";for (const auto &p : temp_tr.data_points()) { cout << p << " "; } cout << "}, " << temp_tr.bandwidth() << endl;
   cout << "  compare:{ { (0, -0.5), (1) } { (0, 0), (1) } { (0.5, -0.5), (1) } { (0.5, 0), (1) } }, 2" << endl;
 
   Kde2d temp_tr2(generate_grid(0, -1, 0, 1, 2, 2), 2);
   temp_tr = std::move(temp_tr2);
   cout << "+ move assignment (1): " << endl;
-  cout << "  output: { ";for (const auto &p : temp_tr.points()) { cout << p << " "; } cout << "}, " << temp_tr2.empty() << endl;
+  cout << "  output: { ";for (const auto &p : temp_tr.data_points()) { cout << p << " "; } cout << "}, " << temp_tr2.empty() << endl;
   cout << "  compare:{ { (-0.5, 0), (1) } { (-0.5, 0.5), (1) } { (0, 0), (1) } { (0, 0.5), (1) } }, 1" << endl;
 
   cout << endl;
@@ -108,11 +108,9 @@ int main() {
   tr1 = Kde2d(generate_grid(0, 1, 0, 1, 100, 100), 3);
   cout << "+ empty() (1): " << tr1.empty() << " (c.f. 0)" << endl;
   cout << "+ size() (1): " << tr1.size() << " (c.f. 10000)" << endl;
-  cout << "+ bounding_box (1): " << tr1.bounding_box(); 
-  cout << " (c.f. { (0, 0.99), (0, 0.99) })" << endl;
-  cout << "+ leaf_nmax() (1): " << tr1.leaf_nmax() << " (c.f. 2)" << endl;
   cout << "+ bandwidth() (1): " << tr1.bandwidth() << " (c.f. 3)" << endl;
   cout << endl;
+
 
   return 0;
 }

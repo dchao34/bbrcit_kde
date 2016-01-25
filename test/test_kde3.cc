@@ -34,7 +34,13 @@ int main() {
   ofstream fout1("test_kde3_data.csv");
   ofstream fout2("test_kde3_kde.csv");
 
+  std::chrono::time_point<std::chrono::high_resolution_clock> start, end;
+  std::chrono::duration<double> elapsed;
+
+  // generating data
   cout << "generating data" << endl;
+  start = std::chrono::high_resolution_clock::now();
+
   default_random_engine e;
   normal_distribution<> gaussian(0.0, 1.0);
   uniform_real_distribution<> uniform(0.0, 1.0);
@@ -50,9 +56,26 @@ int main() {
     data.push_back({{x,y}});
   }
 
+  end = std::chrono::high_resolution_clock::now();
+  elapsed = end-start;
+  cout << "runtime: " << elapsed.count() << " seconds" << endl;
+  cout << endl;
+
+  // building tree
+  cout << "building kdtree" << endl;
+  start = std::chrono::high_resolution_clock::now();
+
   KernelDensityType kde(data, 0.5, 64);
 
-  cout << "generating grid/evaluating kde" << endl;
+  end = std::chrono::high_resolution_clock::now();
+  elapsed = end-start;
+  cout << "runtime: " << elapsed.count() << " seconds" << endl;
+  cout << endl;
+
+  // evaluate kde at grid points
+  cout << "evaluating kde at grid points" << endl;
+  start = std::chrono::high_resolution_clock::now();
+
   double start_x = -2, end_x = 2;
   double start_y = -2, end_y = 2;
   int x_steps = 100, y_steps = 100;
@@ -64,7 +87,6 @@ int main() {
   for (int i = 0; i < y_steps; ++i) { fout2 << start_y + i * delta_y << " "; }
   fout2 << endl;
 
-  std::chrono::time_point<std::chrono::high_resolution_clock> start, end;
   start = std::chrono::high_resolution_clock::now();
   for (int j = 0; j < y_steps; ++j) {
 
@@ -80,9 +102,11 @@ int main() {
     }
     fout2 << endl;
   }
+
   end = std::chrono::high_resolution_clock::now();
-  std::chrono::duration<double> elapsed = end-start;
+  elapsed = end-start;
   cout << "runtime: " << elapsed.count() << " seconds" << endl;
+  cout << endl;
 
   return 0;
 }

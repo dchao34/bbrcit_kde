@@ -11,7 +11,7 @@ using bbrcit::KernelDensity;
 
 using Kde1d = KernelDensity<1>;
 using DataPoint1d = typename Kde1d::DataPointType;
-using Rectangle1d = typename Kde1d::RectangleType;
+using Rectangle1d = typename Kde1d::GeomRectangleType;
 
 int main() {
   cout << endl;
@@ -56,7 +56,7 @@ int main() {
   for (int i = 0; i < 4; ++i) { points1d.push_back({{static_cast<double>(i)}}); }
   for (int i = 0; i < 4; ++i) { points1d.push_back({{static_cast<double>(i)}}); }
   Kde1d tr4(points1d, 1);
-  for (const auto &p : tr4.points()) { 
+  for (const auto &p : tr4.data_points()) { 
     cout << "  " << p;
   }
   cout << endl;
