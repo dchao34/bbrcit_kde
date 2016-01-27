@@ -5,6 +5,8 @@
 #include <cmath>
 #include <random>
 #include <chrono>
+#include <algorithm>
+#include <numeric>
 
 #include <KernelDensity.h>
 #include <Point.h>
@@ -38,14 +40,15 @@ int main() {
   std::chrono::duration<double> elapsed;
 
   // generating data
-  cout << "generating data" << endl;
+  int n_data = 1000000;
+  cout << "generating data: " << n_data << endl;
   start = std::chrono::high_resolution_clock::now();
 
   default_random_engine e;
   normal_distribution<> gaussian(0.0, 1.0);
   uniform_real_distribution<> uniform(0.0, 1.0);
   vector<DataPointType> data;
-  for (int i = 0; i < 10000; ++i) {
+  for (int i = 0; i < n_data; ++i) {
     double x = gaussian(e), y = gaussian(e), u = uniform(e);
     if (u < 0.5) {
       transform(x, y, 1, 1, 0.5, 0.3, 30);
@@ -65,12 +68,13 @@ int main() {
   cout << "building kdtree" << endl;
   start = std::chrono::high_resolution_clock::now();
 
-  KernelDensityType kde(data, 0.5, 64);
+  KernelDensityType kde(data, 0.24, 2);
 
   end = std::chrono::high_resolution_clock::now();
   elapsed = end-start;
   cout << "runtime: " << elapsed.count() << " seconds" << endl;
   cout << endl;
+  
 
   // evaluate kde at grid points
   cout << "evaluating kde at grid points" << endl;
@@ -78,7 +82,7 @@ int main() {
 
   double start_x = -2, end_x = 2;
   double start_y = -2, end_y = 2;
-  int x_steps = 100, y_steps = 100;
+  int x_steps = 10, y_steps = 10;
   double delta_x = (end_x - start_x) / x_steps;
   double delta_y = (end_y - start_y) / y_steps;
 
@@ -87,26 +91,37 @@ int main() {
   for (int i = 0; i < y_steps; ++i) { fout2 << start_y + i * delta_y << " "; }
   fout2 << endl;
 
+  vector<size_t> leaves_visited; leaves_visited.reserve(x_steps*y_steps);
   start = std::chrono::high_resolution_clock::now();
   for (int j = 0; j < y_steps; ++j) {
 
     double y_coord = start_y + j * delta_y;
     double x_coord = start_x;
 
-    //fout2 << kde.naive_eval({x_coord, y_coord}); 
-    fout2 << kde.eval({x_coord, y_coord}, 1e-12); 
-    for (int i = 1; i < x_steps; ++i) {
+    size_t cnt = 0;
+
+    leaves_visited.push_back(cnt);
+    for (int i = 0; i < x_steps; ++i) {
       x_coord = start_x + i * delta_x;
-      //fout2 << " " << kde.naive_eval({x_coord, y_coord}); 
-      fout2 << " " << kde.eval({x_coord, y_coord}, 1e-12); 
+      cnt = 0;
+      fout2 << kde.eval4({x_coord, y_coord}, 1e-6, cnt) << " "; 
+      leaves_visited.push_back(cnt);
     }
     fout2 << endl;
   }
 
   end = std::chrono::high_resolution_clock::now();
+  cout << "min/max leaves visited: "; 
+  auto it = std::min_element(leaves_visited.begin(), leaves_visited.end());
+  cout << (*it) << ", ";
+  it = std::max_element(leaves_visited.begin(), leaves_visited.end());
+  cout << (*it) << endl;
+  cout << "mean leaves visited: "; 
+  cout << accumulate(leaves_visited.begin(), leaves_visited.end(), 0.0) / leaves_visited.size() << endl;
   elapsed = end-start;
   cout << "runtime: " << elapsed.count() << " seconds" << endl;
   cout << endl;
+
 
   return 0;
 }
