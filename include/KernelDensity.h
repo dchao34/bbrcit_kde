@@ -82,6 +82,7 @@ class KernelDensity {
     FloatT eval4(const GeomPointType &p, FloatType rtol, size_t&) const;
 
     FloatT eval5(const GeomPointType &p, FloatType rtol, size_t&) const;
+    FloatT eval6(const GeomPointType &p, FloatType rtol, size_t&) const;
 
     void eval(std::vector<QueryPointType>&, FloatType rtol) const;
 
@@ -139,17 +140,87 @@ class KernelDensity {
     };
 
     struct JobNode {
-      DataNodeType *p_dnode;
-      GeomRectangleType rectangle;
-      size_t depth;
-      double du, dl;
-      double priority;
+      DataNodeType *dnode_;
+      double du_; 
+      double dl_;
+      GeomRectangleType bbox_;
+      size_t depth_;
+      double prio_;
       bool operator<(const JobNode &rhs) const {
-        return rhs.priority < this->priority;
+        return rhs.prio_ < this->prio_;
       }
     };
 
 };
+
+template<int D, typename KT, typename DT, typename QT, typename FT>
+typename KernelDensity<D,KT,DT,QT,FT>::FloatType
+KernelDensity<D,KT,DT,QT,FT>::eval6(
+    const GeomPointType &p, FloatType rtol, size_t &cnt) const {
+
+  cnt = 0;
+
+  FloatType upper = data_tree_.root_->attr_.weight();
+  FloatType lower = ConstantTraits<FloatType>::zero();
+  FloatType du = 1.0, dl = 0.0;
+
+  std::priority_queue<JobNode> q; 
+  FloatType max_prio = data_tree_.bbox_.max_dist(p);
+  q.push({data_tree_.root_, du, dl, data_tree_.bbox_, 0, max_prio});
+
+  GeomPointType proxy;
+  while (!q.empty()) {
+
+    JobNode curr = q.top(); q.pop();
+
+    FloatType weight = curr.dnode_->attr_.weight();
+
+    proxy[0] = curr.bbox_.min_dist(p) / bandwidth_;
+    FloatType du_new = kernel_.unnormalized_eval(proxy);
+
+    proxy[0] = curr.bbox_.max_dist(p) / bandwidth_;
+    FloatType dl_new = kernel_.unnormalized_eval(proxy);
+
+    upper += weight * (du_new - curr.du_);
+    lower += weight * (dl_new - curr.dl_);
+
+    // approximation pruning
+    if (approxmately_equal(du_new, dl_new, rtol)) { continue; }
+
+    // exclusion pruning
+    if (almost_equal(du_new, ConstantTraits<FloatType>::zero())) { continue; }
+
+    if (curr.dnode_->is_leaf()) {
+      for (auto i = curr.dnode_->start_idx_; i <= curr.dnode_->end_idx_; ++i) {
+        FloatType delta = kernel_.unnormalized_eval(
+            (p - data_tree_.points_[i].point()) / bandwidth_
+        );
+        upper += delta; lower += delta;
+
+        ++cnt;
+      }
+      upper -= weight * du_new; lower -= weight * dl_new;
+
+    } else {
+
+      GeomRectangleType lower_bbox = curr.bbox_.lower_halfspace(curr.depth_, curr.dnode_->split_);
+      FloatType lower_prio = lower_bbox.min_dist(p);
+      q.push({ curr.dnode_->left_, du_new, dl_new, lower_bbox, (curr.depth_+1)%D, lower_prio });
+
+      GeomRectangleType upper_bbox = curr.bbox_.upper_halfspace(curr.depth_, curr.dnode_->split_);
+      FloatType upper_prio = upper_bbox.min_dist(p);
+      q.push({ curr.dnode_->right_, du_new, dl_new, upper_bbox, (curr.depth_+1)%D, upper_prio });
+      
+    }
+
+  }
+
+  FloatType result = lower + (upper - lower) / 2;
+  result *= KernelType::normalization;
+  result /= (std::pow(bandwidth_, D) * data_tree_.size());
+  return result;
+
+}
 
 
 template<int D, typename KT, typename DT, typename QT, typename FT>
@@ -201,10 +272,10 @@ void KernelDensity<D,KT,DT,QT,FT>::single_tree_tighten(
   if (approxmately_equal(du_new, dl_new, rtol)) { return; }
 
   // exclusion pruning
-  if (du_new < std::numeric_limits<FloatType>::epsilon()) { return; }
+  if (almost_equal(du_new, ConstantTraits<FloatType>::zero())) { return; }
 
   if (r->is_leaf()) {
-    for (auto i = r->start_idx_; i < r->end_idx_; ++i) {
+    for (auto i = r->start_idx_; i <= r->end_idx_; ++i) {
       FloatType delta = kernel_.unnormalized_eval(
           (p - data_tree_.points_[i].point()) / bandwidth_
       );
