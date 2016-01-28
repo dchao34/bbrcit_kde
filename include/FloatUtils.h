@@ -1,3 +1,6 @@
+#ifndef BBRCITKDE_FLOATUTILS_H__
+#define BBRCITKDE_FLOATUTILS_H__
+
 #include <cmath>
 #include <limits>
 #include <type_traits>
@@ -38,6 +41,25 @@ almost_equal(T lhs, T rhs) {
   return diff <= std::numeric_limits<T>::epsilon() * std::max(std::abs(lhs), std::abs(rhs));
 }
 
+// compares whether two floating numbers are approximately equal up to
+// some relative error and absolute error. 
+// approximately_equal() returns true iff one of the following hold:
+// 1. their absolute error is at most abs_err.
+// 2. their relative error is at most rel_err. 
+template <typename T> 
+typename std::enable_if<!std::numeric_limits<T>::is_integer, bool>::type 
+approxmately_equal(T lhs, T rhs, 
+                   T rel_err, T abs_err = std::numeric_limits<T>::min()) {
+
+  T diff = std::abs(lhs-rhs);
+
+  // absolute error
+  if (diff <= abs_err) { return true; }
+
+  // relative error
+  return diff <= rel_err * std::max(std::abs(lhs), std::abs(rhs));
+}
+
 template<typename PointT> 
 bool ExactEqual(const PointT &lhs, const PointT &rhs) {
   int i = 0; while (i < lhs.dim() && lhs[i] == rhs[i]) { ++i; }
@@ -53,3 +75,5 @@ bool ExactLexicoLess(const PointT &lhs, const PointT &rhs) {
 }
 
 }
+
+#endif
