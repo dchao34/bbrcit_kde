@@ -75,16 +75,9 @@ class KernelDensity {
     FloatType bandwidth() const;
     void set_bandwidth(FloatType);
 
-
-    // evaluate the kde at point `p`. relative error is no more than `rtol`.
-    FloatT eval(const GeomPointType &p, FloatType rtol, size_t&) const;
-    FloatT eval3(const GeomPointType &p, FloatType rtol, size_t&) const;
-    FloatT eval4(const GeomPointType &p, FloatType rtol, size_t&) const;
-
-    FloatT eval5(const GeomPointType &p, FloatType rtol, size_t&) const;
-    FloatT eval6(const GeomPointType &p, FloatType rtol, size_t&) const;
-
-    void eval(std::vector<QueryPointType>&, FloatType rtol) const;
+    // evaluate the kde at point `p`. relative error is no more than `rel_err`,
+    // and the relative cutoff tolerance is `rel_tol`.
+    FloatT eval(const GeomPointType &p, FloatType rel_err, FloatType rel_tol, size_t&) const;
 
 
     // primarily for debugging:
@@ -97,8 +90,11 @@ class KernelDensity {
         std::vector<DataPointType> &r) const { data_tree_.range_search(q, r); }
     const DAttrT& root_attributes() const { return data_tree_.root_->attr_; }
 
-    // mainly for debugging: naive kde evaluation; slow... O(n^2). 
+    // mainly for debugging: 
+    // + naive kde evaluation; slow... O(n^2). 
+    // + eval_recursive: recursive implementation of eval.
     FloatT naive_eval(const GeomPointType&) const;
+    FloatT eval_recursive(const GeomPointType &p, FloatType rtol, size_t&) const;
 
   private:
 
@@ -111,34 +107,14 @@ class KernelDensity {
     // the kernel function of the estimator 
     DataTreeType data_tree_;
 
-    void single_tree(const GeomPointType&, FloatType, 
-                     DataNodeType*, const GeomRectangleType&, size_t, 
-                     FloatType&, FloatType&, size_t&) const;
 
-    void single_tree2(const GeomPointType&, FloatType, 
-                     DataNodeType*, const GeomRectangleType&, size_t, 
-                     FloatType&, FloatType&, const FloatType&, const FloatType&, size_t&) const;
-
-    void single_tree3(const GeomPointType&, FloatType, 
-                     DataNodeType*, const GeomRectangleType&, size_t, 
-                     FloatType&, FloatType&, size_t&) const;
-
+    // auxiliary function to eval_recursive()
     void single_tree_tighten(DataNodeType*, const GeomPointType&, 
                              FloatType&, FloatType&, FloatType, FloatType, 
                              FloatType, 
                              const GeomRectangleType&, size_t, size_t&) const;
 
-    struct QueueNode {
-      DataNodeType *p_dnode;
-      GeomRectangleType rectangle;
-      size_t depth;
-      double min_dist;
-      double max_dist;
-      bool operator<(const QueueNode &rhs) const {
-        return rhs.min_dist < this->min_dist;
-      }
-    };
-
+    // priority queue node used in eval(). 
     struct JobNode {
       DataNodeType *dnode_;
       double du_; 
@@ -155,41 +131,80 @@ class KernelDensity {
 
 template<int D, typename KT, typename DT, typename QT, typename FT>
 typename KernelDensity<D,KT,DT,QT,FT>::FloatType
-KernelDensity<D,KT,DT,QT,FT>::eval6(
-    const GeomPointType &p, FloatType rtol, size_t &cnt) const {
+KernelDensity<D,KT,DT,QT,FT>::eval(const GeomPointType &p, 
+                                   FloatType rel_err, FloatType rel_tol, size_t &cnt) const {
 
   cnt = 0;
 
+  // upper and lower bounds on the value of f(p) (f is the kde)
+  // du and dl are the contribution of every data point to the bounds. 
   FloatType upper = data_tree_.root_->attr_.weight();
   FloatType lower = ConstantTraits<FloatType>::zero();
   FloatType du = 1.0, dl = 0.0;
 
+  // absolute error we are willing to make. the rationale follows the 'infernal zero' section of
+  // https://randomascii.wordpress.com/2012/02/25/comparing-floating-point-numbers-2012-edition/
+  FloatType abs_err = upper * rel_err;
+
+
+  // priority queue for the data_tree nodes to processes. those that are closer 
+  // to the query point p are higher prioriy. 
+  // there are two types of nodes in the queue:
+  // 1. points in the node still need their contributions to the bounds tightened. 
+  // 2. points in the node that are done tightening according to rel_tol. 
   std::priority_queue<JobNode> q; 
-  FloatType max_prio = data_tree_.bbox_.max_dist(p);
-  q.push({data_tree_.root_, du, dl, data_tree_.bbox_, 0, max_prio});
+  q.push({data_tree_.root_, du, dl, data_tree_.bbox_, 0, 0});
+
+  // if the priority of a node is < max_prio, it is of type 1. otherwise it is type 2.
+  FloatType max_prio = data_tree_.bbox_.max_dist(p) + 1;
 
   GeomPointType proxy;
   while (!q.empty()) {
 
+    // if the the upper and lower bounds are 'close enough', meaning either 
+    // in abs_err or in the relative error rel_err, then stop the loop. 
+    if (approxmately_equal(lower, upper, rel_err, abs_err)) { break; }
+
+    // process the highest prioiry node. two cases.
     JobNode curr = q.top(); q.pop();
-
     FloatType weight = curr.dnode_->attr_.weight();
+    FloatType du_new, dl_new;
 
-    proxy[0] = curr.bbox_.min_dist(p) / bandwidth_;
-    FloatType du_new = kernel_.unnormalized_eval(proxy);
 
-    proxy[0] = curr.bbox_.max_dist(p) / bandwidth_;
-    FloatType dl_new = kernel_.unnormalized_eval(proxy);
+    // case 1: type 1 node. proceed to tighten its contribution to the bounds 
+    if (curr.prio_ < max_prio) {
 
-    upper += weight * (du_new - curr.du_);
-    lower += weight * (dl_new - curr.dl_);
+      // compute the new contributions
+      proxy[0] = curr.bbox_.min_dist(p) / bandwidth_;
+      du_new = kernel_.unnormalized_eval(proxy);
 
-    // approximation pruning
-    if (approxmately_equal(du_new, dl_new, rtol)) { continue; }
+      proxy[0] = curr.bbox_.max_dist(p) / bandwidth_;
+      dl_new = kernel_.unnormalized_eval(proxy);
 
-    // exclusion pruning
-    if (almost_equal(du_new, ConstantTraits<FloatType>::zero())) { continue; }
+      // update the bounds, but remember to subtract away its previous contribution
+      upper += weight * (du_new - curr.du_);
+      lower += weight * (dl_new - curr.dl_);
 
+      // approximation and exclusion pruning: prune if the contributions is close enough. 
+      // add max_prio to the current priority to indicate that it is now a type 2 node. 
+      if (approxmately_equal(du_new, dl_new, rel_tol) || 
+          almost_equal(du_new, ConstantTraits<FloatType>::zero())) { 
+        q.push({ curr.dnode_, du_new, dl_new, curr.bbox_, curr.depth_, curr.prio_+max_prio });
+        continue; 
+      }
+
+    // case 2: the contributions staty the same. proceed below. 
+    } else {
+
+      du_new = curr.du_; dl_new = curr.dl_;
+
+    }
+
+    // any node that reaches this point requires further tightening of their 
+    // contributions to the upper and lower bounds. again, two cases. 
+
+    // case 1: for a leaf, we have no choice but to do the naive computation. 
+    // the contribution is now exact, and we do not insert it back into the queue. 
     if (curr.dnode_->is_leaf()) {
       for (auto i = curr.dnode_->start_idx_; i <= curr.dnode_->end_idx_; ++i) {
         FloatType delta = kernel_.unnormalized_eval(
@@ -201,6 +216,7 @@ KernelDensity<D,KT,DT,QT,FT>::eval6(
       }
       upper -= weight * du_new; lower -= weight * dl_new;
 
+    // case 2: recursively tighten the children. 
     } else {
 
       GeomRectangleType lower_bbox = curr.bbox_.lower_halfspace(curr.depth_, curr.dnode_->split_);
@@ -215,17 +231,20 @@ KernelDensity<D,KT,DT,QT,FT>::eval6(
 
   }
 
+  // return the mean of the upper and lower bounds 
   FloatType result = lower + (upper - lower) / 2;
   result *= KernelType::normalization;
   result /= (std::pow(bandwidth_, D) * data_tree_.size());
+
   return result;
 
 }
 
 
+// recursive implementation of eval(). mainly for cross checks. 
 template<int D, typename KT, typename DT, typename QT, typename FT>
 typename KernelDensity<D,KT,DT,QT,FT>::FloatType
-KernelDensity<D,KT,DT,QT,FT>::eval5(
+KernelDensity<D,KT,DT,QT,FT>::eval_recursive(
     const GeomPointType &p, FloatType rtol, size_t &cnt) const {
 
   cnt = 0;
@@ -303,220 +322,6 @@ void KernelDensity<D,KT,DT,QT,FT>::single_tree_tighten(
                         *further_r, (depth+1)%D, cnt);
 
   }
-}
-
-template<int D, typename KT, typename DT, typename QT, typename FT>
-typename KernelDensity<D,KT,DT,QT,FT>::FloatType
-KernelDensity<D,KT,DT,QT,FT>::eval4(
-    const GeomPointType &p, FloatType rtol, size_t &cnt) const {
-
-  cnt = 0;
-
-  FloatType u = (data_tree_.root_)->attr_.weight();
-  FloatType l = ConstantTraits<FloatType>::zero();
-
-  std::priority_queue<QueueNode> q; 
-  q.push({data_tree_.root_, data_tree_.bbox_, 0, 
-          data_tree_.bbox_.min_dist(p), 
-          data_tree_.bbox_.max_dist(p)});
-
-  while (!q.empty()) {
-
-    QueueNode curr = q.top(); q.pop();
-    FloatType weight = curr.p_dnode->attr_.weight();
-
-    GeomPointType proxy;
-
-    proxy[0] = curr.max_dist / bandwidth_;
-    FloatType dl = weight * kernel_.unnormalized_eval(proxy);
-
-    proxy[0] = curr.min_dist / bandwidth_;
-    FloatType max_val = kernel_.unnormalized_eval(proxy);
-    FloatType du_temp = weight*max_val;
-    FloatType du = du_temp - weight;
-
-    if (max_val < std::numeric_limits<FloatType>::epsilon() ||
-        std::abs((du_temp-dl)/(l+dl)) < rtol) {
-      u += du; l += dl; continue;
-    }
-
-    if (curr.p_dnode->is_leaf()) {
-      for (auto i = curr.p_dnode->start_idx_; i <= curr.p_dnode->end_idx_; ++i) {
-        FloatType delta = kernel_.unnormalized_eval(
-            (p - data_tree_.points_[i].point()) / bandwidth_
-        );
-        u+=delta; l+= delta;
-        ++cnt;
-      }
-      u -= weight;
-    } else {
-
-      auto lower_bbox = curr.rectangle.lower_halfspace(curr.depth, curr.p_dnode->split_);
-      q.push({ curr.p_dnode->left_, lower_bbox, (curr.depth+1)%D, 
-               lower_bbox.min_dist(p), lower_bbox.max_dist(p) });
-
-      auto upper_bbox = curr.rectangle.upper_halfspace(curr.depth, curr.p_dnode->split_);
-      q.push({ curr.p_dnode->right_, upper_bbox, (curr.depth+1)%D, 
-               upper_bbox.min_dist(p), upper_bbox.max_dist(p) });
-    }
-
-  }
-
-  FloatType result = l + (u - l) / 2;
-  result *= KernelType::normalization;
-  result /= (std::pow(bandwidth_, D) * data_tree_.size());
-  return result;
-
-}
-
-template<int D, typename KT, typename DT, typename QT, typename FT>
-typename KernelDensity<D,KT,DT,QT,FT>::FloatType
-KernelDensity<D,KT,DT,QT,FT>::eval3(
-    const GeomPointType &p, FloatType rtol, size_t &cnt) const {
-
-  FloatType upper_bound = (data_tree_.root_)->attr_.weight(); 
-  FloatType lower_bound = ConstantTraits<FloatType>::zero();
-
-  cnt = 0;
-
-  single_tree3(p, rtol, data_tree_.root_, data_tree_.bbox_, 0, upper_bound, lower_bound, cnt);
-
-  FloatType result = lower_bound + (upper_bound - lower_bound) / 2;
-  result *= KernelType::normalization;
-  result /= (std::pow(bandwidth_, D) * data_tree_.size());
-
-  return result;
-}
-
-
-// proof of concept for various pruning stages
-template<int D, typename KT, typename DT, typename QT, typename FT>
-void KernelDensity<D,KT,DT,QT,FT>::single_tree3(
-    const GeomPointType &p, FloatType rtol, 
-    DataNodeType *r, const GeomRectangleType &bounding_box, size_t depth,
-    FloatType &u, FloatType &l, size_t &cnt) const {
-
-  if (r == nullptr) { return; }
-
-  GeomPointType proxy;
-
-  proxy[0] = bounding_box.min_dist(p) / bandwidth_;
-  FloatType max_val = kernel_.unnormalized_eval(proxy);
-  FloatType du_temp = r->attr_.weight()*(max_val);
-  FloatType du = r->attr_.weight()*(max_val-1);
-
-  proxy[0] = bounding_box.max_dist(p) / bandwidth_;
-  FloatType dl = r->attr_.weight()*kernel_.unnormalized_eval(proxy);
-
-  // 1. constant mass pruning
-  if (max_val < std::numeric_limits<FloatType>::epsilon() ||
-      std::abs((du_temp-dl)/(l+dl)) < rtol) {
-    u += du; l += dl; return;
-  }
-
-  if (r->is_leaf()) {
-    for (auto i = r->start_idx_; i <= r->end_idx_; ++i) {
-      FloatType delta = kernel_.unnormalized_eval(
-          (p - data_tree_.points_[i].point()) / bandwidth_
-      );
-      u+=delta; l+= delta;
-      ++cnt;
-    }
-    u -= r->attr_.weight();
-  } else {
-    auto lower_bbox = bounding_box.lower_halfspace(depth, r->split_);
-    auto upper_bbox = bounding_box.upper_halfspace(depth, r->split_);
-
-    // 2. closer heuristic
-    DataNodeType *closer = r->left_; const GeomRectangleType *closer_r = &lower_bbox;
-    DataNodeType *further = r->right_; const GeomRectangleType *further_r = &upper_bbox;
-    if (lower_bbox.min_dist(p) > upper_bbox.min_dist(p)) {
-      closer = r->right_; closer_r = &upper_bbox;
-      further = r->left_; further_r = &lower_bbox;
-    }
-    single_tree3(p, rtol, closer, *closer_r, (depth+1)%D, u, l, cnt);
-    single_tree3(p, rtol, further, *further_r, (depth+1)%D, u, l, cnt);
-
-  }
-
-}
-
-template<int D, typename KT, typename DT, typename QT, typename FT>
-typename KernelDensity<D,KT,DT,QT,FT>::FloatType
-KernelDensity<D,KT,DT,QT,FT>::eval(
-    const GeomPointType &p, FloatType rtol, size_t &cnt) const {
-
-  // initialize upper bound to be as if every point contributes K(0)
-  // and lower bound to be as if every point contributes 0. 
-  FloatType upper_bound = (data_tree_.root_)->attr_.weight(); 
-  FloatType lower_bound = ConstantTraits<FloatType>::zero();
-
-  cnt = 0;
-
-  // upper_bound and lower_bound are guaranteed to have the required tolerance
-  single_tree(p, rtol, data_tree_.root_, data_tree_.bbox_, 0, upper_bound, lower_bound, cnt);
-
-  // normalize the result properly
-  FloatType result = lower_bound + (upper_bound - lower_bound) / 2;
-  result *= KernelType::normalization;
-  result /= (std::pow(bandwidth_, D) * data_tree_.size());
-
-  return result;
-}
-
-
-// u and l are updated by amounts du and dl. it guarantees 
-// exactly one of the following:
-// 1. du and dl updates u and l such that the contribution of data points 
-//    under r to the density is evaluated exactly. 
-// 2. du and dl is such that |(u+du-l-dl)/(l+dl)| < rtol.
-template<int D, typename KT, typename DT, typename QT, typename FT>
-void KernelDensity<D,KT,DT,QT,FT>::single_tree(
-    const GeomPointType &p, FloatType rtol, 
-    DataNodeType *r, const GeomRectangleType &bounding_box, size_t depth,
-    FloatType &u, FloatType &l, size_t &cnt) const {
-
-  if (r == nullptr) { return; }
-
-  GeomPointType proxy;
-
-  // compute the upper and lower bound updates: these are 
-  // the maximum and minimum possible contributions to the density
-  // for any point in bounding_box
-  proxy[0] = bounding_box.min_dist(p) / bandwidth_;
-  FloatType max_val = kernel_.unnormalized_eval(proxy);
-  FloatType du = r->attr_.weight()*(max_val-1);
-
-  proxy[0] = bounding_box.max_dist(p) / bandwidth_;
-  FloatType dl = r->attr_.weight()*kernel_.unnormalized_eval(proxy);
-
-  // the updates are sufficient and there's no need to explore 
-  // subtrees if
-  // 1. the maximum contribution is less than epsilon. 
-  // 2. the bound improvement already satisfies the required tolerance 
-  if (max_val < std::numeric_limits<FloatType>::epsilon() ||
-      std::abs((u+du-l-dl)/(l+dl)) < rtol) {
-    u += du; l += dl; return;
-  }
-
-  // compute exact contributions if at a leaf, otherwise explore the
-  // subtree recursively
-  if (r->is_leaf()) {
-    for (auto i = r->start_idx_; i <= r->end_idx_; ++i) {
-      FloatType delta = kernel_.unnormalized_eval(
-          (p - data_tree_.points_[i].point()) / bandwidth_
-      );
-      u+=delta; l+= delta;
-      ++cnt;
-    }
-    u -= r->attr_.weight();
-  } else {
-    auto lower_bbox = bounding_box.lower_halfspace(depth, r->split_);
-    auto upper_bbox = bounding_box.upper_halfspace(depth, r->split_);
-    single_tree(p, rtol, r->left_, lower_bbox, (depth+1)%D, u, l, cnt);
-    single_tree(p, rtol, r->right_, upper_bbox, (depth+1)%D, u, l, cnt);
-  }
-
 }
 
 template<int D, typename KT, typename DT, typename QT, typename FT>

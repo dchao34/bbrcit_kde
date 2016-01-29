@@ -68,7 +68,7 @@ int main() {
   cout << "building kdtree" << endl;
   start = std::chrono::high_resolution_clock::now();
 
-  KernelDensityType kde(data, 0.1, 2);
+  KernelDensityType kde(data, 0.2, 2);
 
   end = std::chrono::high_resolution_clock::now();
   elapsed = end-start;
@@ -104,7 +104,8 @@ int main() {
     for (int i = 0; i < x_steps; ++i) {
       x_coord = start_x + i * delta_x;
       cnt = 0;
-      fout2 << kde.eval5({x_coord, y_coord}, 1e-12, cnt) << " "; 
+      //fout2 << kde.eval_recursive({x_coord, y_coord}, 1e-12, cnt) << " "; 
+      fout2 << kde.eval({x_coord, y_coord}, 1e-3, 2e-1, cnt) << " "; 
       leaves_visited.push_back(cnt);
     }
     fout2 << endl;
