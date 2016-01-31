@@ -3,20 +3,20 @@
 #include <vector>
 #include <exception>
 
-#include <QueryTreeAttributes.h>
+#include <KdeAttributes.h>
 
 using namespace std;
-using bbrcit::QueryTreeAttributes;
+using bbrcit::KdeAttributes;
 
 int main() {
 
   cout << endl;
 
-  using PointAttr = QueryTreeAttributes<double>;
+  using PointAttr = KdeAttributes<double>;
 
   // test: default constructor
   PointAttr d0;
-  cout << "+ default constructor (1): " << d0 << " (c.f. (1.0, 0, std::numeric_limits<double>::max()) ) " << endl;
+  cout << "+ default constructor (1): " << d0 << " (c.f. (1.0, 0, 0) " << endl;
   cout << endl;
 
   // test: one argument constructors
