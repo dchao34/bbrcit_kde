@@ -37,7 +37,7 @@ int main() {
 
   // test: default constructor
   Kde2d tr0;
-  cout << "+ Default constructor: " << tr0.empty() << ", " << tr0.bandwidth() << " (cf. 1, 1)" << endl;
+  cout << "+ Default constructor: " << tr0.bandwidth() << " (cf. 1, 1)" << endl;
   cout << endl;
 
   // test: vector constructor
@@ -54,6 +54,7 @@ int main() {
   cout << "  compare:{ { (-0.5, -0.5), (1) } { (-0.5, 0), (1) } { (0, -0.5), (1) } { (0, 0), (1) } }, 2" << endl;
 
   cout << endl;
+  /*
 
   // test: copy constructor
   Kde2d *p_tr = new Kde2d(generate_grid(0, 1, 0, -1, 2, 2), 1);
@@ -110,6 +111,7 @@ int main() {
   cout << "+ size() (1): " << tr1.size() << " (c.f. 10000)" << endl;
   cout << "+ bandwidth() (1): " << tr1.bandwidth() << " (c.f. 3)" << endl;
   cout << endl;
+  */
 
 
   return 0;

@@ -25,7 +25,7 @@ int main() {
   std::chrono::duration<double> elapsed;
 
   // generating data
-  int n_data = 1000;
+  int n_data = 10000;
   cout << "generating data: " << n_data << endl;
   start = std::chrono::high_resolution_clock::now();
 
@@ -57,13 +57,9 @@ int main() {
 
   // evaluate kde at grid points
   cout << "evaluating kde" << endl;
-  start = std::chrono::high_resolution_clock::now();
 
-  vector<size_t> leaves_visited; leaves_visited.reserve(data.size());
   start = std::chrono::high_resolution_clock::now();
-  for (int i = 0; i < data.size(); ++i) {
-    kde.eval(data[i].point(), 1e-6); 
-  }
+  kde.eval(data, 1e-12);
 
   end = std::chrono::high_resolution_clock::now();
   elapsed = end-start;
