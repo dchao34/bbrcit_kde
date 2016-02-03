@@ -104,11 +104,10 @@ int main() {
 
   cout << endl;
 
-  // test: empty(), size(), bounding_box():
+  // test: empty(), size():
   tr1 = generate_grid(0, 1, 0, 1, 100, 100);
   cout << "+ empty() (1): " << tr1.empty() << " (c.f. 0)" << endl;
   cout << "+ size() (1): " << tr1.size() << " (c.f. 10000)" << endl;
-  cout << "+ bounding_box (1): " << tr1.bounding_box(); 
   cout << " (c.f. { (0, 0.99), (0, 0.99) })" << endl;
   cout << "+ leaf_nmax() (1): " << tr1.leaf_nmax() << " (c.f. 2)" << endl;
   cout << endl;
