@@ -18,29 +18,29 @@
 
 namespace bbrcit {
 
-template<int D, typename KT, typename DT, typename FT> class KernelDensity;
+template<int D, typename KT, typename AT, typename FT> class KernelDensity;
 
-template<int D, typename KT, typename DT, typename FT>
-void swap(KernelDensity<D,KT,DT,FT>&, KernelDensity<D,KT,DT,FT>&);
+template<int D, typename KT, typename AT, typename FT>
+void swap(KernelDensity<D,KT,AT,FT>&, KernelDensity<D,KT,AT,FT>&);
 
 // KernelDensity<> implements a kernel density estimator in D dimensions 
 // using a D dimensional Kdtree. 
 template<int D, 
          typename KernelT=EpanechnikovKernel<D>,
-         typename DAttrT=KdeAttributes<double>,
+         typename AttrT=KdeAttributes<double>,
          typename FloatT=double>
 class KernelDensity {
 
   private:
 
-    using KernelDensityType = KernelDensity<D,KernelT,DAttrT,FloatT>;
+    using KernelDensityType = KernelDensity<D,KernelT,AttrT,FloatT>;
 
-    using DataTreeType = Kdtree<D,DAttrT,FloatT>; 
-    using DataNodeType = typename DataTreeType::Node;
+    using KdtreeType = Kdtree<D,AttrT,FloatT>; 
+    using TreeNodeType = typename KdtreeType::Node;
 
   public: 
-    using DataPointType = typename DataTreeType::DataPointType;
-    using GeomRectangleType = typename DataTreeType::RectangleType;
+    using DataPointType = typename KdtreeType::DataPointType;
+    using GeomRectangleType = typename KdtreeType::RectangleType;
     using GeomPointType = typename DataPointType::PointType;
     using KernelType = KernelT;
     using FloatType = FloatT;
@@ -83,21 +83,21 @@ class KernelDensity {
     KernelType kernel_;
 
     // the kernel function of the estimator 
-    DataTreeType data_tree_;
+    KdtreeType data_tree_;
 
 
     // single tree traversal for the single point eval()
-    void single_tree(DataNodeType*, const GeomPointType&, 
+    void single_tree(TreeNodeType*, const GeomPointType&, 
                      FloatType&, FloatType&, FloatType, FloatType, 
                      FloatType, 
                      const GeomRectangleType&, size_t) const;
 
     // dual tree traversal for the multi point eval()
-    void dual_tree(DataNodeType*, DataNodeType*, 
+    void dual_tree(TreeNodeType*, TreeNodeType*, 
                     FloatType, FloatType, FloatType, 
                     const GeomRectangleType&, size_t, 
                     const GeomRectangleType&, size_t, 
-                    DataTreeType&) const;
+                    KdtreeType&) const;
 
   // Mainly for debugging: 
   // ---------------------
@@ -114,7 +114,7 @@ class KernelDensity {
 
     // priority queue node used in eval_iterative(). 
     struct JobNode {
-      DataNodeType *dnode_;
+      TreeNodeType *dnode_;
       double du_; 
       double dl_;
       GeomRectangleType bbox_;
@@ -127,17 +127,17 @@ class KernelDensity {
 
 };
 
-template<int D, typename KT, typename DT, typename FT>
-inline typename KernelDensity<D,KT,DT,FT>::FloatType
-KernelDensity<D,KT,DT,FT>::bandwidth() const { return bandwidth_; }
+template<int D, typename KT, typename AT, typename FT>
+inline typename KernelDensity<D,KT,AT,FT>::FloatType
+KernelDensity<D,KT,AT,FT>::bandwidth() const { return bandwidth_; }
 
-template<int D, typename KT, typename DT, typename FT>
-inline void KernelDensity<D,KT,DT,FT>::set_bandwidth(FloatType bw) { 
+template<int D, typename KT, typename AT, typename FT>
+inline void KernelDensity<D,KT,AT,FT>::set_bandwidth(FloatType bw) { 
   bandwidth_ = bw; 
 }
 
-template<int D, typename KT, typename DT, typename FT>
-void swap(KernelDensity<D,KT,DT,FT> &lhs, KernelDensity<D,KT,DT,FT> &rhs) {
+template<int D, typename KT, typename AT, typename FT>
+void swap(KernelDensity<D,KT,AT,FT> &lhs, KernelDensity<D,KT,AT,FT> &rhs) {
   using std::swap;
   swap(lhs.bandwidth_, rhs.bandwidth_);
   swap(lhs.kernel_, rhs.kernel_);
@@ -145,27 +145,27 @@ void swap(KernelDensity<D,KT,DT,FT> &lhs, KernelDensity<D,KT,DT,FT> &rhs) {
   return;
 }
 
-template<int D, typename KT, typename DT, typename FT>
-KernelDensity<D,KT,DT,FT>::KernelDensity() : bandwidth_(1), kernel_(), data_tree_() {}
+template<int D, typename KT, typename AT, typename FT>
+KernelDensity<D,KT,AT,FT>::KernelDensity() : bandwidth_(1), kernel_(), data_tree_() {}
 
-template<int D, typename KT, typename DT, typename FT>
-KernelDensity<D,KT,DT,FT>::KernelDensity(
+template<int D, typename KT, typename AT, typename FT>
+KernelDensity<D,KT,AT,FT>::KernelDensity(
     const std::vector<DataPointType> &pts, FloatType bw, int leaf_max) 
   : bandwidth_(bw), kernel_(), data_tree_(pts, leaf_max) {}
 
-template<int D, typename KT, typename DT, typename FT>
-KernelDensity<D,KT,DT,FT>::KernelDensity(
+template<int D, typename KT, typename AT, typename FT>
+KernelDensity<D,KT,AT,FT>::KernelDensity(
     std::vector<DataPointType> &&pts, FloatType bw, int leaf_max) 
   : bandwidth_(bw), kernel_(), data_tree_(std::move(pts), leaf_max) {}
 
-template<int D, typename KT, typename DT, typename FT>
-KernelDensity<D,KT,DT,FT>::~KernelDensity() {}
+template<int D, typename KT, typename AT, typename FT>
+KernelDensity<D,KT,AT,FT>::~KernelDensity() {}
 
 
 // single point kde evaluation
-template<int D, typename KT, typename DT, typename FT>
-typename KernelDensity<D,KT,DT,FT>::FloatType
-KernelDensity<D,KT,DT,FT>::eval(const GeomPointType &p, FloatType rel_err) const {
+template<int D, typename KT, typename AT, typename FT>
+typename KernelDensity<D,KT,AT,FT>::FloatType
+KernelDensity<D,KT,AT,FT>::eval(const GeomPointType &p, FloatType rel_err) const {
 
   FloatType upper = data_tree_.root_->attr_.weight();
   FloatType lower = ConstantTraits<FloatType>::zero();
@@ -182,9 +182,9 @@ KernelDensity<D,KT,DT,FT>::eval(const GeomPointType &p, FloatType rel_err) const
 
 }
 
-template<int D, typename KT, typename DT, typename FT>
-void KernelDensity<D,KT,DT,FT>::single_tree(
-    DataNodeType *r, const GeomPointType &p, 
+template<int D, typename KT, typename AT, typename FT>
+void KernelDensity<D,KT,AT,FT>::single_tree(
+    TreeNodeType *r, const GeomPointType &p, 
     FloatType &upper, FloatType &lower, FloatType du, FloatType dl, 
     FloatType rel_err, 
     const GeomRectangleType &bbox, size_t depth) const {
@@ -226,8 +226,8 @@ void KernelDensity<D,KT,DT,FT>::single_tree(
     auto upper_bbox = bbox.upper_halfspace(depth, r->split_);
 
     // closer heuristic
-    DataNodeType *closer = r->left_; const GeomRectangleType *closer_r = &lower_bbox;
-    DataNodeType *further = r->right_; const GeomRectangleType *further_r = &upper_bbox;
+    TreeNodeType *closer = r->left_; const GeomRectangleType *closer_r = &lower_bbox;
+    TreeNodeType *further = r->right_; const GeomRectangleType *further_r = &upper_bbox;
     if (lower_bbox.min_dist(p) > upper_bbox.min_dist(p)) {
       closer = r->right_; closer_r = &upper_bbox;
       further = r->left_; further_r = &lower_bbox;
@@ -244,8 +244,8 @@ void KernelDensity<D,KT,DT,FT>::single_tree(
 
 
 // multi-point kde evaluation
-template<int D, typename KT, typename DT, typename FT>
-void KernelDensity<D,KT,DT,FT>::eval(
+template<int D, typename KT, typename AT, typename FT>
+void KernelDensity<D,KT,AT,FT>::eval(
     std::vector<DataPointType> &queries, FloatType rel_err) const {
 
   for (auto &q : queries) { 
@@ -254,7 +254,7 @@ void KernelDensity<D,KT,DT,FT>::eval(
   }
   FloatType du = 1.0, dl = 0.0;
 
-  DataTreeType query_tree(std::move(queries));
+  KdtreeType query_tree(std::move(queries));
 
   dual_tree(query_tree.root_, data_tree_.root_, 
             du, dl, rel_err,
@@ -276,13 +276,13 @@ void KernelDensity<D,KT,DT,FT>::eval(
 }
 
 
-template<int D, typename KT, typename DT, typename FT>
-void KernelDensity<D,KT,DT,FT>::dual_tree(
-    DataNodeType *Q_node, DataNodeType *D_node, 
+template<int D, typename KT, typename AT, typename FT>
+void KernelDensity<D,KT,AT,FT>::dual_tree(
+    TreeNodeType *Q_node, TreeNodeType *D_node, 
     FloatType du, FloatType dl, FloatType rel_tol, 
     const GeomRectangleType &Q_box, size_t Q_depth, 
     const GeomRectangleType &D_box, size_t D_depth, 
-    DataTreeType &query_tree) const {
+    KdtreeType &query_tree) const {
 
   static GeomPointType proxy;
   FloatType D_weight = D_node->attr_.weight();
@@ -348,8 +348,8 @@ void KernelDensity<D,KT,DT,FT>::dual_tree(
       GeomRectangleType D_ubox = D_box.upper_halfspace(D_depth, D_node->split_);
 
       // closer heuristic
-      DataNodeType *closer = D_node->left_; const GeomRectangleType *closer_r = &D_lbox;
-      DataNodeType *further = D_node->right_; const GeomRectangleType *further_r = &D_ubox;
+      TreeNodeType *closer = D_node->left_; const GeomRectangleType *closer_r = &D_lbox;
+      TreeNodeType *further = D_node->right_; const GeomRectangleType *further_r = &D_ubox;
       if (D_lbox.min_dist(Q_box) > D_ubox.min_dist(Q_box)) {
         closer = D_node->right_; closer_r = &D_ubox;
         further = D_node->left_; further_r = &D_lbox;
@@ -398,8 +398,8 @@ void KernelDensity<D,KT,DT,FT>::dual_tree(
         GeomRectangleType D_ubox = D_box.upper_halfspace(D_depth, D_node->split_);
 
         // Q left
-        DataNodeType *closer = D_node->left_; const GeomRectangleType *closer_r = &D_lbox;
-        DataNodeType *further = D_node->right_; const GeomRectangleType *further_r = &D_ubox;
+        TreeNodeType *closer = D_node->left_; const GeomRectangleType *closer_r = &D_lbox;
+        TreeNodeType *further = D_node->right_; const GeomRectangleType *further_r = &D_ubox;
         if (D_lbox.min_dist(Q_lbox) > D_ubox.min_dist(Q_lbox)) {
           closer = D_node->right_; closer_r = &D_ubox;
           further = D_node->left_; further_r = &D_lbox;
@@ -452,9 +452,9 @@ void KernelDensity<D,KT,DT,FT>::dual_tree(
 // ---------------------------------------------------------------
 // ---------------------------------------------------------------
 
-template<int D, typename KT, typename DT, typename FT>
-typename KernelDensity<D,KT,DT,FT>::FloatType
-KernelDensity<D,KT,DT,FT>::naive_eval(const GeomPointType &p) const {
+template<int D, typename KT, typename AT, typename FT>
+typename KernelDensity<D,KT,AT,FT>::FloatType
+KernelDensity<D,KT,AT,FT>::naive_eval(const GeomPointType &p) const {
   FloatType total = ConstantTraits<FloatType>::zero();
   for (const auto &datum : data_tree_.points()) {
     total += kernel_.unnormalized_eval( (p - datum.point()) / bandwidth_  );
@@ -464,9 +464,9 @@ KernelDensity<D,KT,DT,FT>::naive_eval(const GeomPointType &p) const {
   return total;
 }
 
-template<int D, typename KT, typename DT, typename FT>
-typename KernelDensity<D,KT,DT,FT>::FloatType
-KernelDensity<D,KT,DT,FT>::eval_iterative(const GeomPointType &p, 
+template<int D, typename KT, typename AT, typename FT>
+typename KernelDensity<D,KT,AT,FT>::FloatType
+KernelDensity<D,KT,AT,FT>::eval_iterative(const GeomPointType &p, 
                                    FloatType rel_err, FloatType rel_tol) const {
 
   // upper and lower bounds on the value of f(p) (f is the kde)
