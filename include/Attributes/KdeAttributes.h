@@ -4,8 +4,9 @@
 #include <limits>
 #include <iostream>
 
-#include <AttributesInterface.h>
 #include <KdeTraits.h>
+
+#include "AttributesInterface.h"
 
 namespace bbrcit {
 

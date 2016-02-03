@@ -8,7 +8,7 @@
 #include <iostream>
 
 #include <Point.h>
-#include <PointWeights.h>
+#include <Attributes/PointWeights.h>
 
 namespace bbrcit {
 
@@ -66,7 +66,6 @@ class DecoratedPoint {
 
     // returns the attribute or point
     const AttrT& attributes() const;
-    AttrT& attributes();
     const PointType& point() const;
 
     // set the attributes or point
@@ -131,13 +130,6 @@ template <int Dim, typename AttrT, typename FloatT>
 inline const AttrT& 
 DecoratedPoint<Dim,AttrT,FloatT>::attributes() const 
 { return attr_; }
-
-template <int Dim, typename AttrT, typename FloatT> 
-inline AttrT& 
-DecoratedPoint<Dim,AttrT,FloatT>::attributes() { 
-  return const_cast<AttrT&>(
-      static_cast<const DecoratedPoint&>(*this).attributes()); 
-}
 
 template <int Dim, typename AttrT, typename FloatT> 
 inline const typename DecoratedPoint<Dim,AttrT,FloatT>::PointType& 

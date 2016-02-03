@@ -12,8 +12,7 @@
 #include <DecoratedPoint.h>
 #include <Rectangle.h>
 #include <FloatUtils.h>
-#include <PointWeights.h>
-#include <EmptyNodeAttributes.h>
+#include <Attributes/PointWeights.h>
 
 // API
 // ---
@@ -426,9 +425,9 @@ typename Kdtree<D,AttrT,FloatT>::Node* Kdtree<D,AttrT,FloatT>::construct_tree(in
   // create a leaf node when [i,j] contains no more than leaf_nmax_ indices. 
   if (j-i+1 <= leaf_nmax_) { 
 
-    p->attr_ = AttributesType::extract_point_attributes(points_[i]);
+    p->attr_ = points_[i].attributes();
     for (IndexType k = i+1; k <= j; ++k) {
-      p->attr_.merge(AttributesType::extract_point_attributes(points_[k]));
+      p->attr_.merge(points_[k].attributes());
     }
 
   // partition points_ by the lower median m. [i,m] go in the left subtree 

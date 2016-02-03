@@ -69,8 +69,10 @@ int main() {
   start = std::chrono::high_resolution_clock::now();
   for (auto &p : grid) { 
     auto result = kde.eval(p.point(), rel_err); 
-    p.attributes().set_lower(result);
-    p.attributes().set_upper(result);
+    auto attr = p.attributes();
+    attr.set_lower(result);
+    attr.set_upper(result);
+    p.set_attributes(attr);
   }
   end = std::chrono::high_resolution_clock::now();
   elapsed = end-start;

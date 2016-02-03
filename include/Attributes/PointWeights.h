@@ -3,8 +3,9 @@
 
 #include <iostream>
 
-#include <AttributesInterface.h>
 #include <KdeTraits.h>
+
+#include "AttributesInterface.h"
 
 namespace bbrcit {
 
@@ -48,18 +49,10 @@ class PointWeights {
 
     // required functions for the Attributes<> interface
     PointWeights<T>& merge(const PointWeights<T>&);
-    template<typename PointT> static PointWeights<T> extract_point_attributes(const PointT &p);
 
   private: 
     T weight_;
 };
-
-template<typename T> 
-  template<typename PointT> 
-inline PointWeights<T> 
-PointWeights<T>::extract_point_attributes(const PointT &p) {
-  return p.attributes();
-}
 
 template<typename T>
 PointWeights<T>& 
