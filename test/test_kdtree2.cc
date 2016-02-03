@@ -66,13 +66,6 @@ int main() {
 
   cout << endl;
 
-  // test: root attributes
-  cout << "+ kdtree root attributes. " << endl;
-  cout << "  output:  " << tr4.root_attributes() << endl;
-  cout << "  compare: ()" << endl;
-  cout << endl;
-
-
 
   return 0;
 }

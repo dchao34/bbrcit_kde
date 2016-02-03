@@ -35,7 +35,7 @@ class KernelDensity {
 
     using KernelDensityType = KernelDensity<D,KernelT,DAttrT,FloatT>;
 
-    using DataTreeType = Kdtree<D,DAttrT,DAttrT,FloatT>; 
+    using DataTreeType = Kdtree<D,DAttrT,FloatT>; 
     using DataNodeType = typename DataTreeType::Node;
 
   public: 
