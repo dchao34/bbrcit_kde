@@ -30,7 +30,7 @@ int main() {
   std::chrono::duration<double> elapsed;
 
   // generate data
-  int n_samples = 10000;
+  int n_samples = 100000;
   default_random_engine e;
   vector<DataPointType> data;
   cout << "generating data: " << n_samples << endl;
@@ -58,8 +58,9 @@ int main() {
   
 
   // evaluate kde at grid points
-  double rel_err = 1e-6;
-  cout << "evaluating kde. rel_err = " << rel_err << endl;
+  double rel_err = 1e-6; double abs_err = 1e-10;
+  cout << "evaluating kde. rel_err = " << rel_err; 
+  cout << ", abs_err = " << abs_err << endl;
 
   vector<DataPointType> grid;
   double start_x = -2, end_x = 2; int steps_x = 100;
@@ -68,7 +69,7 @@ int main() {
 
   start = std::chrono::high_resolution_clock::now();
   for (auto &p : grid) { 
-    auto result = kde.eval(p.point(), rel_err); 
+    auto result = kde.eval(p.point(), rel_err, abs_err); 
     auto attr = p.attributes();
     attr.set_lower(result);
     attr.set_upper(result);

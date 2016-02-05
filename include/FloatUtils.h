@@ -48,7 +48,7 @@ almost_equal(T lhs, T rhs) {
 // 2. their relative error is at most rel_err. 
 template <typename T> 
 typename std::enable_if<!std::numeric_limits<T>::is_integer, bool>::type 
-approxmately_equal(T lhs, T rhs, 
+approximately_equal(T lhs, T rhs, 
                    T rel_err, T abs_err = std::numeric_limits<T>::min()) {
 
   T diff = std::abs(lhs-rhs);
