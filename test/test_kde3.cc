@@ -30,7 +30,7 @@ int main() {
   std::chrono::duration<double> elapsed;
 
   // generate data
-  int n_samples = 100000;
+  int n_samples = 10000;
   default_random_engine e;
   vector<DataPointType> data;
   cout << "generating data: " << n_samples << endl;

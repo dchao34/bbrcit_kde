@@ -83,7 +83,9 @@ int main() {
   
 
   // evaluate kde at grid points
-  cout << "evaluating kde at grid points" << endl;
+  double rel_err = 1e-6; double abs_err = 1e-10;
+  cout << "evaluating kde. rel_err = " << rel_err; 
+  cout << ", abs_err = " << abs_err << endl;
 
   vector<DataPointType> queries;
 
@@ -108,7 +110,7 @@ int main() {
   for (int i = 0; i < y_steps; ++i) { fout2 << start_y + i * delta_y << " "; } fout2 << endl;
 
   start = std::chrono::high_resolution_clock::now();
-  kde.eval(queries, 1e-6);
+  kde.eval(queries, rel_err, abs_err);
   end = std::chrono::high_resolution_clock::now();
   elapsed = end-start;
   cout << "runtime: " << elapsed.count() << " seconds" << endl;

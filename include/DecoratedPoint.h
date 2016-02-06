@@ -66,7 +66,10 @@ class DecoratedPoint {
 
     // returns the attribute or point
     const AttrT& attributes() const;
+    AttrT& attributes();
+
     const PointType& point() const;
+    PointType& point();
 
     // set the attributes or point
     void set_attributes(const AttrT&);
@@ -132,9 +135,25 @@ DecoratedPoint<Dim,AttrT,FloatT>::attributes() const
 { return attr_; }
 
 template <int Dim, typename AttrT, typename FloatT> 
+inline AttrT& 
+DecoratedPoint<Dim,AttrT,FloatT>::attributes() {
+  return const_cast<AttrT&>(
+           static_cast<const DecoratedPoint<Dim,AttrT,FloatT>&>(*this).attributes()
+      );
+}
+
+template <int Dim, typename AttrT, typename FloatT> 
 inline const typename DecoratedPoint<Dim,AttrT,FloatT>::PointType& 
 DecoratedPoint<Dim,AttrT,FloatT>::point() const 
 { return point_; }
+
+template <int Dim, typename AttrT, typename FloatT> 
+inline typename DecoratedPoint<Dim,AttrT,FloatT>::PointType& 
+DecoratedPoint<Dim,AttrT,FloatT>::point() {
+  return const_cast<PointType&>(
+           static_cast<const DecoratedPoint<Dim,AttrT,FloatT>&>(*this).point()
+      );
+}
 
 template <int Dim, typename AttrT, typename FloatT> 
 inline void 
