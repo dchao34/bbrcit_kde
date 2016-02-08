@@ -185,7 +185,7 @@ KernelDensity<D,KT,AT,FT>::eval(const GeomPointType &p,
   // + upper is such that all points contribute maximally (1)
   // + lower is such that all points contribute minimally (0)
   // (max is 1.0 because we do not incorporate the normalization yet)
-  FloatType upper = data_tree_.root_->attr_.weight();
+  FloatType upper = data_tree_.root_->size();
   FloatType lower = ConstantTraits<FloatType>::zero();
   FloatType du = 1.0, dl = 0.0;
 
@@ -269,8 +269,8 @@ void KernelDensity<D,KT,AT,FT>::single_tree_base(
     );
     upper += delta; lower += delta;
   }
-  upper -= D_node->attr_.weight() * du; 
-  lower -= D_node->attr_.weight() * dl;
+  upper -= D_node->size() * du; 
+  lower -= D_node->size() * dl;
 
   // see comment in tighten_bounds. 
   if (lower > upper) { upper = lower; }
@@ -507,8 +507,8 @@ void KernelDensity<D,KT,AT,FT>::tighten_bounds(
     FloatType &upper, FloatType &lower) const {
 
   // add the new contributions, but remember to subtract away the old ones
-  lower += D_node->attr_.weight() * (dl_new - dl);
-  upper += D_node->attr_.weight() * (du_new - du); 
+  lower += D_node->size() * (dl_new - dl);
+  upper += D_node->size() * (du_new - du); 
 
   // the input invariants guarantee, mathematically, that lower <= upper.
   // however, roundoff error (approx. cancellation) can break this gurantee.

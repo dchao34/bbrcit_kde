@@ -120,6 +120,9 @@ class Kdtree {
       
       // returns true if this object is a leaf
       bool is_leaf() const { return left_ == nullptr && right_ == nullptr; }
+      
+      // returns the number of points under this node 
+      IndexType size() const { return end_idx_ - start_idx_ + 1;}
 
     };
 
@@ -254,7 +257,9 @@ template<int D, typename AttrT, typename FloatT>
 inline bool Kdtree<D,AttrT,FloatT>::empty() const { return root_ == nullptr; }
 
 template<int D, typename AttrT, typename FloatT>
-inline typename Kdtree<D,AttrT,FloatT>::IndexType Kdtree<D,AttrT,FloatT>::size() const { return points_.size(); }
+inline typename Kdtree<D,AttrT,FloatT>::IndexType Kdtree<D,AttrT,FloatT>::size() const { 
+  return root_->size(); 
+}
 
 template<int D, typename AttrT, typename FloatT>
 inline int Kdtree<D,AttrT,FloatT>::leaf_nmax() const 
