@@ -27,8 +27,8 @@ class KdeAttributes {
     using BoundType = T;
 
     KdeAttributes();
-
-    KdeAttributes(const T&, const T&, const T&);
+    KdeAttributes(T weight);
+    KdeAttributes(T weight, T lower, T upper);
 
     KdeAttributes(const KdeAttributes<T>&) = default;
     KdeAttributes(KdeAttributes<T>&&) = default;
@@ -92,7 +92,14 @@ template<typename T>
 KdeAttributes<T>::~KdeAttributes() {}
 
 template<typename T>
-KdeAttributes<T>::KdeAttributes(const T &w, const T &l, const T &u) 
+KdeAttributes<T>::KdeAttributes(T w) 
+  : weight_(w), 
+    lower_(ConstantTraits<T>::zero()),
+    upper_(ConstantTraits<T>::zero()) {
+}
+
+template<typename T>
+KdeAttributes<T>::KdeAttributes(T w, T l, T u) 
   : weight_(w), lower_(l), upper_(u) {
 }
 

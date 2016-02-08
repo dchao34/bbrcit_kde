@@ -54,9 +54,9 @@ class KernelDensity {
 
     // construct a kernel density estimator with 
     // bandwidth `bw` over the points `data`.
-    KernelDensity(const std::vector<DataPointType> &data, 
+    KernelDensity(std::vector<DataPointType> data, 
                   FloatType bw, int leaf_nmax=2);
-    KernelDensity(std::vector<DataPointType>&&, 
+    KernelDensity(std::vector<DataPointType> &&data, 
                   FloatType bw, int leaf_nmax=2);
 
     // copy-control
@@ -99,6 +99,9 @@ class KernelDensity {
 
     // the kernel function of the estimator 
     KdtreeType data_tree_;
+
+    // helper functions for initialization
+    void normalize_weights(std::vector<DataPointType>&);
 
     // helper functions for kde evaluataions
     void single_tree(const TreeNodeType*, const GeomPointType&, FloatType&, 
@@ -160,13 +163,36 @@ KernelDensity<D,KT,AT,FT>::KernelDensity() :
 
 template<int D, typename KT, typename AT, typename FT>
 KernelDensity<D,KT,AT,FT>::KernelDensity(
-    const std::vector<DataPointType> &pts, FloatType bw, int leaf_max) 
-  : bandwidth_(bw), kernel_(), data_tree_(pts, leaf_max) {}
+    std::vector<DataPointType> pts, FloatType bw, int leaf_max) 
+  : bandwidth_(bw), kernel_() {
+
+  normalize_weights(pts);
+  data_tree_ = KdtreeType(std::move(pts), leaf_max);
+
+}
 
 template<int D, typename KT, typename AT, typename FT>
 KernelDensity<D,KT,AT,FT>::KernelDensity(
     std::vector<DataPointType> &&pts, FloatType bw, int leaf_max) 
-  : bandwidth_(bw), kernel_(), data_tree_(std::move(pts), leaf_max) {}
+  : bandwidth_(bw), kernel_(), data_tree_(std::move(pts), leaf_max) {
+
+  normalize_weights(pts);
+  data_tree_ = KdtreeType(std::move(pts), leaf_max);
+
+}
+
+template<int D, typename KT, typename AT, typename FT>
+void KernelDensity<D,KT,AT,FT>::normalize_weights(std::vector<DataPointType> &pts) {
+
+  FloatType weight_total = ConstantTraits<FloatType>::zero();
+  for (const auto &p : pts) { weight_total += p.attributes().weight(); }
+  for (auto &p : pts) { 
+    p.attributes().set_weight(
+        p.attributes().weight() / weight_total
+    );
+  }
+
+}
 
 template<int D, typename KT, typename AT, typename FT>
 KernelDensity<D,KT,AT,FT>::~KernelDensity() {}
@@ -181,11 +207,21 @@ typename KernelDensity<D,KT,AT,FT>::FloatType
 KernelDensity<D,KT,AT,FT>::eval(const GeomPointType &p, 
     FloatType rel_err, FloatType abs_err) const {
 
+  // the contribution of some data point `d` to the kde at point `p`
+  // is given by its weight scaled by the kernel value, which depends
+  // on the distance between `d` and `p`. 
+  //
+  // (we will normalize the kernel once the computation is complete; 
+  //  thus, we assume that the maximum value of any kernel is 1.0. )
+  //
   // initialization: 
-  // + upper is such that all points contribute maximally (1)
-  // + lower is such that all points contribute minimally (0)
-  // (max is 1.0 because we do not incorporate the normalization yet)
-  FloatType upper = data_tree_.root_->size();
+  // + upper: upper bound on the kde value. initially, every point 
+  //          contributes its maximum weight. 
+  // + lower: lower bound on the kde value. initially, every point 
+  //          contributes none of its weight. 
+  // + du: the upper bound on the proportion of weight each point contributes. 
+  // + dl: the lower bound on the proportion of weight each point contributes. 
+  FloatType upper = data_tree_.root_->attr_.weight();
   FloatType lower = ConstantTraits<FloatType>::zero();
   FloatType du = 1.0, dl = 0.0;
 
@@ -194,8 +230,7 @@ KernelDensity<D,KT,AT,FT>::eval(const GeomPointType &p,
   assert(lower <= upper); assert(lower >= 0);
 
   // take the mean of the bounds and remember to include the normalization
-  FloatType normalization = KernelType::normalization;
-  normalization /= (std::pow(bandwidth_, D) * data_tree_.size());
+  FloatType normalization = KernelType::normalization / std::pow(bandwidth_, D);
   FloatType result = normalization * (lower + (upper - lower) / 2);
 
   // error reporting: notify the user of any loss of precision
@@ -213,7 +248,7 @@ void KernelDensity<D,KT,AT,FT>::single_tree(
     FloatType du, FloatType dl, 
     FloatType rel_err, FloatType abs_err) const {
 
-  // update the individual contributions due to points in `D_node` 
+  // update the kernel contributions due to points in `D_node` 
   // towards the upper/lower bounds on the kde value at point `p`. 
   FloatType du_new, dl_new; 
   estimate_contributions(D_node, p, du_new, dl_new);
@@ -267,10 +302,11 @@ void KernelDensity<D,KT,AT,FT>::single_tree_base(
     delta = kernel_.unnormalized_eval(
         (p - data_tree_.points_[i].point()) / bandwidth_
     );
+    delta *= data_tree_.points_[i].attributes().weight();
     upper += delta; lower += delta;
   }
-  upper -= D_node->size() * du; 
-  lower -= D_node->size() * dl;
+  upper -= D_node->attr_.weight() * du; 
+  lower -= D_node->attr_.weight() * dl;
 
   // see comment in tighten_bounds. 
   if (lower > upper) { upper = lower; }
@@ -288,7 +324,7 @@ void KernelDensity<D,KT,AT,FT>::eval(
   // such that all data points contribute maximally/minimally
   for (auto &q : queries) { 
     q.attributes().set_lower(0);
-    q.attributes().set_upper(data_tree_.size());
+    q.attributes().set_upper(data_tree_.root_->attr_.weight());
   }
   FloatType du = 1.0, dl = 0.0;
 
@@ -300,8 +336,7 @@ void KernelDensity<D,KT,AT,FT>::eval(
             du, dl, rel_err, abs_err, query_tree);
 
   // remember to normalize before returning
-  FloatType normalization = KernelType::normalization; 
-  normalization /= (std::pow(bandwidth_, D) * data_tree_.size());
+  FloatType normalization = KernelType::normalization / std::pow(bandwidth_, D); 
   for (auto &q : query_tree.points_) { 
 
     q.attributes().set_lower(q.attributes().lower()*normalization);
@@ -320,7 +355,7 @@ void KernelDensity<D,KT,AT,FT>::eval(
 
 // tighten the contribution from all points in D_node to the upper/lower
 // bounds of Q_node as well as each individual queries in Q_node
-// `du`, `dl` are the present contribution of D_node to bounds in Q_node. 
+// `du`, `dl` are the present kernel contributions of D_node to bounds in Q_node. 
 //
 // the lower/upper bounds of Q_node is the min/max of all lower/upper 
 // bounds of the individual queries 
@@ -330,7 +365,7 @@ void KernelDensity<D,KT,AT,FT>::dual_tree(
     FloatType du, FloatType dl, FloatType rel_err, FloatType abs_err,
     KdtreeType &query_tree) const {
 
-  // update the contributions due to D_nod
+  // update the kernel contributions due to D_node
   FloatType du_new, dl_new;
   estimate_contributions(D_node, Q_node->bbox_, du_new, dl_new);
 
@@ -507,8 +542,8 @@ void KernelDensity<D,KT,AT,FT>::tighten_bounds(
     FloatType &upper, FloatType &lower) const {
 
   // add the new contributions, but remember to subtract away the old ones
-  lower += D_node->size() * (dl_new - dl);
-  upper += D_node->size() * (du_new - du); 
+  lower += D_node->attr_.weight() * (dl_new - dl);
+  upper += D_node->attr_.weight() * (du_new - du); 
 
   // the input invariants guarantee, mathematically, that lower <= upper.
   // however, roundoff error (approx. cancellation) can break this gurantee.
@@ -632,10 +667,11 @@ typename KernelDensity<D,KT,AT,FT>::FloatType
 KernelDensity<D,KT,AT,FT>::naive_eval(const GeomPointType &p) const {
   FloatType total = ConstantTraits<FloatType>::zero();
   for (const auto &datum : data_tree_.points()) {
-    total += kernel_.unnormalized_eval( (p - datum.point()) / bandwidth_  );
+    total += 
+      datum.attributes().weight() * 
+      kernel_.unnormalized_eval( (p - datum.point()) / bandwidth_  );
   }
-  total *= KernelType::normalization;
-  total /= (std::pow(bandwidth_, D) * data_tree_.size());
+  total *= KernelType::normalization / std::pow(bandwidth_, D);
   return total;
 }
 

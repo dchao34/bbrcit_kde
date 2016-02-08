@@ -25,7 +25,7 @@ void generate_bimodal_gaussian(
     RND_E &e, std::vector<PointT> &data, int n_samples, 
     double mx1, double my1, double sx1, double sy1, double dgr1,
     double mx2, double my2, double sx2, double sy2, double dgr2, 
-    double p1 = 0.5) {
+    double p1 = 0.5, double p1_wgt = 1.0) {
 
   data.clear(); data.reserve(n_samples);
 
@@ -34,12 +34,14 @@ void generate_bimodal_gaussian(
 
   for (int i = 0; i < n_samples; ++i) {
     double x = gaussian(e), y = gaussian(e), u = uniform(e);
+    double w = 1.0;
     if (u < p1) {
       transform(x, y, mx1, my1, sx1, sy1, dgr1);
+      w = p1_wgt;
     } else {
       transform(x, y, mx2, my2, sx2, sy2, dgr2);
     }
-    data.push_back({{x,y}});
+    data.push_back({{x,y}, {w}});
   }
 }
 
