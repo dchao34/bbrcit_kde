@@ -29,11 +29,13 @@ class EpanechnikovKernel {
   public:
 
     static constexpr int dim() { return D; }
-    static const double normalization;
 
     // evaluate the value of the kernel at point p
     template<typename PointT>
     double eval(const PointT &p) const;
+
+    // compute the normalization
+    double normalization() const;
 
     // evaluate the kernel at point p, but do not include the 
     // normalization factor. e.g. evalutes (1-x'x), but does not 
@@ -41,8 +43,6 @@ class EpanechnikovKernel {
     template<typename PointT>
     double unnormalized_eval(const PointT&) const;
 
-  private:
-    static double compute_normalization();
     
 };
 
@@ -51,9 +51,8 @@ class EpanechnikovKernel {
 
 template<int D>
   template<typename PointT>
-double EpanechnikovKernel<D>::eval(const PointT &p) const {
-  double dot_prod = DotProduct(p, p);
-  return dot_prod < 1.0 ? (1-dot_prod) * normalization : 0; 
+inline double EpanechnikovKernel<D>::eval(const PointT &p) const {
+  return normalization() * unnormalized_eval(p); 
 }
 
 template<int D>
@@ -64,10 +63,7 @@ double EpanechnikovKernel<D>::unnormalized_eval(const PointT &p) const {
 }
 
 template <int D>
-const double EpanechnikovKernel<D>::normalization = EpanechnikovKernel<D>::compute_normalization();
-
-template <int D>
-inline double EpanechnikovKernel<D>::compute_normalization() {
+inline double EpanechnikovKernel<D>::normalization() const {
   return 0.5 * (D+2) / (std::pow(M_PI, D/2.0) / std::tgamma(1+D/2.0));
 }
 

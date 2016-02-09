@@ -81,7 +81,8 @@ void generate_1dgrid(
   double x_coord;
   for (int i = 0; i < steps_x; ++i) {
     x_coord = start_x + i * delta_x;
-    grid.push_back({{x_coord}});
+    PointT p = {{ x_coord }};
+    grid.push_back(p);
   }
 
 }
@@ -121,7 +122,7 @@ bool ReverseExactLexicoLess(const PointT &lhs, const PointT &rhs) {
 }
 
 template<typename PointT>
-void write_kde2d_data(std::ostream &os, const std::vector<PointT> &data) {
+void write_scatter_data(std::ostream &os, const std::vector<PointT> &data) {
   for (const auto &p : data) { os << p[0] << " " << p[1] << std::endl; }
 }
 

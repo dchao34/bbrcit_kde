@@ -261,7 +261,7 @@ KernelDensity<D,KT,AT,FT>::eval(const GeomPointType &p,
   assert(lower <= upper); assert(lower >= 0);
 
   // take the mean of the bounds and remember to include the normalization
-  FloatType normalization = KernelType::normalization / std::pow(bandwidth_, D);
+  FloatType normalization = kernel_.normalization() / std::pow(bandwidth_, D);
   FloatType result = normalization * (lower + (upper - lower) / 2);
 
   // error reporting: notify the user of any loss of precision
@@ -367,7 +367,7 @@ void KernelDensity<D,KT,AT,FT>::eval(
             du, dl, rel_err, abs_err, query_tree);
 
   // remember to normalize before returning
-  FloatType normalization = KernelType::normalization / std::pow(bandwidth_, D); 
+  FloatType normalization = kernel_.normalization() / std::pow(bandwidth_, D); 
   for (auto &q : query_tree.points_) { 
 
     q.attributes().set_lower(q.attributes().lower()*normalization);
@@ -710,7 +710,7 @@ KernelDensity<D,KT,AT,FT>::naive_eval(const GeomPointType &p) const {
       datum.attributes().weight() * 
       kernel_.unnormalized_eval( (p - datum.point()) / bandwidth_  );
   }
-  total *= KernelType::normalization / std::pow(bandwidth_, D);
+  total *= kernel_.normalization() / std::pow(bandwidth_, D);
   return total;
 }
 

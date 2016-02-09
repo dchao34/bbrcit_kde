@@ -44,7 +44,7 @@ int main() {
   cout << "runtime: " << elapsed.count() << " seconds" << endl;
   cout << endl;
 
-  write_kde2d_data(fout1, data);
+  write_scatter_data(fout1, data);
 
   // building tree
   cout << "building kdtree" << endl;
