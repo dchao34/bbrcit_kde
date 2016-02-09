@@ -1,93 +1,162 @@
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <vector>
 #include <utility>
 #include <random>
+#include <algorithm>
 
 #include <KernelDensity.h>
+
+#include "kde_test_utils.h"
 
 using namespace std;
 using bbrcit::KernelDensity;
 
 using Kde1d = KernelDensity<1>;
 using DataPoint1d = typename Kde1d::DataPointType;
-using Rectangle1d = typename Kde1d::GeomRectangleType;
 
 int main() {
-  cout << endl;
 
-  // test: kde construction using different leaf_nmax
-  cout << "+ kde construction with different leaf_max. " << endl;
-  cout << endl;
-  vector<DataPoint1d> points1d;
-  for (int i = 0; i < 8; ++i) { points1d.push_back({{static_cast<double>(i)}}); }
-  Kde1d tr1(points1d, 1, 2);
-  vector<pair<size_t, size_t>> leaves;
-  tr1.report_leaves(leaves);
-  cout << "  output:  ";
-  for (const auto &l : leaves) { cout << "[" << l.first << ", " << l.second << "] "; }
-  cout << endl;
-  cout << "  compare: [0, 1] [2, 3] [4, 5] [6, 7]" << endl;
-  cout << endl;
+  int n_data = 10000;
+  Kde1d kde;
+  default_random_engine e;
+  vector<DataPoint1d> data;
 
-  Kde1d tr2(points1d, 1, 1);
-  leaves.clear(); tr2.report_leaves(leaves);
-  cout << "  output:  ";
-  for (const auto &l : leaves) { cout << "[" << l.first << ", " << l.second << "] "; }
-  cout << endl;
-  cout << "  compare: [0, 0] [1, 1] [2, 2] [3, 3] [4, 4] [5, 5] [6, 6] [7, 7]" << endl;
-  cout << endl;
+  int n_query = 100;
+  vector<DataPoint1d> grid;
+  generate_1dgrid(grid, -1, 1, n_query);
 
-  Kde1d tr3(points1d, 1, 5);
-  leaves.clear(); tr3.report_leaves(leaves);
-  cout << "  output:  ";
-  for (const auto &l : leaves) { cout << "[" << l.first << ", " << l.second << "] "; }
-  cout << endl;
-  cout << "  compare: [0, 3] [4, 7]" << endl;
-  
-  cout << endl;
+  double rel_err = 1e-6, abs_err = 1e-10;
+  vector<DataPoint1d> naive_result, single_tree_result, dual_tree_result;
 
-  // test: duplicate keys
-  cout << "+ kde with duplicate keys. " << endl;
-  cout << endl;
+  ofstream fout;
 
-  cout << "  output:";
-  points1d.clear();
-  for (int i = 0; i < 4; ++i) { points1d.push_back({{static_cast<double>(i)}}); }
-  for (int i = 0; i < 4; ++i) { points1d.push_back({{static_cast<double>(i)}}); }
-  Kde1d tr4(points1d, 1);
-  for (const auto &p : tr4.data_points()) { 
-    cout << "  " << p;
+  // test: unweighted
+  data.clear();
+  generate_bimodal_gaussian(e, data, n_data, 0.3, 0.1, -0.3, 0.1, 0.75);
+
+  kde = Kde1d(data, 0.2);
+
+  fout.open("test_kde2.csv");
+
+  naive_result = grid;
+  for (auto &q : naive_result) { kde.naive_eval(q); }
+  std::sort(naive_result.begin(), naive_result.end(), 
+      ReverseExactLexicoLess<DataPoint1d>);
+
+  single_tree_result = grid;
+  for (auto &q : single_tree_result) { kde.eval(q, rel_err, abs_err); }
+  std::sort(single_tree_result.begin(), single_tree_result.end(), 
+      ReverseExactLexicoLess<DataPoint1d>);
+
+  dual_tree_result = grid;
+  kde.eval(dual_tree_result, rel_err, abs_err);
+  std::sort(dual_tree_result.begin(), dual_tree_result.end(), 
+      ReverseExactLexicoLess<DataPoint1d>);
+
+  for (int i = 0; i < n_query; ++i) {
+    double naive = naive_result[i].attributes().middle();
+    double single = single_tree_result[i].attributes().middle();
+    double dual = dual_tree_result[i].attributes().middle();
+
+    double diff = std::abs(single - naive);
+    if (diff > abs_err) {
+      if (diff / std::max(single, naive) > rel_err) {
+        cout << "relative precision lost for " << naive_result[i].point();
+        cout << ": " << diff / std::max(single, naive); 
+        cout << " expected " << rel_err << endl;
+      } else {
+        cout << "absolute precision lost for " << naive_result[i].point();
+        cout << ": " << diff; 
+        cout << " expected " << abs_err << endl;
+      }
+    }
+
+    diff = std::abs(dual - naive);
+    if (diff > abs_err) {
+      if (diff / std::max(single, naive) > rel_err) {
+        cout << "relative precision lost for " << naive_result[i].point();
+        cout << ": " << diff / std::max(single, naive); 
+        cout << " expected " << rel_err << endl;
+      } else {
+        cout << "absolute precision lost for " << naive_result[i].point();
+        cout << ": " << diff; 
+        cout << " expected " << abs_err << endl;
+      }
+    }
+
+    fout << naive_result[i][0] << " ";
+    fout << naive << " ";
+    fout << single << " ";
+    fout << dual << endl;
   }
-  cout << endl;
 
-  cout << "  compare: { (0), (2) }  { (1), (2) }  { (2), (2) }  { (3), (2) }";
-  cout << endl;
+  fout.close();
 
-  cout << endl;
+  // test: weighted. the proportions and weights dialed in for the 
+  // bimodal gaussian below is such that the kde contains the "same"
+  // probability content in either mode as `n_data` tends to infinity. 
+  data.clear();
+  generate_bimodal_gaussian(e, data, n_data, 0.3, 0.1, -0.3, 0.1, 0.25, 3);
 
-  // test: root attributes
-  points1d.clear();
-  for (int i = 0; i < 4; ++i) { points1d.push_back({{1.0*i}, {0.1*i}}); }
-  Kde1d tr5(points1d, 1);
-  cout << "+ kde root attributes. " << endl;
-  cout << endl;
-  cout << "  output:  " << tr5.root_attributes() << " (c.f. (0.6))" << endl;
-  cout << endl;
+  kde = Kde1d(data, 0.2);
 
-  // test: range search
-  points1d.clear();
-  for (int i = 0; i < 1000; ++i) { points1d.push_back({{0.001*i}}); }
-  Kde1d tr6(points1d, 1);
-  vector<DataPoint1d> result;
-  Rectangle1d query({0.990}, {0.995});
-  tr6.range_search(query, result);
-  cout << "+ kde range search. " << endl;
-  cout << endl;
-  cout << "  output:  "; for (const auto &p : result) { cout << " " << p[0]; } cout << ", " << tr6.root_attributes() << endl; 
-  cout << "  compare:  0.99 0.991 0.992 0.993 0.994 0.995, (1000)" << endl;
-  cout << endl;
+  fout.open("test_kde2_weighted.csv");
 
+  naive_result = grid;
+  for (auto &q : naive_result) { kde.naive_eval(q); }
+  std::sort(naive_result.begin(), naive_result.end(), 
+      ReverseExactLexicoLess<DataPoint1d>);
+
+  single_tree_result = grid;
+  for (auto &q : single_tree_result) { kde.eval(q, rel_err, abs_err); }
+  std::sort(single_tree_result.begin(), single_tree_result.end(), 
+      ReverseExactLexicoLess<DataPoint1d>);
+
+  dual_tree_result = grid;
+  kde.eval(dual_tree_result, rel_err, abs_err);
+  std::sort(dual_tree_result.begin(), dual_tree_result.end(), 
+      ReverseExactLexicoLess<DataPoint1d>);
+
+  for (int i = 0; i < n_query; ++i) {
+    double naive = naive_result[i].attributes().middle();
+    double single = single_tree_result[i].attributes().middle();
+    double dual = dual_tree_result[i].attributes().middle();
+
+    double diff = std::abs(single - naive);
+    if (diff > abs_err) {
+      if (diff / std::max(single, naive) > rel_err) {
+        cout << "relative precision lost for " << naive_result[i].point();
+        cout << ": " << diff / std::max(single, naive); 
+        cout << " expected " << rel_err << endl;
+      } else {
+        cout << "absolute precision lost for " << naive_result[i].point();
+        cout << ": " << diff; 
+        cout << " expected " << abs_err << endl;
+      }
+    }
+
+    diff = std::abs(dual - naive);
+    if (diff > abs_err) {
+      if (diff / std::max(single, naive) > rel_err) {
+        cout << "relative precision lost for " << naive_result[i].point();
+        cout << ": " << diff / std::max(single, naive); 
+        cout << " expected " << rel_err << endl;
+      } else {
+        cout << "absolute precision lost for " << naive_result[i].point();
+        cout << ": " << diff; 
+        cout << " expected " << abs_err << endl;
+      }
+    }
+
+    fout << naive_result[i][0] << " ";
+    fout << naive << " ";
+    fout << single << " ";
+    fout << dual << endl;
+  }
+
+  fout.close();
 
   return 0;
 }

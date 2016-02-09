@@ -23,6 +23,30 @@ void transform(double &x, double &y,
 template <typename RND_E, typename PointT>
 void generate_bimodal_gaussian(
     RND_E &e, std::vector<PointT> &data, int n_samples, 
+    double mx1, double sx1, double mx2, double sx2,
+    double p1 = 0.5, double p1_wgt = 1.0) {
+
+  data.clear(); data.reserve(n_samples);
+
+  std::normal_distribution<> gaussian(0.0, 1.0);
+  std::uniform_real_distribution<> uniform(0.0, 1.0);
+
+  for (int i = 0; i < n_samples; ++i) {
+    double x = gaussian(e), u = uniform(e);
+    double w = 1.0;
+    if (u < p1) {
+      x *= sx1; x += mx1;
+      w = p1_wgt;
+    } else {
+      x *= sx2; x += mx2;
+    }
+    data.push_back({{x}, {w}});
+  }
+}
+
+template <typename RND_E, typename PointT>
+void generate_bimodal_gaussian(
+    RND_E &e, std::vector<PointT> &data, int n_samples, 
     double mx1, double my1, double sx1, double sy1, double dgr1,
     double mx2, double my2, double sx2, double sy2, double dgr2, 
     double p1 = 0.5, double p1_wgt = 1.0) {
@@ -43,6 +67,23 @@ void generate_bimodal_gaussian(
     }
     data.push_back({{x,y}, {w}});
   }
+}
+
+template <typename PointT>
+void generate_1dgrid(
+    std::vector<PointT> &grid, 
+    double start_x, double end_x, double steps_x) {
+  
+  grid.clear();
+
+  double delta_x = (end_x - start_x) / steps_x;
+
+  double x_coord;
+  for (int i = 0; i < steps_x; ++i) {
+    x_coord = start_x + i * delta_x;
+    grid.push_back({{x_coord}});
+  }
+
 }
 
 template <typename PointT>

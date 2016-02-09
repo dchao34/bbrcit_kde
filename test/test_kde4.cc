@@ -11,6 +11,8 @@
 #include <KernelDensity.h>
 #include <Point.h>
 
+#include "kde_test_utils.h"
+
 using namespace std;
 
 using bbrcit::KernelDensity;
@@ -21,55 +23,60 @@ int main() {
   using KernelDensityType = KernelDensity<2>;
   using DataPointType = typename KernelDensityType::DataPointType;
 
+  ofstream fout1("test_kde4_data.csv");
+  ofstream fout2("test_kde4_kde.csv");
+
   std::chrono::time_point<std::chrono::high_resolution_clock> start, end;
   std::chrono::duration<double> elapsed;
 
-  // generating data
-  int n_data = 1000;
-  cout << "generating data: " << n_data << endl;
-  start = std::chrono::high_resolution_clock::now();
-
+  // generate data
+  int n_samples = 10000;
   default_random_engine e;
-  normal_distribution<> gaussian(0.0, 1.0);
-  uniform_real_distribution<> uniform(0.0, 1.0);
   vector<DataPointType> data;
-  for (int i = 0; i < n_data; ++i) {
-    double x = gaussian(e), y = gaussian(e);
-    data.push_back({{x,y}});
-  }
+  cout << "generating data: " << n_samples << endl;
 
+  start = std::chrono::high_resolution_clock::now();
+  generate_bimodal_gaussian(e, data, n_samples, 
+                            1, 1, 0.5, 0.3, 30, 
+                            -1, -1, 0.5, 0.3, -30);
   end = std::chrono::high_resolution_clock::now();
   elapsed = end-start;
   cout << "runtime: " << elapsed.count() << " seconds" << endl;
   cout << endl;
 
+  write_kde2d_data(fout1, data);
+
   // building tree
   cout << "building kdtree" << endl;
+
   start = std::chrono::high_resolution_clock::now();
-
-  KernelDensityType kde(data, 2.4*std::pow(n_data, -1/6.0), 2);
-
+  KernelDensityType kde(data, 0.2, 2);
   end = std::chrono::high_resolution_clock::now();
   elapsed = end-start;
   cout << "runtime: " << elapsed.count() << " seconds" << endl;
   cout << endl;
   
 
-  // evaluate kde at grid points
-  cout << "evaluating kde" << endl;
-  start = std::chrono::high_resolution_clock::now();
+  // evaluate kde at grid points: dual tree
+  double rel_err = 1e-6; double abs_err = 1e-10;
+  cout << "evaluating kde. rel_err = " << rel_err; 
+  cout << ", abs_err = " << abs_err << endl;
 
-  vector<size_t> leaves_visited; leaves_visited.reserve(data.size());
-  start = std::chrono::high_resolution_clock::now();
-  for (int i = 0; i < data.size(); ++i) {
-    kde.eval(data[i].point(), 1e-6); 
-  }
+  vector<DataPointType> grid;
+  double start_x = -2, end_x = 2; int steps_x = 100;
+  double start_y = -2, end_y = 2; int steps_y = 100;
+  generate_2dgrid(grid, start_x, end_x, steps_x, start_y, end_y, steps_y);
 
+  start = std::chrono::high_resolution_clock::now();
+  kde.eval(grid, rel_err, abs_err);
   end = std::chrono::high_resolution_clock::now();
   elapsed = end-start;
   cout << "runtime: " << elapsed.count() << " seconds" << endl;
   cout << endl;
 
+  write_kde2d_result(fout2, grid, 
+                     start_x, end_x, steps_x,
+                     start_y, end_y, steps_y);
 
   return 0;
 }

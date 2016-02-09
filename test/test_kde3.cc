@@ -57,7 +57,7 @@ int main() {
   cout << endl;
   
 
-  // evaluate kde at grid points
+  // evaluate kde at grid points: single tree
   double rel_err = 1e-6; double abs_err = 1e-10;
   cout << "evaluating kde. rel_err = " << rel_err; 
   cout << ", abs_err = " << abs_err << endl;

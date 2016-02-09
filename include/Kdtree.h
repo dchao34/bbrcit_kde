@@ -258,7 +258,7 @@ inline bool Kdtree<D,AttrT,FloatT>::empty() const { return root_ == nullptr; }
 
 template<int D, typename AttrT, typename FloatT>
 inline typename Kdtree<D,AttrT,FloatT>::IndexType Kdtree<D,AttrT,FloatT>::size() const { 
-  return root_->size(); 
+  return root_ == nullptr ? 0 : root_->size(); 
 }
 
 template<int D, typename AttrT, typename FloatT>

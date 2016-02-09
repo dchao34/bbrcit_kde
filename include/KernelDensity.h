@@ -54,7 +54,7 @@ class KernelDensity {
 
     // construct a kernel density estimator with 
     // bandwidth `bw` over the points `data`.
-    KernelDensity(std::vector<DataPointType> data, 
+    KernelDensity(const std::vector<DataPointType> &data, 
                   FloatType bw, int leaf_nmax=2);
     KernelDensity(std::vector<DataPointType> &&data, 
                   FloatType bw, int leaf_nmax=2);
@@ -70,11 +70,19 @@ class KernelDensity {
     FloatType bandwidth() const;
     void set_bandwidth(FloatType);
 
+    // returns the number of data points
+    size_t size() const;
+
+    // returns a const reference to the data points
+    const std::vector<DataPointType>& points() const;
+
     // return the kde evaluated at point `p`. the result satisfies 
     // at least one of the following:
     //   + the relative error is at most `rel_err`.
     //   + the absolute error is at most `abs_err`.
     // otherwise, it will report to stderr that precision has been lost. 
+    FloatT eval(DataPointType &p, 
+                FloatType rel_err, FloatType abs_err) const;
     FloatT eval(const GeomPointType &p, 
                 FloatType rel_err, FloatType abs_err) const;
 
@@ -86,6 +94,7 @@ class KernelDensity {
 
     // return the kde naively evaluated at point `p`. 
     // slow... O(n^2); mainly for debugging
+    FloatT naive_eval(DataPointType&) const;
     FloatT naive_eval(const GeomPointType&) const;
 
 
@@ -140,8 +149,17 @@ class KernelDensity {
 };
 
 template<int D, typename KT, typename AT, typename FT>
+inline size_t KernelDensity<D,KT,AT,FT>::size() const { return data_tree_.size(); }
+
+template<int D, typename KT, typename AT, typename FT>
 inline typename KernelDensity<D,KT,AT,FT>::FloatType
 KernelDensity<D,KT,AT,FT>::bandwidth() const { return bandwidth_; }
+
+template<int D, typename KT, typename AT, typename FT>
+inline const std::vector<typename KernelDensity<D,KT,AT,FT>::DataPointType>& 
+KernelDensity<D,KT,AT,FT>::points() const {
+  return data_tree_.points();
+}
 
 template<int D, typename KT, typename AT, typename FT>
 inline void KernelDensity<D,KT,AT,FT>::set_bandwidth(FloatType bw) { 
@@ -163,18 +181,19 @@ KernelDensity<D,KT,AT,FT>::KernelDensity() :
 
 template<int D, typename KT, typename AT, typename FT>
 KernelDensity<D,KT,AT,FT>::KernelDensity(
-    std::vector<DataPointType> pts, FloatType bw, int leaf_max) 
+    const std::vector<DataPointType> &pts, FloatType bw, int leaf_max) 
   : bandwidth_(bw), kernel_() {
 
-  normalize_weights(pts);
-  data_tree_ = KdtreeType(std::move(pts), leaf_max);
+  std::vector<DataPointType> pts_normed = pts;
+  normalize_weights(pts_normed);
+  data_tree_ = KdtreeType(std::move(pts_normed), leaf_max);
 
 }
 
 template<int D, typename KT, typename AT, typename FT>
 KernelDensity<D,KT,AT,FT>::KernelDensity(
     std::vector<DataPointType> &&pts, FloatType bw, int leaf_max) 
-  : bandwidth_(bw), kernel_(), data_tree_(std::move(pts), leaf_max) {
+  : bandwidth_(bw), kernel_() {
 
   normalize_weights(pts);
   data_tree_ = KdtreeType(std::move(pts), leaf_max);
@@ -196,6 +215,18 @@ void KernelDensity<D,KT,AT,FT>::normalize_weights(std::vector<DataPointType> &pt
 
 template<int D, typename KT, typename AT, typename FT>
 KernelDensity<D,KT,AT,FT>::~KernelDensity() {}
+
+
+template<int D, typename KT, typename AT, typename FT>
+typename KernelDensity<D,KT,AT,FT>::FloatType
+KernelDensity<D,KT,AT,FT>::eval(DataPointType &p, 
+    FloatType rel_err, FloatType abs_err) const {
+
+  FloatType result = eval(p.point(), rel_err, abs_err);
+  p.attributes().set_upper(result); p.attributes().set_lower(result);
+  return result;
+
+}
 
 
 // single point kde evaluation. based on the following algorithms:
@@ -661,6 +692,14 @@ void KernelDensity<D,KT,AT,FT>::report_error(
 
 }
 
+template<int D, typename KT, typename AT, typename FT>
+typename KernelDensity<D,KT,AT,FT>::FloatType
+KernelDensity<D,KT,AT,FT>::naive_eval(DataPointType &p) const {
+  FloatType result = naive_eval(p.point());
+  p.attributes().set_upper(result);
+  p.attributes().set_lower(result);
+  return result;
+}
 
 template<int D, typename KT, typename AT, typename FT>
 typename KernelDensity<D,KT,AT,FT>::FloatType
