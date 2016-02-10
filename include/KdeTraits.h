@@ -9,16 +9,16 @@ template<>
 class ConstantTraits<double> {
   public: 
     using Type = double;
-    static Type zero() { return 0; } 
-    static Type one() { return 1; } 
+    static Type zero() { return 0.0; } 
+    static Type one() { return 1.0; } 
 };
 
 template<> 
 class ConstantTraits<float> {
   public: 
     using Type = float;
-    static Type zero() { return 0; } 
-    static Type one() { return 1; } 
+    static Type zero() { return 0.0; } 
+    static Type one() { return 1.0; } 
 };
 
 template<> 

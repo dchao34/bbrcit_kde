@@ -50,7 +50,7 @@ int main() {
   cout << "building kdtree" << endl;
 
   start = std::chrono::high_resolution_clock::now();
-  KernelDensityType kde(data, 0.2, 2);
+  KernelDensityType kde(data); kde.kernel().set_bandwidth(0.2);
   end = std::chrono::high_resolution_clock::now();
   elapsed = end-start;
   cout << "runtime: " << elapsed.count() << " seconds" << endl;

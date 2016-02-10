@@ -36,7 +36,8 @@ int main() {
   data.clear();
   generate_bimodal_gaussian(e, data, n_data, 0.3, 0.1, -0.3, 0.1, 0.75);
 
-  kde = Kde1d(data, 0.2);
+  kde = Kde1d(data);
+  kde.kernel().set_bandwidth(0.2);
 
   fout.open("test_kde2.csv");
 
@@ -100,7 +101,8 @@ int main() {
   data.clear();
   generate_bimodal_gaussian(e, data, n_data, 0.3, 0.1, -0.3, 0.1, 0.25, 3);
 
-  kde = Kde1d(data, 0.2);
+  kde = Kde1d(data);
+  kde.kernel().set_bandwidth(0.2);
 
   fout.open("test_kde2_weighted.csv");
 

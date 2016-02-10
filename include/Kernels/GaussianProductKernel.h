@@ -45,6 +45,13 @@ class GaussianProductKernel {
     template<typename PointT>
     double unnormalized_eval(const PointT&) const;
 
+    // index access to bandwidths
+    double bandwidth(size_t) const;
+
+    // set bandwidths
+    void set_bandwidth(size_t, double);
+    void set_bandwidths(const std::initializer_list<double> &);
+
   private:
     std::vector<double> bandwidths_;
     
@@ -59,6 +66,23 @@ GaussianProductKernel<D>::GaussianProductKernel() : bandwidths_(D, 1.0) {}
 template<int D>
 GaussianProductKernel<D>::GaussianProductKernel(
     const std::initializer_list<double> &li): bandwidths_(li) {
+  if (bandwidths_.size() != D) { bandwidths_.resize(D); }
+}
+
+template<int D>
+inline double GaussianProductKernel<D>::bandwidth(size_t i) const { 
+  return bandwidths_[i]; 
+}
+
+template<int D>
+inline void GaussianProductKernel<D>::set_bandwidth(size_t i, double bw) { 
+  bandwidths_[i] = bw; 
+}
+
+template<int D>
+void GaussianProductKernel<D>::set_bandwidths(
+    const std::initializer_list<double> &li) {
+  bandwidths_ = li;
   if (bandwidths_.size() != D) { bandwidths_.resize(D); }
 }
 
