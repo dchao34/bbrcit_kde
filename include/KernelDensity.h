@@ -664,12 +664,13 @@ void KernelDensity<D,KT,AT,FT>::estimate_contributions(
 
   static GeomPointType proxy;
 
-  // simply use the minimum(maximum) distance to the point to bound the 
-  // maximum(minimum) contribution to the kernel evaluation
-  proxy[0] = D_node->bbox_.min_dist(obj);
+  // use the minimum(maximum) distance to the argument in each 
+  // dimension to bound the min/max kernel contributions
+
+  for (int i = 0; i < D; ++i) { proxy[i] = D_node->bbox_.min_dist(i, obj); }
   du = kernel_.unnormalized_eval(proxy);
 
-  proxy[0] = D_node->bbox_.max_dist(obj);
+  for (int i = 0; i < D; ++i) { proxy[i] = D_node->bbox_.max_dist(i, obj); }
   dl = kernel_.unnormalized_eval(proxy);
 
 }

@@ -10,6 +10,7 @@
 
 #include <Point.h>
 #include <Interval.h>
+#include <KdeTraits.h>
 
 // API
 // ---
@@ -65,18 +66,19 @@ class Rectangle {
     Rectangle<D,T> upper_halfspace(size_t, const T&) const;
 
     // returns true if the argument is fully contained in this Rectangle<>. 
-    // (1) Specific case for containing other Rectangle<>'s
-    // (2) General Point type objects. operator[] accesses coordinate values.
-    bool contains(const Rectangle<D,T>&) const;
-    template<typename PointT> bool contains(const PointT&) const;
+    // Examples of GT: Rectangle<>, Point<>. 
+    template<typename GT> bool contains(const GT&) const;
 
-    // returns the min/max L2 distance from p to this Rectangle<>. 
-    T min_dist(const Point<D,T> &p) const;
-    T max_dist(const Point<D,T> &p) const;
+    // returns the min/max L2 distance from the argument to this Rectangle<>. 
+    // Examples of GT: Rectangle<>, Point<>. 
+    template <typename GT> T min_dist(const GT &g) const;
+    template <typename GT> T max_dist(const GT &g) const;
 
-    // returns the min/max L2 distance from r to this Rectangle<>. 
-    T min_dist(const Rectangle<D,T> &r) const;
-    T max_dist(const Rectangle<D,T> &r) const;
+    // returns the min/max distance from the argument to this Rectangle<> in 
+    // the `i`th dimension. 
+    // Examples of GT: Rectangle<>, Point<>. 
+    template <typename GT> T min_dist(size_t i, const GT &g) const;
+    template <typename GT> T max_dist(size_t i, const GT &g) const;
 
   private:
 
@@ -160,10 +162,14 @@ Rectangle<D,T>& Rectangle<D,T>::operator=(Rectangle &&r) noexcept {
 }
 
 template <int D, typename T>
-T Rectangle<D,T>::min_dist(const Point<D,T> &p) const {
-  T total = T(), curr = T();
+  template <typename GT> 
+T Rectangle<D,T>::min_dist(const GT &g) const {
+
+  T total = ConstantTraits<T>::zero(); 
+  T curr = ConstantTraits<T>::zero(); 
+
   for (int i = 0; i < D; ++i) {
-    curr = intervals_[i].min_dist(p[i]);
+    curr = intervals_[i].min_dist(g[i]);
     curr *= curr;
     total += curr;
   }
@@ -171,10 +177,14 @@ T Rectangle<D,T>::min_dist(const Point<D,T> &p) const {
 }
 
 template <int D, typename T>
-T Rectangle<D,T>::max_dist(const Point<D,T> &p) const {
-  T total = T(), curr = T();
+  template <typename GT> 
+T Rectangle<D,T>::max_dist(const GT &g) const {
+
+  T total = ConstantTraits<T>::zero(); 
+  T curr = ConstantTraits<T>::zero(); 
+
   for (int i = 0; i < D; ++i) {
-    curr = intervals_[i].max_dist(p[i]);
+    curr = intervals_[i].max_dist(g[i]);
     curr *= curr;
     total += curr;
   }
@@ -182,42 +192,23 @@ T Rectangle<D,T>::max_dist(const Point<D,T> &p) const {
 }
 
 template <int D, typename T>
-T Rectangle<D,T>::min_dist(const Rectangle<D,T> &r) const {
-  T total = T(), curr = T();
-  for (int i = 0; i < D; ++i) {
-    curr = intervals_[i].min_dist(r[i]);
-    curr *= curr;
-    total += curr;
-  }
-  return std::sqrt(total);
+  template <typename GT> 
+inline T Rectangle<D,T>::min_dist(size_t i, const GT &g) const {
+  return intervals_[i].min_dist(g[i]);
 }
 
 template <int D, typename T>
-T Rectangle<D,T>::max_dist(const Rectangle<D,T> &r) const {
-  T total = T(), curr = T();
-  for (int i = 0; i < D; ++i) {
-    curr = intervals_[i].max_dist(r[i]);
-    curr *= curr;
-    total += curr;
-  }
-  return std::sqrt(total);
+  template <typename GT> 
+inline T Rectangle<D,T>::max_dist(size_t i, const GT &g) const {
+  return intervals_[i].max_dist(g[i]);
 }
 
 template <int D, typename T>
-bool Rectangle<D,T>::contains(const Rectangle<D,T> &r) const {
+template <typename GT>
+bool Rectangle<D,T>::contains(const GT &g) const {
   bool is_contained = true;
   for (int i = 0; i < D && is_contained; ++i) {
-    is_contained = intervals_[i].contains(r[i]);
-  }
-  return is_contained;
-}
-
-template <int D, typename T>
-template <typename PointT>
-bool Rectangle<D,T>::contains(const PointT &p) const {
-  bool is_contained = true;
-  for (int i = 0; i < D && is_contained; ++i) {
-    is_contained = intervals_[i].contains(p[i]);
+    is_contained = intervals_[i].contains(g[i]);
   }
   return is_contained;
 }
