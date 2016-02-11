@@ -261,12 +261,16 @@ KernelDensity<D,KT,AT,FT>::eval(const GeomPointType &p,
   FloatType lower = ConstantTraits<FloatType>::zero();
   FloatType du = 1.0, dl = 0.0;
 
-  // tighten the bounds by the single_tree algorithm
-  single_tree(data_tree_.root_, p, upper, lower, du, dl, rel_err, abs_err);
+  // tighten the bounds by the single_tree algorithm. since we are computing
+  // bounds before including the normalization, we need to scale abs_err accordingly
+  FloatType normalization = kernel_.normalization();
+
+  single_tree(data_tree_.root_, p, upper, lower, du, dl, 
+              rel_err, abs_err / normalization);
+
   assert(lower <= upper); assert(lower >= 0);
 
   // take the mean of the bounds and remember to include the normalization
-  FloatType normalization = kernel_.normalization();
   FloatType result = normalization * (lower + (upper - lower) / 2);
 
   // error reporting: notify the user of any loss of precision
@@ -634,7 +638,7 @@ bool KernelDensity<D,KT,AT,FT>::can_approximate(
 
   tighten_bounds(D_node, du_new, dl_new, du, dl, upper, lower);
 
-  if (std::abs(upper - lower) <= abs_err || 
+  if (std::abs(upper-lower) <= abs_err || 
       std::abs(upper-lower) <= std::abs(lower)*rel_err) { return true; }
 
   return false;
@@ -683,18 +687,26 @@ void KernelDensity<D,KT,AT,FT>::report_error(
     FloatType rel_err, FloatType abs_err) const {
 
   if (std::abs(upper - lower) > abs_err) {
-    if (std::abs((upper-lower)/lower) > rel_err) {
-      os << "Loss of relative precision with ";
-      os << std::setprecision(5) << "relative error: ";
-      os << std::abs((upper - lower)/lower);
-      os << " (c.f. " << rel_err << ")";
-      os << " when querying " << p << std::endl;
+    if (lower) {
+      if (std::abs((upper-lower)/lower) > rel_err) {
+        os << std::setprecision(6);
+        os << "Relative loss when querying " << p << ": " << std::endl;
+        os << std::setprecision(15);
+        os << "\tlower:   " << lower << std::endl;
+        os << "\tupper:   " << upper << std::endl;
+        os << "\tabs_err: " << std::abs(upper - lower) << " (c.f. " << abs_err << ")" << std::endl;
+        os << "\trel_err: " << std::abs(upper - lower) / lower << " (c.f. " << rel_err << ")" << std::endl;
+        os << std::endl;
+      }
     } else {
-      os << "Loss of absolute precision with ";
-      os << std::setprecision(5) << "absolute error: ";
-      os << std::abs(upper - lower);
-      os << " (c.f. " << abs_err << ")";
-      os << " when querying " << p << std::endl;
+      os << std::setprecision(6);
+      os << "Absolute precision loss when querying " << p << ": " << std::endl;
+      os << std::setprecision(15);
+      os << "\tlower:   " << lower << std::endl;
+      os << "\tupper:   " << upper << std::endl;
+      os << "\tabs_err: " << std::abs(upper - lower) << " (c.f. " << abs_err << ")" << std::endl;
+      os << "\trel_err: --- " << std::endl;
+      os << std::endl;
     }
   }
 
