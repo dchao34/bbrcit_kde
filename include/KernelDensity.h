@@ -374,11 +374,11 @@ void KernelDensity<D,KT,AT,FT>::eval(
   KdtreeType query_tree(std::move(queries));
 
   // tighten using the dual tree algorithm
+  FloatType normalization = kernel_.normalization(); 
   dual_tree(data_tree_.root_, query_tree.root_, 
-            du, dl, rel_err, abs_err, query_tree);
+            du, dl, rel_err, abs_err/normalization, query_tree);
 
   // remember to normalize before returning
-  FloatType normalization = kernel_.normalization(); 
   for (auto &q : query_tree.points_) { 
 
     q.attributes().set_lower(q.attributes().lower()*normalization);
