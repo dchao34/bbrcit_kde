@@ -63,7 +63,7 @@ int main() {
 
 
     // compute optimal bandwidth
-    double epan_bw = 0.00001;
+    double epan_bw = 0.01;
     //epan_bw = 2.345 * std::pow(n_samples, -0.2);
     cout << epan_bw << " ";
     fout << epan_bw << " ";
