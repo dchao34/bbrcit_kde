@@ -142,7 +142,7 @@ class Kdtree {
     void initialize();
     void merge_duplicates();
     RectangleType compute_bounding_box() const;
-    Node* construct_tree(int, int, int, const RectangleType&);
+    Node* construct_tree(IndexType, IndexType, int, const RectangleType&);
 
     Node* tree_deep_copy(const Node*) const;
 
@@ -405,7 +405,7 @@ typename Kdtree<D,AttrT,FloatT>::RectangleType Kdtree<D,AttrT,FloatT>::compute_b
 template<int D, typename AttrT, typename FloatT>
 typename Kdtree<D,AttrT,FloatT>::Node* 
 Kdtree<D,AttrT,FloatT>::construct_tree(
-    int i, int j, int d, const RectangleType &bbox) {
+    IndexType i, IndexType j, int d, const RectangleType &bbox) {
 
   Node *p = new Node();
   p->start_idx_ = i;
