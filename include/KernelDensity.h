@@ -666,7 +666,7 @@ void KernelDensity<D,KT,AT,FT>::estimate_contributions(
     const TreeNodeType *D_node, const ObjT &obj, 
     FloatType &du, FloatType &dl) const {
 
-  static GeomPointType proxy;
+  GeomPointType proxy;
 
   // use the minimum(maximum) distance to the argument in each 
   // dimension to bound the min/max kernel contributions
