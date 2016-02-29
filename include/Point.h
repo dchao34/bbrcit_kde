@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <utility>
-#include <exception>
+#include <stdexcept>
 #include <initializer_list>
 #include <iostream>
 
