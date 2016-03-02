@@ -17,8 +17,8 @@ template<>
 class ConstantTraits<float> {
   public: 
     using Type = float;
-    static Type zero() { return 0.0; } 
-    static Type one() { return 1.0; } 
+    static Type zero() { return 0.0f; } 
+    static Type one() { return 1.0f; } 
 };
 
 template<> 

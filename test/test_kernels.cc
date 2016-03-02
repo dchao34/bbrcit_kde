@@ -12,13 +12,14 @@
 #include "kde_test_utils.h"
 
 using namespace std;
+using FloatType = double;
 using bbrcit::EpanechnikovKernel;
 using bbrcit::GaussianKernel;
 using bbrcit::EpanechnikovProductKernel;
 using bbrcit::GaussianProductKernel;
 using bbrcit::KdeAttributes;
-using Point1d = bbrcit::DecoratedPoint<1, KdeAttributes<double>>;
-using Point2d = bbrcit::DecoratedPoint<2, KdeAttributes<double>>;
+using Point1d = bbrcit::DecoratedPoint<1, KdeAttributes<FloatType>>;
+using Point2d = bbrcit::DecoratedPoint<2, KdeAttributes<FloatType>>;
 
 int main() {
 
@@ -27,7 +28,7 @@ int main() {
   vector<Point2d> grid2d; generate_2dgrid(grid2d, -5, 5, 1000, -5, 5, 1000);
 
   // test: EpanechnikovKernel
-  EpanechnikovKernel<1> ep1d, ep1d_narrow(0.5), ep1d_wide(2);
+  EpanechnikovKernel<1,FloatType> ep1d, ep1d_narrow(0.5), ep1d_wide(2);
   cout << ep1d.dim() << " " << ep1d.normalization() << " (c.f. 1, 0.75) " << std::endl;
   cout << ep1d_narrow.dim() << " " << ep1d_narrow.normalization() << " (c.f. 1, 1.5) " << std::endl;
   cout << ep1d_wide.dim() << " " << ep1d_wide.normalization() << " (c.f. 1, 0.375) " << std::endl;
@@ -40,12 +41,12 @@ int main() {
   }
   fout.close();
 
-  EpanechnikovKernel<2> ep2d;
+  EpanechnikovKernel<2,FloatType> ep2d;
   cout << ep2d.dim() << " " << ep2d.normalization();
   cout << " (c.f. 2, "<< 0.5 * (1/M_PI) * 4 << ") " << std::endl;
   fout.open("test_epanechnikov2d.csv");
   for (auto &p : grid2d) { 
-    double result = ep2d.eval(p); 
+    FloatType result = ep2d.eval(p); 
     p.attributes().set_lower(result);
     p.attributes().set_upper(result);
   };
@@ -53,7 +54,7 @@ int main() {
   fout.close();
 
   // test: GaussianKernel
-  GaussianKernel<1> gauss1d, gauss1d_narrow(0.5), gauss1d_wide(2);
+  GaussianKernel<1,FloatType> gauss1d, gauss1d_narrow(0.5), gauss1d_wide(2);
   cout << gauss1d.dim() << " " << gauss1d.normalization();
   cout << " (c.f. 1, "<< std::pow(2*M_PI, -0.5)<< ") " << std::endl;
   cout << gauss1d_narrow.dim() << " " << gauss1d_narrow.normalization();
@@ -69,12 +70,12 @@ int main() {
   }
   fout.close();
 
-  GaussianKernel<2> gauss2d;
+  GaussianKernel<2,FloatType> gauss2d;
   cout << gauss2d.dim() << " " << gauss2d.normalization();
   cout << " (c.f. 2, "<< std::pow(2*M_PI, -1.0)<< ") " << std::endl;
   fout.open("test_gauss2d.csv");
   for (auto &p : grid2d) { 
-    double result = gauss2d.eval(p); 
+    FloatType result = gauss2d.eval(p); 
     p.attributes().set_lower(result);
     p.attributes().set_upper(result);
   };
@@ -100,7 +101,7 @@ int main() {
   cout << " (c.f. 2, "<< std::pow(2*M_PI, -1.0) / (1.2*0.7) << ") " << std::endl;
   fout.open("test_gaussprod2d.csv");
   for (auto &p : grid2d) { 
-    double result = gaussprod2d.eval(p); 
+    FloatType result = gaussprod2d.eval(p); 
     p.attributes().set_lower(result);
     p.attributes().set_upper(result);
   };
@@ -126,7 +127,7 @@ int main() {
   cout << " (c.f. 2, "<< std::pow(0.75, 2) / (1.2*0.7) << ") " << std::endl;
   fout.open("test_epprod2d.csv");
   for (auto &p : grid2d) { 
-    double result = epprod2d.eval(p); 
+    FloatType result = epprod2d.eval(p); 
     p.attributes().set_lower(result);
     p.attributes().set_upper(result);
   };

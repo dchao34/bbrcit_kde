@@ -6,12 +6,11 @@
 namespace bbrcit {
 
 // straight forward implementation of a dot product between two points. 
-template<typename PointT>
-typename PointT::FloatType DotProduct(const PointT &lhs, const PointT &rhs) {
+template<typename PointT, 
+         typename FloatT = typename PointT::FloatType>
+FloatT DotProduct(const PointT &lhs, const PointT &rhs) {
 
-  using FloatType = typename PointT::FloatType;
-
-  FloatType result = ConstantTraits<FloatType>::zero();
+  FloatT result = ConstantTraits<FloatT>::zero();
   for (int i = 0; i < lhs.dim(); ++i) {
     result += lhs[i] * rhs[i];
   }
