@@ -41,8 +41,8 @@ class DecoratedPoint {
     using AttributesType = AttrT;
     using FloatType = FloatT;
 
-    friend std::istream& operator>><>(std::istream&, DecoratedPoint<Dim,AttrT,FloatT>&);
-    friend std::ostream& operator<<<>(std::ostream&, const DecoratedPoint<Dim,AttrT,FloatT>&);
+    friend std::istream& operator>> <>(std::istream&, DecoratedPoint<Dim,AttrT,FloatT>&);
+    friend std::ostream& operator<< <>(std::ostream&, const DecoratedPoint<Dim,AttrT,FloatT>&);
     friend void swap<>(DecoratedPoint<Dim,AttrT,FloatT>&, DecoratedPoint<Dim,AttrT,FloatT>&);
 
     static constexpr int dim() { return Dim; }
