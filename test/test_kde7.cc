@@ -42,7 +42,7 @@ int main() {
   }
 
   int n_samples;
-  for (int k = 7; k < 22; ++k) {
+  for (int k = 7; k < 16; ++k) {
 
     cout << k << " ";
     fout << k << " ";
