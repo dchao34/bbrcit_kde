@@ -6,13 +6,12 @@
 #include <cmath>
 #include <iostream>
 
-#include <GeomUtils.h>
-
 namespace bbrcit {
 
-// The Gaussian kernel in D dimensions is the following:
+// The Gaussian kernel in D dimensions of bandwidth h is
+// defined as follows:
 //
-// K(x) = unit_volume * exp{ -0.5 * x'x }
+// K(x) = unit_volume / h^D * exp{ -0.5 * x'x / h*h}
 //
 // where: 
 //
@@ -20,6 +19,10 @@ namespace bbrcit {
 //     dot product of x. 
 // + unit_volume: 
 //     (2 \pi)^{-D/2}
+//
+// The two point version is defined as follows:
+//
+// K(x, y) := K(x-y)
 //
 template<int D, typename T=double>
 class GaussianKernel {
@@ -45,10 +48,15 @@ class GaussianKernel {
     // compute the normalization
     T normalization() const;
 
-    // evaluate the kernel at point p, but do not include the 
-    // normalization factor. e.g. evalutes exp{-0.5 * x'x}
+    // evaluate the one point kernel at point p, but do not include the 
+    // normalization factor. e.g. evalutes exp{-0.5 * x'x/h*h}
     template<typename PointT>
     T unnormalized_eval(const PointT&) const;
+
+    // evaluate the two point kernel, but do not include the 
+    // normalization factor. e.g. evalutes exp{-0.5 * (x-y)'(x-y)/h*h}
+    template<typename PointT>
+    T unnormalized_eval(const PointT&, const PointT&) const;
 
     // get/set the bandwidth
     T bandwidth() const;
@@ -56,6 +64,9 @@ class GaussianKernel {
 
   private:
     T bandwidth_;
+
+    template<typename PointT>
+    T point_arg_eval(const PointT&, const PointT&) const;
     
 };
 
@@ -83,12 +94,34 @@ inline T GaussianKernel<D,T>::eval(const PointT &p) const {
 template<int D, typename T>
   template<typename PointT>
 inline T GaussianKernel<D,T>::unnormalized_eval(const PointT &p) const {
-  return exp(-0.5 * DotProduct(p, p) / (bandwidth_ * bandwidth_) );
+  return exp(-0.5 * point_arg_eval(p, PointT()));
+}
+
+template<int D, typename T>
+  template<typename PointT>
+T GaussianKernel<D,T>::unnormalized_eval(const PointT &p, const PointT &q) const {
+  return exp(-0.5 * point_arg_eval(p, q));
 }
 
 template <int D, typename T>
 inline T GaussianKernel<D,T>::normalization() const {
   return pow(2*M_PI, -D/2.0) / pow(bandwidth_, D);
+}
+
+// evaluates the (x-y)'(x-y)/h*h part for the kernel argument. 
+template<int D, typename T>
+  template<typename PointT>
+T GaussianKernel<D,T>::point_arg_eval(const PointT &lhs, const PointT &rhs) const {
+
+  T result = ConstantTraits<T>::zero(); 
+
+  T diff; 
+  for (int i = 0; i < D; ++i) {
+    diff = lhs[i] - rhs[i];
+    result += diff * diff;
+  }
+
+  return result / (bandwidth_ * bandwidth_);
 }
 
 
@@ -125,7 +158,7 @@ inline double GaussianKernel<2,double>::normalization() const {
 // 2. unnormalized_eval()
 // ----------------------
 
-template<>
+/*template<>
   template<typename PointT>
 inline float GaussianKernel<1,float>::unnormalized_eval(const PointT &p) const {
   return expf(-0.5f * DotProduct<PointT,float>(p, p) / (bandwidth_ * bandwidth_) );
@@ -147,7 +180,7 @@ template<>
   template<typename PointT>
 inline double GaussianKernel<2,double>::unnormalized_eval(const PointT &p) const {
   return exp(-0.5 * DotProduct<PointT,double>(p, p) / (bandwidth_ * bandwidth_) );
-}
+}*/
 
 }
 

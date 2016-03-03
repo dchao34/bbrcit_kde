@@ -1,6 +1,8 @@
 #include <iostream>
-#include <Point2d.h>
 #include <stdio.h>
+
+#include <Point2d.h>
+#include <Kernels/GaussianKernel.h>
 
 #ifdef __CUDACC__
 __global__ void kernel() {

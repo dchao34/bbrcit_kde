@@ -1,0 +1,6 @@
+test_kernels
+test_kde3
+test_kde4
+test_kde5
+test_kde6
+test_kde7

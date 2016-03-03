@@ -1,6 +1,8 @@
 # Unit tests
-CPUBINS := test_point2d test_kernels
-GPUBINS := test_point2d_cuda
+#CPUBINS := test_point2d test_kernels
+CPUBINS := $(shell cat cpu_binary_targets.txt)
+#GPUBINS := #test_point2d_cuda
+GPUBINS := $(shell cat gpu_binary_targets.txt)
 
 # additional include and library search paths
 IDIR := ../include
