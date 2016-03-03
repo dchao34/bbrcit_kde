@@ -43,18 +43,8 @@ class EpanechnikovKernel {
     EpanechnikovKernel& operator=(const EpanechnikovKernel&) = default;
     EpanechnikovKernel& operator=(EpanechnikovKernel&&) = default;
 
-    // evaluate the value of the kernel at point p
-    template<typename PointT>
-    T eval(const PointT &p) const;
-
     // compute the normalization
     T normalization() const;
-
-    // evaluate the kernel at point p, but do not include the 
-    // normalization factor. e.g. evalutes (1-x'x/h*h), but does not 
-    // multiply the leading constants
-    template<typename PointT>
-    T unnormalized_eval(const PointT&) const;
 
     // evaluate the two point kernel, but do not include the 
     // normalization factor. 
@@ -88,18 +78,6 @@ inline T EpanechnikovKernel<D,T>::bandwidth() const { return bandwidth_; }
 
 template<int D, typename T>
 inline void EpanechnikovKernel<D,T>::set_bandwidth(T bw) { bandwidth_ = bw; }
-
-template<int D, typename T>
-  template<typename PointT>
-inline T EpanechnikovKernel<D,T>::eval(const PointT &p) const {
-  return normalization() * unnormalized_eval(p); 
-}
-
-template<int D, typename T>
-  template<typename PointT>
-inline T EpanechnikovKernel<D,T>::unnormalized_eval(const PointT &p) const {
-  return std::max(1.0 - point_arg_eval(p, PointT()), 0.0);
-}
 
 template<int D, typename T>
   template<typename PointT>
@@ -162,29 +140,29 @@ inline double EpanechnikovKernel<2,double>::normalization() const {
 // 2. unnormalized_eval()
 // ----------------------
 
-/*template<>
+template<>
   template<typename PointT>
-inline float EpanechnikovKernel<1,float>::unnormalized_eval(const PointT &p) const {
-  return fmaxf(1.0f - DotProduct<PointT,float>(p,p)/(bandwidth_*bandwidth_), 0.0f);
+inline float EpanechnikovKernel<1,float>::unnormalized_eval(const PointT &p, const PointT &q) const {
+  return fmaxf(1.0f - point_arg_eval(p, q), 0.0f);
 }
 
 template<>
   template<typename PointT>
-inline float EpanechnikovKernel<2,float>::unnormalized_eval(const PointT &p) const {
-  return fmaxf(1.0f - DotProduct<PointT,float>(p,p)/(bandwidth_*bandwidth_), 0.0f);
+inline double EpanechnikovKernel<1,double>::unnormalized_eval(const PointT &p, const PointT &q) const {
+  return fmax(1.0 - point_arg_eval(p, q), 0.0);
 }
 
 template<>
   template<typename PointT>
-inline double EpanechnikovKernel<1,double>::unnormalized_eval(const PointT &p) const {
-  return fmax(1.0 - DotProduct<PointT,double>(p,p)/(bandwidth_*bandwidth_), 0.0);
+inline float EpanechnikovKernel<2,float>::unnormalized_eval(const PointT &p, const PointT &q) const {
+  return fmaxf(1.0f - point_arg_eval(p, q), 0.0f);
 }
 
 template<>
   template<typename PointT>
-inline double EpanechnikovKernel<2,double>::unnormalized_eval(const PointT &p) const {
-  return fmax(1.0 - DotProduct<PointT,double>(p,p)/(bandwidth_*bandwidth_), 0.0);
-}*/
+inline double EpanechnikovKernel<2,double>::unnormalized_eval(const PointT &p, const PointT &q) const {
+  return fmax(1.0 - point_arg_eval(p, q), 0.0);
+}
 
 
 }

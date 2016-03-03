@@ -43,20 +43,11 @@ class GaussianKernel {
     GaussianKernel& operator=(const GaussianKernel&) = default;
     GaussianKernel& operator=(GaussianKernel&&) = default;
 
-    // evaluate the value of the kernel at point p
-    template<typename PointT>
-    T eval(const PointT &p) const;
-
     // compute the normalization
     T normalization() const;
 
-    // evaluate the one point kernel at point p, but do not include the 
-    // normalization factor. e.g. evalutes exp{-0.5 * x'x/h*h}
-    template<typename PointT>
-    T unnormalized_eval(const PointT&) const;
-
     // evaluate the two point kernel, but do not include the 
-    // normalization factor. 
+    // normalization factor. e.g. evaluates exp{-0.5 * (x-y)'(x-y)/(h*h)
     template<typename PointT>
     T unnormalized_eval(const PointT&, const PointT&) const;
 
@@ -86,18 +77,6 @@ inline T GaussianKernel<D,T>::bandwidth() const { return bandwidth_; }
 
 template<int D, typename T>
 inline void GaussianKernel<D,T>::set_bandwidth(T bw) { bandwidth_ = bw; }
-
-template<int D, typename T>
-  template<typename PointT>
-inline T GaussianKernel<D,T>::eval(const PointT &p) const {
-  return normalization() * unnormalized_eval(p);
-}
-
-template<int D, typename T>
-  template<typename PointT>
-inline T GaussianKernel<D,T>::unnormalized_eval(const PointT &p) const {
-  return exp(-0.5 * point_arg_eval(p, PointT()));
-}
 
 template<int D, typename T>
   template<typename PointT>
@@ -160,29 +139,29 @@ inline double GaussianKernel<2,double>::normalization() const {
 // 2. unnormalized_eval()
 // ----------------------
 
-/*template<>
+template<>
   template<typename PointT>
-inline float GaussianKernel<1,float>::unnormalized_eval(const PointT &p) const {
-  return expf(-0.5f * DotProduct<PointT,float>(p, p) / (bandwidth_ * bandwidth_) );
+inline float GaussianKernel<1,float>::unnormalized_eval(const PointT &p, const PointT &q) const {
+  return expf(-0.5f * point_arg_eval(p, q));
 }
 
 template<>
   template<typename PointT>
-inline float GaussianKernel<2,float>::unnormalized_eval(const PointT &p) const {
-  return expf(-0.5f * DotProduct<PointT,float>(p, p) / (bandwidth_ * bandwidth_) );
+inline double GaussianKernel<1,double>::unnormalized_eval(const PointT &p, const PointT &q) const {
+  return exp(-0.5 * point_arg_eval(p, q));
 }
 
 template<>
   template<typename PointT>
-inline double GaussianKernel<1,double>::unnormalized_eval(const PointT &p) const {
-  return exp(-0.5 * DotProduct<PointT,double>(p, p) / (bandwidth_ * bandwidth_) );
+inline float GaussianKernel<2,float>::unnormalized_eval(const PointT &p, const PointT &q) const {
+  return expf(-0.5f * point_arg_eval(p, q));
 }
 
 template<>
   template<typename PointT>
-inline double GaussianKernel<2,double>::unnormalized_eval(const PointT &p) const {
-  return exp(-0.5 * DotProduct<PointT,double>(p, p) / (bandwidth_ * bandwidth_) );
-}*/
+inline double GaussianKernel<2,double>::unnormalized_eval(const PointT &p, const PointT &q) const {
+  return exp(-0.5 * point_arg_eval(p, q));
+}
 
 }
 

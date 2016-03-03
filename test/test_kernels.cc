@@ -12,7 +12,7 @@
 #include "kde_test_utils.h"
 
 using namespace std;
-using FloatType = double;
+using FloatType = float;
 using bbrcit::EpanechnikovKernel;
 using bbrcit::GaussianKernel;
 using bbrcit::EpanechnikovProductKernel;
@@ -20,6 +20,9 @@ using bbrcit::GaussianProductKernel;
 using bbrcit::KdeAttributes;
 using Point1d = bbrcit::DecoratedPoint<1, KdeAttributes<FloatType>>;
 using Point2d = bbrcit::DecoratedPoint<2, KdeAttributes<FloatType>>;
+
+const Point1d origin1d; 
+const Point2d origin2d;
 
 int main() {
 
@@ -32,11 +35,12 @@ int main() {
   cout << ep1d.dim() << " " << ep1d.normalization() << " (c.f. 1, 0.75) " << std::endl;
   cout << ep1d_narrow.dim() << " " << ep1d_narrow.normalization() << " (c.f. 1, 1.5) " << std::endl;
   cout << ep1d_wide.dim() << " " << ep1d_wide.normalization() << " (c.f. 1, 0.375) " << std::endl;
+
   fout.open("test_epanechnikov1d.csv");
   for (const auto &p : grid1d) { 
-    fout << p[0] << " " << ep1d.eval(p);
-    fout << " " << ep1d_narrow.eval(p);
-    fout << " " << ep1d_wide.eval(p);
+    fout << p[0] << " " << ep1d.normalization() * ep1d.unnormalized_eval(p, origin1d);
+    fout << " " << ep1d_narrow.normalization() * ep1d_narrow.unnormalized_eval(p, origin1d);
+    fout << " " << ep1d_wide.normalization() * ep1d_wide.unnormalized_eval(p, origin1d);
     fout << endl; 
   }
   fout.close();
@@ -46,7 +50,7 @@ int main() {
   cout << " (c.f. 2, "<< 0.5 * (1/M_PI) * 4 << ") " << std::endl;
   fout.open("test_epanechnikov2d.csv");
   for (auto &p : grid2d) { 
-    FloatType result = ep2d.eval(p); 
+    FloatType result = ep2d.normalization() * ep2d.unnormalized_eval(p, origin2d); 
     p.attributes().set_lower(result);
     p.attributes().set_upper(result);
   };
@@ -63,9 +67,9 @@ int main() {
   cout << " (c.f. 1, "<< std::pow(2*M_PI, -0.5) / 2.0 << ") " << std::endl;
   fout.open("test_gauss1d.csv");
   for (const auto &p : grid1d) { 
-    fout << p[0] << " " << gauss1d.eval(p);
-    fout << " " << gauss1d_narrow.eval(p);
-    fout << " " << gauss1d_wide.eval(p);
+    fout << p[0] << " " << gauss1d.normalization() * gauss1d.unnormalized_eval(p, origin1d);
+    fout << " " << gauss1d_narrow.normalization() * gauss1d_narrow.unnormalized_eval(p, origin1d);
+    fout << " " << gauss1d_wide.normalization() * gauss1d_wide.unnormalized_eval(p, origin1d);
     fout << endl; 
   }
   fout.close();
@@ -75,7 +79,7 @@ int main() {
   cout << " (c.f. 2, "<< std::pow(2*M_PI, -1.0)<< ") " << std::endl;
   fout.open("test_gauss2d.csv");
   for (auto &p : grid2d) { 
-    FloatType result = gauss2d.eval(p); 
+    FloatType result = gauss2d.normalization() * gauss2d.unnormalized_eval(p, origin2d); 
     p.attributes().set_lower(result);
     p.attributes().set_upper(result);
   };
@@ -113,7 +117,9 @@ int main() {
   cout << epprod1d.dim() << " " << epprod1d.normalization();
   cout << " (c.f. 1, "<< std::pow(0.75, 1)<< ") " << std::endl;
   fout.open("test_epprod1d.csv");
-  for (const auto &p : grid1d) { fout << p[0] << " " << epprod1d.eval(p) << endl; }
+  for (const auto &p : grid1d) { 
+    fout << p[0] << " " << epprod1d.normalization() * epprod1d.unnormalized_eval(p, origin1d) << endl; 
+  }
   fout.close();
 
   EpanechnikovProductKernel<2> epprod2d({1.2, 1.0});
