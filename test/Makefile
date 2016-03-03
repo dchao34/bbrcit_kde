@@ -1,36 +1,51 @@
 # Unit tests
-TESTBINS := test_kernels #test_kde_cppthread test_kde7 test_kde6 test_kde5 test_kde1 test_kde2 test_kde3 test_kde4 #test_kdtree3 test_kdtree2 test_kdtree1 #test_rectangle #test_kde_attributes #test_interval #test_float_utils test_point_weight_attributes test_decorated_point #test_point  #test_fft generate_bimodal_gauss prodkde2d_scan prodkde2d_fftcv prodadakde2d_scan
+CPUBINS := test_point2d test_kernels
+GPUBINS := test_point2d_cuda
 
-# Remainder of this file controls the compilation process
-
+# additional include and library search paths
 IDIR := ../include
 LDIR := ../lib
 DDIR := .d
-
-CXX ?= g++
-CXXFLAGS = -Wall -Werror -pedantic -pthread -std=c++11 -O2
 INCFLAGS = -I$(IDIR)
 LDFLAGS = -L$(LDIR) -lbbrcit_kde
 
+# host compiler
+CXX ?= g++
+CXXFLAGS = -Wall -Werror -pedantic -pthread -std=c++11 -O2
+
+# device compiler
+NVCC := nvcc -ccbin=$(CXX)
+NVCCFLAGS = -std=c++11 -arch=sm_35 -x cu
+
 $(shell mkdir -p $(DDIR) > /dev/null)
-DEPFLAGS = -MT $@ -MMD -MP -MF $(DDIR)/$*.Td
-POSTCOMPILE = @mv -f $(DDIR)/$*.Td $(DDIR)/$*.d
-SRCS = $(addsuffix .cc, $(TESTBINS))
+CXXDEPFLAGS = -MT $@ -MMD -MP -MF $(DDIR)/$*.Td
+CXXPOSTCOMPILE = @mv -f $(DDIR)/$*.Td $(DDIR)/$*.d
+NVCCPOSTCOMPILE = @$(NVCC) -M -MT $@ $(NVCCFLAGS) $(INCFLAGS) $< -o $(DDIR)/$@.d
 
 .PHONY : all clean cleanall
 
-all : $(TESTBINS)
+all : cpu gpu
+
+cpu : $(CPUBINS)
+
+gpu : $(GPUBINS)
 
 % : %.cc
-	$(CXX) $(DEPFLAGS) $(CXXFLAGS) $(INCFLAGS) $(LDFLAGS) $< -o $@
-	$(POSTCOMPILE)
+	$(CXX) $(CXXDEPFLAGS) $(CXXFLAGS) $(INCFLAGS) $(LDFLAGS) $< -o $@
+	$(CXXPOSTCOMPILE)
+
+%_cuda : %.cc
+	$(NVCC) $(NVCCFLAGS) $(INCFLAGS) $< -o $@
+	$(NVCCPOSTCOMPILE)
 
 $(DDIR)/%.d : ;
 
-include $(patsubst %,$(DDIR)/%.d,$(basename $(SRCS)))
+include $(patsubst %,$(DDIR)/%.d,$(CPUBINS))
+include $(patsubst %,$(DDIR)/%.d,$(GPUBINS))
 
 clean:
-	@rm -rf *~ *.o $(TESTBINS)
+	@rm -rf *~ *.o $(CPUBINS) $(GPUBINS)
 
 cleanall:
-	@rm -rf *~ *.o $(TESTBINS) *.dat *.csv *.out *.dSYM
+	@rm -rf *~ *.o $(CPUBINS) $(GPUBINS) \
+		*.dat *.csv *.out *.dSYM $(DDIR)/*.d

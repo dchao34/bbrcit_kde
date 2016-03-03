@@ -7,6 +7,7 @@
 #include <cmath>
 #include <ostream>
 #include <random>
+#include <algorithm>
 
 void transform(double &x, double &y,
                double mx, double my,

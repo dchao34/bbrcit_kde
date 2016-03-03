@@ -1,32 +1,44 @@
-Example
--------
+Unit Tests
+==========
 
-+ `make`. This will create all the unit tests. 
+The following is a listing of all the unit tests available in this directory. 
 
-+ Generate some data. Currently a bimodal gaussian (see source for details):
+Each line below is associated with a single unit test. The binary executable that performs the test appears to the left of the `:`, and a description of the test appears to the right.
 
-  ```
-  ./generate_bimodal_gauss 10000
-  ```
+For the CPU tests, the binary executables are all produced using the single source file whose name is the same except for the extension `.cc`. For example, `test_kde1` is produced with `test_kde1.cc`. 
 
-  this will produce `bimodal_gaussian.csv`. 
+For the GPU tests, the binary execuables all have the suffix `_cuda`. They are produced using the source file whose name is the same as the string preceding `_cuda`, but with the extension `.cc`. For example, `test_point2d_cuda` is produced using `test_point2d.cc`. 
 
-+ Bandwidth cross validation:
+A single source file can produce both a CPU as well as a GPU test. In this case, the cpu binary has the same name as the prefix of the source file, while the gpu binary has the same name as the prefix, except with a `cuda` extension. For example, `test_point2d.cc` produces the cpu test `test_point2d` as well as a gpu test `test_point2d_cuda`. 
 
-  ```
-  ./prodkde2d_fftcv bimodal_gaussian.csv 1
-  ./prodkde2d_fftcv bimodal_gaussian.csv 2
-  ```
+CPU tests
+---------
++ `test_point2d`:
++ `test_kernels`:
++ `test_kde_cppthread`:
++ `test_kde7`:
++ `test_kde6`:
++ `test_kde5`:
++ `test_kde1`:
++ `test_kde2`:
++ `test_kde3`:
++ `test_kde4`:
++ `test_kdtree3`:
++ `test_kdtree2`:
++ `test_kdtree1`:
++ `test_rectangle`:
++ `test_kde_attributes`:
++ `test_interval`:
++ `test_float_utils`:
++ `test_point_weight_attributes`:
++ `test_decorated_point`:
++ `test_point `:
++ `test_fft`:
++ `generate_bimodal_gauss`:
++ `prodkde2d_scan`:
++ `prodkde2d_fftcv`:
++ `prodadakde2d_scan`:
 
-  I got `0.074` for the first dimension and `0.022` for the second. 
-
-+ Scan the product kde's:
-
-  ```
-  python call_kde_scan.py bimodal_gaussian.csv 0.074 0.022
-  python call_akde_scan.py bimodal_gaussian.csv 0.074 0.022
-  ```
-
-  this will produce `prodkde2d_scan2d.dat`, `prodkde2d_scan1d.dat`, `prodadakde2d_scan2d.dat`, and `prodadakde2d_scan2d.dat`.
-
-+ `jupyter notebook`. Then run all of `kde_visual.ipynb`. 
+GPU tests
+---------
++ `test_point2d_cuda`:
