@@ -3,10 +3,17 @@
 
 #define _USE_MATH_DEFINES
 
+#ifdef __CUDACC__
+#define CUDA_CALLABLE __host__ __device__
+#else
+#define CUDA_CALLABLE
+#endif
+
 #include <cmath>
 #include <iostream>
 
 #include <KdeTraits.h>
+#include <Point2d.h>
 
 namespace bbrcit {
 
@@ -34,32 +41,37 @@ class GaussianKernel {
     static constexpr int dim() { return D; }
 
   public:
-    GaussianKernel();
-    GaussianKernel(T bandwidth);
+    CUDA_CALLABLE GaussianKernel();
+    CUDA_CALLABLE GaussianKernel(T bandwidth);
 
-    ~GaussianKernel() = default;
-    GaussianKernel(const GaussianKernel&) = default;
-    GaussianKernel(GaussianKernel&&) = default;
-    GaussianKernel& operator=(const GaussianKernel&) = default;
-    GaussianKernel& operator=(GaussianKernel&&) = default;
+    CUDA_CALLABLE ~GaussianKernel() = default;
+    CUDA_CALLABLE GaussianKernel(const GaussianKernel&) = default;
+    CUDA_CALLABLE GaussianKernel(GaussianKernel&&) = default;
+    CUDA_CALLABLE GaussianKernel& operator=(const GaussianKernel&) = default;
+    CUDA_CALLABLE GaussianKernel& operator=(GaussianKernel&&) = default;
 
     // compute the normalization
-    T normalization() const;
+    CUDA_CALLABLE T normalization() const;
 
     // evaluate the two point kernel, but do not include the 
     // normalization factor. e.g. evaluates exp{-0.5 * (x-y)'(x-y)/(h*h)
     template<typename PointT>
-    T unnormalized_eval(const PointT&, const PointT&) const;
+    CUDA_CALLABLE T unnormalized_eval(const PointT&, const PointT&) const;
 
     // get/set the bandwidth
-    T bandwidth() const;
-    void set_bandwidth(T);
+    CUDA_CALLABLE T bandwidth() const;
+    CUDA_CALLABLE void set_bandwidth(T);
 
   private:
     T bandwidth_;
 
     template<typename PointT>
-    T point_arg_eval(const PointT&, const PointT&) const;
+    CUDA_CALLABLE T point_arg_eval(const PointT&, const PointT&) const;
+    
+    // TODO: allow these overloads for now. would be better if only some are 
+    // callable when D has the right dimension. 
+    // consider using IfThenElse metafunction to custimize these overloads?
+    CUDA_CALLABLE T point_arg_eval(const Point2d<T>&, const Point2d<T>&) const;
     
 };
 
@@ -103,6 +115,14 @@ T GaussianKernel<D,T>::point_arg_eval(const PointT &lhs, const PointT &rhs) cons
   }
 
   return result / (bandwidth_ * bandwidth_);
+}
+
+template<int D, typename T>
+inline T GaussianKernel<D,T>::point_arg_eval(
+    const Point2d<T> &lhs, 
+    const Point2d<T> &rhs) const {
+  return ((lhs.x()-rhs.x())*(lhs.x()-rhs.x()) +
+          (lhs.y()-rhs.y())*(lhs.y()-rhs.y())) / (bandwidth_*bandwidth_);
 }
 
 

@@ -18,17 +18,17 @@ using bbrcit::GaussianKernel;
 using bbrcit::EpanechnikovProductKernel;
 using bbrcit::GaussianProductKernel;
 using bbrcit::KdeAttributes;
-using Point1d = bbrcit::DecoratedPoint<1, KdeAttributes<FloatType>>;
-using Point2d = bbrcit::DecoratedPoint<2, KdeAttributes<FloatType>>;
+using PointType1d = bbrcit::DecoratedPoint<1, KdeAttributes<FloatType>>;
+using PointType2d = bbrcit::DecoratedPoint<2, KdeAttributes<FloatType>>;
 
-const Point1d origin1d; 
-const Point2d origin2d;
+const PointType1d origin1d; 
+const PointType2d origin2d;
 
 int main() {
 
   ofstream fout;
-  vector<Point1d> grid1d; generate_1dgrid(grid1d, -5, 5, 1000);
-  vector<Point2d> grid2d; generate_2dgrid(grid2d, -5, 5, 1000, -5, 5, 1000);
+  vector<PointType1d> grid1d; generate_1dgrid(grid1d, -5, 5, 1000);
+  vector<PointType2d> grid2d; generate_2dgrid(grid2d, -5, 5, 1000, -5, 5, 1000);
 
   // test: EpanechnikovKernel
   EpanechnikovKernel<1,FloatType> ep1d, ep1d_narrow(0.5), ep1d_wide(2);

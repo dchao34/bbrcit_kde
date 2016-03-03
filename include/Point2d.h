@@ -9,6 +9,8 @@
 #define CUDA_CALLABLE
 #endif
 
+namespace bbrcit {
+
 template <typename T>
 class Point2d {
   using FloatType = float;
@@ -39,5 +41,33 @@ class CUDA_ALIGN16 Point2d<float> {
 
 inline
 Point2d<float>::Point2d(float x, float y, float w) : x_(x), y_(y), w_(w) {}
+
+template <>
+class CUDA_ALIGN16 Point2d<double> {
+
+  public:
+    using FloatType = double;
+
+    CUDA_CALLABLE Point2d() = default;
+    CUDA_CALLABLE Point2d(double, double, double);
+
+    CUDA_CALLABLE ~Point2d() = default;
+    CUDA_CALLABLE Point2d(const Point2d<double>&) = default;
+    CUDA_CALLABLE Point2d<double>& operator=(const Point2d<double>&) = default;
+
+    CUDA_CALLABLE double x() const { return x_; }
+    CUDA_CALLABLE double y() const { return y_; }
+    CUDA_CALLABLE double w() const { return w_; }
+
+  private:
+    double x_ = 0.0;
+    double y_ = 0.0;
+    double w_ = 0.0;
+};
+
+inline
+Point2d<double>::Point2d(double x, double y, double w) : x_(x), y_(y), w_(w) {}
+
+}
 
 #endif
