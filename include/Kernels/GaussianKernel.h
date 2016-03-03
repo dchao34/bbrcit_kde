@@ -6,6 +6,8 @@
 #include <cmath>
 #include <iostream>
 
+#include <KdeTraits.h>
+
 namespace bbrcit {
 
 // The Gaussian kernel in D dimensions of bandwidth h is
@@ -54,7 +56,7 @@ class GaussianKernel {
     T unnormalized_eval(const PointT&) const;
 
     // evaluate the two point kernel, but do not include the 
-    // normalization factor. e.g. evalutes exp{-0.5 * (x-y)'(x-y)/h*h}
+    // normalization factor. 
     template<typename PointT>
     T unnormalized_eval(const PointT&, const PointT&) const;
 

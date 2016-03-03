@@ -6,15 +6,15 @@
 #include <cmath>
 #include <iostream>
 
-#include <GeomUtils.h>
+#include <KdeTraits.h>
 
 namespace bbrcit {
 
 // The Epanechnikov kernel in D dimensions is the following:
 //
 // K(x) = 
-//     0.5 * unit_volume * (D+2) (1 - x'x), if x'x < 1
-//     0                                    otherwise
+//     0.5 * unit_volume/h^D * (D+2) (1 - x'x/(h*h)), if x'x < 1
+//     0                                              otherwise
 //
 // where: 
 //
@@ -51,10 +51,15 @@ class EpanechnikovKernel {
     T normalization() const;
 
     // evaluate the kernel at point p, but do not include the 
-    // normalization factor. e.g. evalutes (1-x'x), but does not 
+    // normalization factor. e.g. evalutes (1-x'x/h*h), but does not 
     // multiply the leading constants
     template<typename PointT>
     T unnormalized_eval(const PointT&) const;
+
+    // evaluate the two point kernel, but do not include the 
+    // normalization factor. 
+    template<typename PointT>
+    T unnormalized_eval(const PointT&, const PointT&) const;
 
     // get/set the bandwidth
     T bandwidth() const;
@@ -63,6 +68,9 @@ class EpanechnikovKernel {
   private: 
     T bandwidth_;
 
+
+    template<typename PointT>
+    T point_arg_eval(const PointT&, const PointT&) const;
     
 };
 
@@ -90,13 +98,35 @@ inline T EpanechnikovKernel<D,T>::eval(const PointT &p) const {
 template<int D, typename T>
   template<typename PointT>
 inline T EpanechnikovKernel<D,T>::unnormalized_eval(const PointT &p) const {
-  return std::max(1.0 - DotProduct(p,p) / (bandwidth_ * bandwidth_), 0.0);
+  return std::max(1.0 - point_arg_eval(p, PointT()), 0.0);
+}
+
+template<int D, typename T>
+  template<typename PointT>
+inline T EpanechnikovKernel<D,T>::unnormalized_eval(const PointT &p, const PointT &q) const {
+  return std::max(1.0 - point_arg_eval(p, q), 0.0);
 }
 
 template <int D, typename T>
 inline T EpanechnikovKernel<D,T>::normalization() const {
   return 0.5 * (D+2) / (std::pow(M_PI, D/2.0) / std::tgamma(1+D/2.0)) 
                      / std::pow(bandwidth_, D);
+}
+
+// evaluates the (x-y)'(x-y)/h*h part for the kernel argument. 
+template<int D, typename T>
+  template<typename PointT>
+T EpanechnikovKernel<D,T>::point_arg_eval(const PointT &lhs, const PointT &rhs) const {
+
+  T result = ConstantTraits<T>::zero(); 
+
+  T diff; 
+  for (int i = 0; i < D; ++i) {
+    diff = lhs[i] - rhs[i];
+    result += diff * diff;
+  }
+
+  return result / (bandwidth_ * bandwidth_);
 }
 
 // Specializations
@@ -132,7 +162,7 @@ inline double EpanechnikovKernel<2,double>::normalization() const {
 // 2. unnormalized_eval()
 // ----------------------
 
-template<>
+/*template<>
   template<typename PointT>
 inline float EpanechnikovKernel<1,float>::unnormalized_eval(const PointT &p) const {
   return fmaxf(1.0f - DotProduct<PointT,float>(p,p)/(bandwidth_*bandwidth_), 0.0f);
@@ -154,7 +184,7 @@ template<>
   template<typename PointT>
 inline double EpanechnikovKernel<2,double>::unnormalized_eval(const PointT &p) const {
   return fmax(1.0 - DotProduct<PointT,double>(p,p)/(bandwidth_*bandwidth_), 0.0);
-}
+}*/
 
 
 }
