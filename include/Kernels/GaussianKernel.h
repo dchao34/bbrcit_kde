@@ -66,7 +66,7 @@ class GaussianKernel {
     T bandwidth_;
 
     template<typename PointT>
-    CUDA_CALLABLE T point_arg_eval(const PointT&, const PointT&) const;
+    T point_arg_eval(const PointT&, const PointT&) const;
     
     // TODO: allow these overloads for now. would be better if only some are 
     // callable when D has the right dimension. 
@@ -159,24 +159,38 @@ inline double GaussianKernel<2,double>::normalization() const {
 // 2. unnormalized_eval()
 // ----------------------
 
+// TODO: these pragmas are workarounds for the warnings. is there a better solution?
+
+#ifdef __CUDACC__
+#pragma hd_warning_disable
+#endif
 template<>
   template<typename PointT>
 inline float GaussianKernel<1,float>::unnormalized_eval(const PointT &p, const PointT &q) const {
   return expf(-0.5f * point_arg_eval(p, q));
 }
 
+#ifdef __CUDACC__
+#pragma hd_warning_disable
+#endif
 template<>
   template<typename PointT>
 inline double GaussianKernel<1,double>::unnormalized_eval(const PointT &p, const PointT &q) const {
   return exp(-0.5 * point_arg_eval(p, q));
 }
 
+#ifdef __CUDACC__
+#pragma hd_warning_disable
+#endif
 template<>
   template<typename PointT>
 inline float GaussianKernel<2,float>::unnormalized_eval(const PointT &p, const PointT &q) const {
   return expf(-0.5f * point_arg_eval(p, q));
 }
 
+#ifdef __CUDACC__
+#pragma hd_warning_disable
+#endif
 template<>
   template<typename PointT>
 inline double GaussianKernel<2,double>::unnormalized_eval(const PointT &p, const PointT &q) const {
