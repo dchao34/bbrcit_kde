@@ -23,7 +23,15 @@ class CUDA_ALIGN16 Point2d<float> {
     using FloatType = float;
 
     CUDA_CALLABLE Point2d() = default;
-    CUDA_CALLABLE Point2d(float, float, float);
+    CUDA_CALLABLE Point2d(float x, float y, float w) : x_(x), y_(y), w_(w) {}
+
+    template<typename HostDecPointT>
+      Point2d<float>& operator=(const HostDecPointT &pt) {
+        x_ = pt[0]; 
+        y_ = pt[1];
+        w_ = pt.attributes().weight();
+        return *this;
+      }
 
     CUDA_CALLABLE ~Point2d() = default;
     CUDA_CALLABLE Point2d(const Point2d<float>&) = default;
@@ -39,9 +47,6 @@ class CUDA_ALIGN16 Point2d<float> {
     float w_ = 0.0f;
 };
 
-inline
-Point2d<float>::Point2d(float x, float y, float w) : x_(x), y_(y), w_(w) {}
-
 template <>
 class CUDA_ALIGN16 Point2d<double> {
 
@@ -49,7 +54,15 @@ class CUDA_ALIGN16 Point2d<double> {
     using FloatType = double;
 
     CUDA_CALLABLE Point2d() = default;
-    CUDA_CALLABLE Point2d(double, double, double);
+    CUDA_CALLABLE Point2d(double x, double y, double w) : x_(x), y_(y), w_(w) {}
+
+    template<typename HostDecPointT>
+      Point2d<double>& operator=(const HostDecPointT &pt) {
+        x_ = pt[0]; 
+        y_ = pt[1];
+        w_ = pt.attributes().weight();
+        return *this;
+      }
 
     CUDA_CALLABLE ~Point2d() = default;
     CUDA_CALLABLE Point2d(const Point2d<double>&) = default;
@@ -65,8 +78,6 @@ class CUDA_ALIGN16 Point2d<double> {
     double w_ = 0.0;
 };
 
-inline
-Point2d<double>::Point2d(double x, double y, double w) : x_(x), y_(y), w_(w) {}
 
 }
 
