@@ -41,7 +41,7 @@ class CudaDirectKde {
 
     // copy-control
     CudaDirectKde(const CudaDirectKde<D,FloatT,KernelT>&);
-    CudaDirectKde(CudaDirectKde<D,FloatT,KernelT>&&);
+    CudaDirectKde(CudaDirectKde<D,FloatT,KernelT>&&) noexcept;
     CudaDirectKde& operator=(CudaDirectKde<D,FloatT,KernelT>);
     ~CudaDirectKde();
 
@@ -256,7 +256,7 @@ CudaDirectKde<D,FT,KT>::CudaDirectKde(
 }
 
 template<int D, typename FT, typename KT>
-CudaDirectKde<D,FT,KT>::CudaDirectKde(CudaDirectKde<D,FT,KT> &&rhs) 
+CudaDirectKde<D,FT,KT>::CudaDirectKde(CudaDirectKde<D,FT,KT> &&rhs) noexcept
   : n_ref_points_(std::move(rhs.n_ref_points_)), 
     n_query_points_(std::move(rhs.n_query_points_)),
     kernel_(std::move(rhs.kernel_)) {

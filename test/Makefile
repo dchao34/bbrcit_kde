@@ -1,15 +1,15 @@
 # Unit tests
 CPUBINS := test_kde10
 #CPUBINS := $(shell cat cpu_binary_targets.txt)
-#GPUBINS := test_tree_kde_cuda
+GPUBINS := test_kde10_cuda
 #GPUBINS := $(shell cat gpu_binary_targets.txt)
 
 # additional include and library search paths
 IDIR := ../include
 LDIR := ../lib
 DDIR := .d
-INCFLAGS = -I$(IDIR)
-LDFLAGS = -L$(LDIR) -lbbrcit_kde
+INCFLAGS = $(addprefix -I, $(IDIR))
+LDFLAGS = $(addprefix -L, $(LDIR)) -lbbrcit_kde
 
 # host compiler
 CXX ?= g++
@@ -17,7 +17,7 @@ CXXFLAGS = -Wall -Werror -pedantic -pthread -std=c++11 -O2
 
 # device compiler
 NVCC := nvcc -ccbin=$(CXX)
-NVCCFLAGS = -std=c++11 -arch=sm_35 -x cu
+NVCCFLAGS = -std=c++11 -O2 -arch=sm_35 -x cu
 
 $(shell mkdir -p $(DDIR) > /dev/null)
 CXXDEPFLAGS = -MT $@ -MMD -MP -MF $(DDIR)/$*.Td

@@ -17,6 +17,10 @@
 #include <KdeTraits.h>
 #include <FloatUtils.h>
 
+#ifdef __CUDACC__
+#include <CudaDirectKde.h>
+#endif
+
 namespace bbrcit {
 
 template<int D, typename FT, typename KT, typename AT> class KernelDensity;
@@ -742,11 +746,32 @@ KernelDensity<D,FT,KT,AT>::direct_eval(const GeomPointType &p) const {
 template<int D, typename FT, typename KT, typename AT>
 void KernelDensity<D,FT,KT,AT>::direct_eval(
     std::vector<DataPointType> &queries) const {
+
+#ifndef __CUDACC__
+
   for (auto &q : queries) {
     FloatType result = direct_eval(q.point());
     q.attributes().set_lower(result);
     q.attributes().set_upper(result);
   }
+
+#else 
+
+  std::vector<FloatType> host_results(queries.size());
+
+  CudaDirectKde<D,FloatType,KernelType> cuda_kde(data_tree_.points(), queries);
+  cuda_kde.kernel() = kernel_;
+
+  cuda_kde.eval(0, data_tree_.size()-1, 0, queries.size()-1, 
+                host_results);
+
+  for (size_t i = 0; i < queries.size(); ++i) {
+    queries[i].attributes().set_lower(host_results[i]);
+    queries[i].attributes().set_upper(host_results[i]);
+  }
+
+#endif
+
   return;
 }
 

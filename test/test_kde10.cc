@@ -36,9 +36,14 @@ int main() {
 
   default_random_engine e;
   vector<DataPointType> references;
+
+  start = std::chrono::high_resolution_clock::now();
   generate_bimodal_gaussian(e, references, n_references, 
                             1, 1, 0.5, 0.3, 30, 
                             -1, -1, 0.5, 0.3, -30);
+  end = std::chrono::high_resolution_clock::now();
+  elapsed = end - start;
+  cout << "  cpu time: " << elapsed.count() << " ms. " << std::endl;
 
   fout.open("test_kde10_data.csv");
   write_scatter_data(fout, references);
@@ -53,7 +58,11 @@ int main() {
 
   cout << "+ generating " << steps_x << "x" << steps_y << " query grid" << endl;
 
+  start = std::chrono::high_resolution_clock::now();
   generate_2dgrid(grid, start_x, end_x, steps_x, start_y, end_y, steps_y);
+  end = std::chrono::high_resolution_clock::now();
+  elapsed = end - start;
+  cout << "  cpu time: " << elapsed.count() << " ms. " << std::endl;
 
   cout << endl;
 
@@ -75,6 +84,10 @@ int main() {
   // 4. direct kde evaluation
   cout << "+ direct kde evaluation" << endl; 
   queries = grid;
+
+#ifdef __CUDACC__
+  cudaDeviceSynchronize();
+#endif
 
   start = std::chrono::high_resolution_clock::now();
   kde.direct_eval(queries);

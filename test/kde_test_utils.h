@@ -3,6 +3,12 @@
 
 #define _USE_MATH_DEFINES
 
+#ifdef __CUDACC__
+#define CUDA_UNUSED __attribute__((unused))
+#else 
+#define CUDA_UNUSED
+#endif
+
 #include <vector>
 #include <cmath>
 #include <ostream>
@@ -34,7 +40,7 @@ void generate_bimodal_gaussian(
 
   for (int i = 0; i < n_samples; ++i) {
     double x = gaussian(e), u = uniform(e);
-    double w = 1.0;
+    double CUDA_UNUSED w = 1.0;
     if (u < p1) {
       x *= sx1; x += mx1;
       w = p1_wgt;
@@ -59,7 +65,7 @@ void generate_bimodal_gaussian(
 
   for (int i = 0; i < n_samples; ++i) {
     double x = gaussian(e), y = gaussian(e), u = uniform(e);
-    double w = 1.0;
+    double CUDA_UNUSED w = 1.0;
     if (u < p1) {
       transform(x, y, mx1, my1, sx1, sy1, dgr1);
       w = p1_wgt;
@@ -99,7 +105,7 @@ void generate_2dgrid(
   double delta_x = (end_x - start_x) / steps_x;
   double delta_y = (end_y - start_y) / steps_y;
 
-  double x_coord, y_coord;
+  double CUDA_UNUSED x_coord, y_coord;
   for (int j = 0; j < steps_y; ++j) {
 
     y_coord = start_y + j * delta_y;
