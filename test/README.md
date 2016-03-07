@@ -42,3 +42,6 @@ CPU tests
 GPU tests
 ---------
 + `test_point2d_cuda`:
++ `test_cukde0_cuda`: Basic usage of CudaDirectKde.
++ `test_cukde1_cuda`: Tests non kde evaluating methods (e.g. constructors, copy-control, etc.). Largely incomplete!
++ `test_cukde2_cuda`: Tests kde evaluating methods. 
