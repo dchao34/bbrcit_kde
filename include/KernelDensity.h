@@ -29,7 +29,7 @@ void swap(KernelDensity<D,FT,KT,AT>&, KernelDensity<D,FT,KT,AT>&);
 template<int D, 
          typename FloatT=double,
          typename KernelT=EpanechnikovKernel<D,FloatT>,
-         typename AttrT=KdeAttributes<double>>
+         typename AttrT=KdeAttributes<FloatT>>
 class KernelDensity {
 
   private:
@@ -419,7 +419,7 @@ void KernelDensity<D,FT,KT,AT>::dual_tree(
     tighten_bounds(D_node, Q_node, du_new, dl_new, du, dl);
 
     // tighten the individual queries
-    double upper_q, lower_q;
+    FloatType upper_q, lower_q;
     for (auto i = Q_node->start_idx_; i <= Q_node->end_idx_; ++i) {
 
       upper_q = query_tree.points_[i].attributes().upper();
