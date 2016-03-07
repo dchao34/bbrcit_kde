@@ -1,7 +1,7 @@
 # Unit tests
-CPUBINS := #test_point2d test_kernels
+CPUBINS := test_kde10
 #CPUBINS := $(shell cat cpu_binary_targets.txt)
-GPUBINS := test_cukde2_cuda #test_point2d_cuda
+#GPUBINS := test_tree_kde_cuda
 #GPUBINS := $(shell cat gpu_binary_targets.txt)
 
 # additional include and library search paths

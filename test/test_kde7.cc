@@ -59,12 +59,12 @@ int main() {
 
       epan_kde->kernel().set_bandwidth(bw);
 
-      // naive evaluation
+      // direct evaluation
       /*
       queries = data;
       start = std::chrono::high_resolution_clock::now();
       for (auto &p : queries) { 
-        auto result = epan_kde->naive_eval(p); 
+        auto result = epan_kde->direct_eval(p); 
         auto attr = p.attributes();
         attr.set_lower(result);
         attr.set_upper(result);

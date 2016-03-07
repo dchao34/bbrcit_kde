@@ -85,16 +85,20 @@ class KernelDensity {
     FloatT eval(const GeomPointType &p, 
                 FloatType rel_err, FloatType abs_err) const;
 
-    // return the kde evaluate at points in `queries`. 
+    // return the kde evaluated at point `p` using the
+    // direct algorithm. 
+    FloatT direct_eval(DataPointType&) const;
+    FloatT direct_eval(const GeomPointType&) const;
+
+    // return the kde evaluated at points in `queries`. 
     // the evaluataion at each point satisfies the guarantees 
     // as in the single point evaluation. 
     void eval(std::vector<DataPointType> &queries, 
               FloatType rel_err, FloatType abs_err) const;
 
-    // return the kde naively evaluated at point `p`. 
-    // slow... O(n^2); mainly for debugging
-    FloatT naive_eval(DataPointType&) const;
-    FloatT naive_eval(const GeomPointType&) const;
+    // return the kde evaluated at points in `queries` using 
+    // the direct algorithm
+    void direct_eval(std::vector<DataPointType> &queries) const;
 
 
   private:
@@ -715,8 +719,8 @@ void KernelDensity<D,FT,KT,AT>::report_error(
 
 template<int D, typename FT, typename KT, typename AT>
 typename KernelDensity<D,FT,KT,AT>::FloatType
-KernelDensity<D,FT,KT,AT>::naive_eval(DataPointType &p) const {
-  FloatType result = naive_eval(p.point());
+KernelDensity<D,FT,KT,AT>::direct_eval(DataPointType &p) const {
+  FloatType result = direct_eval(p.point());
   p.attributes().set_upper(result);
   p.attributes().set_lower(result);
   return result;
@@ -724,7 +728,7 @@ KernelDensity<D,FT,KT,AT>::naive_eval(DataPointType &p) const {
 
 template<int D, typename FT, typename KT, typename AT>
 typename KernelDensity<D,FT,KT,AT>::FloatType
-KernelDensity<D,FT,KT,AT>::naive_eval(const GeomPointType &p) const {
+KernelDensity<D,FT,KT,AT>::direct_eval(const GeomPointType &p) const {
   FloatType total = ConstantTraits<FloatType>::zero();
   for (const auto &datum : data_tree_.points()) {
     total += 
@@ -733,6 +737,17 @@ KernelDensity<D,FT,KT,AT>::naive_eval(const GeomPointType &p) const {
   }
   total *= kernel_.normalization();
   return total;
+}
+
+template<int D, typename FT, typename KT, typename AT>
+void KernelDensity<D,FT,KT,AT>::direct_eval(
+    std::vector<DataPointType> &queries) const {
+  for (auto &q : queries) {
+    FloatType result = direct_eval(q.point());
+    q.attributes().set_lower(result);
+    q.attributes().set_upper(result);
+  }
+  return;
 }
 
 

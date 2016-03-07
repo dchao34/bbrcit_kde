@@ -67,12 +67,12 @@ int main() {
     fout << epan_bw << " ";
     epan_kde->kernel().set_bandwidth(epan_bw);
 
-    // naive evaluation
+    // direct evaluation
     if (k < 13) {
       queries = data;
       start = std::chrono::high_resolution_clock::now();
       for (auto &p : queries) { 
-        auto result = epan_kde->naive_eval(p); 
+        auto result = epan_kde->direct_eval(p); 
         auto attr = p.attributes();
         attr.set_lower(result);
         attr.set_upper(result);
@@ -130,12 +130,12 @@ int main() {
     fout << gauss_bw << " ";
     gauss_kde->kernel().set_bandwidth(epan_bw);
 
-    // naive evaluation
+    // direct evaluation
     if (k < 13) {
       queries = data;
       start = std::chrono::high_resolution_clock::now();
       for (auto &p : queries) { 
-        auto result = gauss_kde->naive_eval(p); 
+        auto result = gauss_kde->direct_eval(p); 
         auto attr = p.attributes();
         attr.set_lower(result);
         attr.set_upper(result);

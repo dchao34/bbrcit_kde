@@ -22,7 +22,7 @@ using bbrcit::Point;
 
 // this test is to check that the single and dual tree algorithms
 // get the same answers, at least visually, as compared to the 
-// naive algorithm. unlike test_kde3, this is for product kernels. 
+// direct algorithm. unlike test_kde3, this is for product kernels. 
 //
 // input: 2d data points sampled from a bimodal gaussian, all 
 //        equally weighted. 
@@ -86,13 +86,13 @@ int main() {
   generate_2dgrid(grid, start_x, end_x, steps_x, start_y, end_y, steps_y);
 
 
-  // naive evaluation
-  cout << "  naive"; 
+  // direct evaluation
+  cout << "  direct"; 
   queries = grid;
 
   start = std::chrono::high_resolution_clock::now();
   for (auto &p : queries) { 
-    auto result = kde.naive_eval(p); 
+    auto result = kde.direct_eval(p); 
     auto attr = p.attributes();
     attr.set_lower(result);
     attr.set_upper(result);
@@ -104,7 +104,7 @@ int main() {
   cout << " runtime: " << elapsed.count() << " seconds" << endl;
   cout << endl;
 
-  fout.open("test_kde4_naive.csv");
+  fout.open("test_kde4_direct.csv");
   write_kde2d_result(fout, queries, 
                      start_x, end_x, steps_x,
                      start_y, end_y, steps_y);
