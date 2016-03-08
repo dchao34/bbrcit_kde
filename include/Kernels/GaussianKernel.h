@@ -29,7 +29,7 @@ namespace bbrcit {
 // + C(h,D) = 1 / (unit_volume(D) * h^D)
 //   unit_volume(D) = (2 \pi)^{-D/2}
 //
-// + U(x,h) = exp{-0.5, x'x/ (h*h) }. 
+// + U(x,h) = exp{-0.5 x'x/ (h*h) }. 
 //   x'x := dot product of the D-dim vector x.
 //
 // + U(x,y,h) := U(x-y,h)
