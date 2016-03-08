@@ -38,6 +38,7 @@ class GaussianKernel {
 
   public:
 
+    using FloatType = T;
     static constexpr int dim() { return D; }
 
   public:

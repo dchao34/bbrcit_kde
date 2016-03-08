@@ -21,7 +21,7 @@ namespace bbrcit {
 
 template<int D, typename AttrT, typename FloatT> class Kdtree;
 
-template<int D, typename KernelT, typename AttrT, typename FloatT> class KernelDensity;
+template<int D, typename KernelT, typename FloatT, typename AttrT> class KernelDensity;
 
 template<int D, typename AttrT, typename FloatT>
 void swap(Kdtree<D,AttrT,FloatT>&, Kdtree<D,AttrT,FloatT>&);
@@ -45,7 +45,7 @@ class Kdtree {
     using IndexType = typename std::vector<DataPointType>::size_type;
     friend void swap<>(Kdtree<D,AttrT,FloatT>&, Kdtree<D,AttrT,FloatT>&);
 
-    template <int DIM, typename KT, typename AT, typename FT> 
+    template <int DIM, typename KT, typename FT, typename AT> 
       friend class KernelDensity;
 
   public: 

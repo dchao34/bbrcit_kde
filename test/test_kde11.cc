@@ -19,8 +19,9 @@ using namespace std;
 
 namespace {
   using FloatType = double;
-  using KernelType = bbrcit::EpanechnikovKernel<2, FloatType>;
-  using KernelDensityType = bbrcit::KernelDensity<2, FloatType, KernelType>;
+  using KFloatType = float;
+  using KernelType = bbrcit::EpanechnikovKernel<2, KFloatType>;
+  using KernelDensityType = bbrcit::KernelDensity<2, KernelType, FloatType>;
   using DataPointType = typename KernelDensityType::DataPointType;
 }
 
@@ -57,18 +58,22 @@ int main() {
 #ifndef __CUDACC__
   int leaf_max = 32;
 #else 
-  int leaf_max = 1024;
+  int leaf_max = 4096;
   int block_size = 128;
 #endif
 
 #ifndef __CUDACC__
+  int kstart = 7;
+  int kend = 20;
   int direct_kmax = 13;
 #else 
-  int direct_kmax = 16;
+  int kstart = 7;
+  int kend = 21;
+  int direct_kmax = 18;
 #endif
 
   size_t n_samples; double direct_time, tree_time;
-  for (int k = 7; k < 22; ++k) {
+  for (int k = kstart; k <= kend; ++k) {
 
     data.clear();
     n_samples = 2 << k;

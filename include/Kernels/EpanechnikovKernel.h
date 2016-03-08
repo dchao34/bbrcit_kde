@@ -37,6 +37,7 @@ class EpanechnikovKernel {
 
   public:
 
+    using FloatType = T;
     static constexpr int dim() { return D; }
 
   public:

@@ -10,7 +10,6 @@
 
 #include <Kernels/EpanechnikovKernel.h>
 #include <KernelDensity.h>
-#include <Point.h>
 
 #include "kde_test_utils.h"
 
@@ -18,8 +17,9 @@ using namespace std;
 
 namespace {
   using FloatType = double;
-  using KernelType = bbrcit::EpanechnikovKernel<2, FloatType>;
-  using KernelDensityType = bbrcit::KernelDensity<2, FloatType, KernelType>;
+  using KFloatType = float;
+  using KernelType = bbrcit::EpanechnikovKernel<2, KFloatType>;
+  using KernelDensityType = bbrcit::KernelDensity<2, KernelType, FloatType>;
   using DataPointType = typename KernelDensityType::DataPointType;
 }
 
@@ -141,6 +141,7 @@ int main() {
   fout.close();
 
   cout << endl;
+
 
   return 0;
 }
