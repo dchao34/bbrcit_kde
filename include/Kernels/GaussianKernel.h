@@ -12,26 +12,27 @@
 #include <cmath>
 #include <iostream>
 
+#include <Kernels/KernelTraits.h>
 #include <KdeTraits.h>
 #include <Point2d.h>
 
 namespace bbrcit {
 
-// The Gaussian kernel in D dimensions of bandwidth h is
-// defined as follows:
+// The one/two-point Gaussian kernel in D dimensions of 
+// bandwidth h is defined as follows:
 //
-// K(x) = unit_volume / h^D * exp{ -0.5 * x'x / h*h}
+// K(x;h,D) = C(h,D) * U(x,h)
+// K(x,y;h,D) := C(h,D) * U(x,y,h)
 //
 // where: 
 //
-// + x'x: 
-//     dot product of x. 
-// + unit_volume: 
-//     (2 \pi)^{-D/2}
+// + C(h,D) = 1 / (unit_volume(D) * h^D)
+//   unit_volume(D) = (2 \pi)^{-D/2}
 //
-// The two point version is defined as follows:
+// + U(x,h) = exp{-0.5, x'x/ (h*h) }. 
+//   x'x := dot product of the D-dim vector x.
 //
-// K(x, y) := K(x-y)
+// + U(x,y,h) := U(x-y,h)
 //
 template<int D, typename T=double>
 class GaussianKernel {
@@ -51,11 +52,10 @@ class GaussianKernel {
     CUDA_CALLABLE GaussianKernel& operator=(const GaussianKernel&) = default;
     CUDA_CALLABLE GaussianKernel& operator=(GaussianKernel&&) = default;
 
-    // compute the normalization
+    // evaluate C(h,D)
     CUDA_CALLABLE T normalization() const;
 
-    // evaluate the two point kernel, but do not include the 
-    // normalization factor. e.g. evaluates exp{-0.5 * (x-y)'(x-y)/(h*h)
+    // evaluate U(x,y,h)
     template<typename PointT>
     CUDA_CALLABLE T unnormalized_eval(const PointT&, const PointT&) const;
 
@@ -66,12 +66,12 @@ class GaussianKernel {
   private:
     T bandwidth_;
 
+    // point_arg_eval: evaluates (x-y)'(x-y)/h*h. 
+    // default behavior is provided through the function template, while 
+    // specialized behavior are provided through overloads. 
     template<typename PointT>
-    T point_arg_eval(const PointT&, const PointT&) const;
-    
-    // TODO: allow these overloads for now. would be better if only some are 
-    // callable when D has the right dimension. 
-    // consider using IfThenElse metafunction to custimize these overloads?
+      T point_arg_eval(const PointT&, const PointT&) const;
+
     CUDA_CALLABLE T point_arg_eval(const Point2d<T>&, const Point2d<T>&) const;
     
 };
@@ -91,18 +91,20 @@ inline T GaussianKernel<D,T>::bandwidth() const { return bandwidth_; }
 template<int D, typename T>
 inline void GaussianKernel<D,T>::set_bandwidth(T bw) { bandwidth_ = bw; }
 
+#ifdef __CUDACC__
+#pragma hd_warning_disable
+#endif
 template<int D, typename T>
   template<typename PointT>
 T GaussianKernel<D,T>::unnormalized_eval(const PointT &p, const PointT &q) const {
-  return exp(-0.5 * point_arg_eval(p, q));
+  return GaussianTraits<D,T>::kernel(point_arg_eval(p, q));
 }
 
 template <int D, typename T>
 inline T GaussianKernel<D,T>::normalization() const {
-  return pow(2*M_PI, -D/2.0) / pow(bandwidth_, D);
+  return GaussianTraits<D,T>::normalization(bandwidth_);
 }
 
-// evaluates the (x-y)'(x-y)/h*h part for the kernel argument. 
 template<int D, typename T>
   template<typename PointT>
 T GaussianKernel<D,T>::point_arg_eval(const PointT &lhs, const PointT &rhs) const {
@@ -126,77 +128,6 @@ inline T GaussianKernel<D,T>::point_arg_eval(
           (lhs.y()-rhs.y())*(lhs.y()-rhs.y())) / (bandwidth_*bandwidth_);
 }
 
-
-// Specializations
-// ---------------
-
-// 1. normalization()
-// ------------------
-
-template <>
-inline float GaussianKernel<1,float>::normalization() const {
-  // 1 / (sqrt(2pi) * h); 1 / sqrt(2pi) = 0.39894228040143267794
-  return 0.3989422804f / bandwidth_;
-}
-
-template <>
-inline double GaussianKernel<1,double>::normalization() const {
-  // 1 / (sqrt(2pi) * h); 1 / sqrt(2pi) = 0.39894228040143267794
-  return 0.3989422804014326779 / bandwidth_;
-}
-
-template <>
-inline float GaussianKernel<2,float>::normalization() const {
-  // 1 / (2pi) * h * h; 1 / (2pi) = 0.15915494309189533577
-  return 0.1591549431f / (bandwidth_ * bandwidth_);
-}
-
-template <>
-inline double GaussianKernel<2,double>::normalization() const {
-  // 1 / (2pi) * h * h; 1 / (2pi) = 0.15915494309189533577
-  return 0.1591549430918953357 / (bandwidth_ * bandwidth_);
-}
-
-// 2. unnormalized_eval()
-// ----------------------
-
-// TODO: these pragmas are workarounds for the warnings. is there a better solution?
-
-#ifdef __CUDACC__
-#pragma hd_warning_disable
-#endif
-template<>
-  template<typename PointT>
-inline float GaussianKernel<1,float>::unnormalized_eval(const PointT &p, const PointT &q) const {
-  return expf(-0.5f * point_arg_eval(p, q));
-}
-
-#ifdef __CUDACC__
-#pragma hd_warning_disable
-#endif
-template<>
-  template<typename PointT>
-inline double GaussianKernel<1,double>::unnormalized_eval(const PointT &p, const PointT &q) const {
-  return exp(-0.5 * point_arg_eval(p, q));
-}
-
-#ifdef __CUDACC__
-#pragma hd_warning_disable
-#endif
-template<>
-  template<typename PointT>
-inline float GaussianKernel<2,float>::unnormalized_eval(const PointT &p, const PointT &q) const {
-  return expf(-0.5f * point_arg_eval(p, q));
-}
-
-#ifdef __CUDACC__
-#pragma hd_warning_disable
-#endif
-template<>
-  template<typename PointT>
-inline double GaussianKernel<2,double>::unnormalized_eval(const PointT &p, const PointT &q) const {
-  return exp(-0.5 * point_arg_eval(p, q));
-}
 
 }
 

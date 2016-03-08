@@ -12,25 +12,28 @@
 #include <cmath>
 #include <iostream>
 
+#include <Kernels/KernelTraits.h>
 #include <KdeTraits.h>
 #include <Point2d.h>
 
 namespace bbrcit {
 
-// The Epanechnikov kernel in D dimensions is the following:
+// The one/two-point EpanechnikovKernel kernel in D dimensions of 
+// bandwidth h is defined as follows:
 //
-// K(x) = 
-//     0.5 * unit_volume/h^D * (D+2) (1 - x'x/(h*h)), if x'x < 1
-//     0                                              otherwise
+// K(x;h,D) = C(h,D) * U(x,h)
+// K(x,y;h,D) := C(h,D) * U(x,y,h)
 //
 // where: 
 //
-// + x'x: 
-//     dot product of x. 
-// + unit_volume: 
-//     volume of a D-dim unit sphere, which is 
-//     \pi^{D/2} * \Gamma(1+D/2), 
-//     where Gamma is the gamma function. 
+// + C(h,D) = 0.5 * (D+2) / (unit_volume(D) * h^D)
+//   unit_volume(D) = \pi^{D/2} * \Gamma(1+D/2), where
+//
+// + U(x,h) = 
+//       1 - x'x/(h*h), if x'x < 1
+//       0            , otherwise
+//
+// + U(x,y,h) := U(x-y,h)
 //
 template<int D, typename T=double>
 class EpanechnikovKernel {
@@ -51,11 +54,10 @@ class EpanechnikovKernel {
     CUDA_CALLABLE EpanechnikovKernel& operator=(const EpanechnikovKernel&) = default;
     CUDA_CALLABLE EpanechnikovKernel& operator=(EpanechnikovKernel&&) = default;
 
-    // compute the normalization
+    // evaluate C(h,D)
     CUDA_CALLABLE T normalization() const;
 
-    // evaluate the two point kernel, but do not include the 
-    // normalization factor. 
+    // evaluate U(x,y,h)
     template<typename PointT>
     CUDA_CALLABLE T unnormalized_eval(const PointT&, const PointT&) const;
 
@@ -66,14 +68,14 @@ class EpanechnikovKernel {
   private: 
     T bandwidth_;
 
-
+    // point_arg_eval: evaluates (x-y)'(x-y)/h*h. 
+    // default behavior is provided through the function template, while 
+    // specialized behavior are provided through overloads. 
     template<typename PointT>
-    T point_arg_eval(const PointT&, const PointT&) const;
-    
-    // TODO: allow these overloads for now. would be better if only some are 
-    // callable when D has the right dimension. 
-    // consider using IfThenElse metafunction to custimize these overloads?
+      T point_arg_eval(const PointT&, const PointT&) const;
+
     CUDA_CALLABLE T point_arg_eval(const Point2d<T>&, const Point2d<T>&) const;
+
     
 };
 
@@ -92,19 +94,20 @@ inline T EpanechnikovKernel<D,T>::bandwidth() const { return bandwidth_; }
 template<int D, typename T>
 inline void EpanechnikovKernel<D,T>::set_bandwidth(T bw) { bandwidth_ = bw; }
 
+#ifdef __CUDACC__
+#pragma hd_warning_disable
+#endif
 template<int D, typename T>
   template<typename PointT>
 inline T EpanechnikovKernel<D,T>::unnormalized_eval(const PointT &p, const PointT &q) const {
-  return std::max(1.0 - point_arg_eval(p, q), 0.0);
+  return EpanechnikovTraits<D,T>::kernel(point_arg_eval(p, q));
 }
 
 template <int D, typename T>
 inline T EpanechnikovKernel<D,T>::normalization() const {
-  return 0.5 * (D+2) / (std::pow(M_PI, D/2.0) / std::tgamma(1+D/2.0)) 
-                     / std::pow(bandwidth_, D);
+  return EpanechnikovTraits<D,T>::normalization(bandwidth_);
 }
 
-// evaluates the (x-y)'(x-y)/h*h part for the kernel argument. 
 template<int D, typename T>
   template<typename PointT>
 T EpanechnikovKernel<D,T>::point_arg_eval(const PointT &lhs, const PointT &rhs) const {
@@ -126,77 +129,6 @@ inline T EpanechnikovKernel<D,T>::point_arg_eval(
     const Point2d<T> &rhs) const {
   return ((lhs.x()-rhs.x())*(lhs.x()-rhs.x()) +
           (lhs.y()-rhs.y())*(lhs.y()-rhs.y())) / (bandwidth_*bandwidth_);
-}
-
-// Specializations
-// ---------------
-
-// 1. normalization()
-// ------------------
-
-template <>
-inline float EpanechnikovKernel<1,float>::normalization() const {
-  // 0.5 * 3 / (sqrt(pi) * gamma(3/2)) / h = 0.75 / h
-  return 0.75f / bandwidth_;
-}
-
-template <>
-inline double EpanechnikovKernel<1,double>::normalization() const {
-  // 0.5 * 3 / (sqrt(pi) * gamma(3/2)) / h = 0.75 / h
-  return 0.75 / bandwidth_;
-}
-
-template <>
-inline float EpanechnikovKernel<2,float>::normalization() const {
-  // 0.5 * 4 / (pi*h*h) = 2 / (pi*h*h) =  0.63661977236758134307553 / (h*h)
-  return 0.6366197723f / (bandwidth_ * bandwidth_);
-}
-
-template <>
-inline double EpanechnikovKernel<2,double>::normalization() const {
-  // 0.5 * 4 / (pi*h*h) = 2 / (pi*h*h) =  0.63661977236758134307553 / (h*h)
-  return 0.6366197723675813431 / (bandwidth_ * bandwidth_);
-}
-
-// 2. unnormalized_eval()
-// ----------------------
-
-// TODO: these pragmas are workarounds for the warnings. is there a better solution?
-
-#ifdef __CUDACC__
-#pragma hd_warning_disable
-#endif
-template<>
-  template<typename PointT>
-inline float EpanechnikovKernel<1,float>::unnormalized_eval(const PointT &p, const PointT &q) const {
-  return fmaxf(1.0f - point_arg_eval(p, q), 0.0f);
-}
-
-#ifdef __CUDACC__
-#pragma hd_warning_disable
-#endif
-template<>
-  template<typename PointT>
-inline double EpanechnikovKernel<1,double>::unnormalized_eval(const PointT &p, const PointT &q) const {
-  return fmax(1.0 - point_arg_eval(p, q), 0.0);
-}
-
-#ifdef __CUDACC__
-#pragma hd_warning_disable
-#endif
-template<>
-  template<typename PointT>
-inline float EpanechnikovKernel<2,float>::unnormalized_eval(const PointT &p, const PointT &q) const {
-  return fmaxf(1.0f - point_arg_eval(p, q), 0.0f);
-}
-
-#ifdef __CUDACC__
-#pragma hd_warning_disable
-#endif
-template<>
-  template<typename PointT>
-inline double EpanechnikovKernel<2,double>::unnormalized_eval(const PointT &p, const PointT &q) const {
-  return fmax(1.0 - point_arg_eval(p, q), 0.0);
 }
 
 
