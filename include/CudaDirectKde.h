@@ -78,8 +78,12 @@ class CudaDirectKde {
     // is stored in result[q_k-q_i]. 
     //
     // use `blocksize` to tune performance
-    void eval(size_t r_i, size_t r_j, size_t q_i, size_t q_j, 
-              std::vector<FloatT> &results, size_t block_size=128);
+    void eval(
+        size_t r_i, size_t r_j, size_t q_i, size_t q_j, 
+        std::vector<FloatT> &results, size_t block_size=128);
+    void unnormalized_eval(
+        size_t r_i, size_t r_j, size_t q_i, size_t q_j, 
+        std::vector<FloatT> &results, size_t block_size=128);
 
 
 
@@ -157,7 +161,6 @@ __global__ void eval_kernel(
 
   // post process and write the result back to global memory. 
   if (q_idx <= j_q) {
-    sum *= kern.normalization();
     results[q_idx - i_q] = sum;
   }
 
@@ -167,19 +170,19 @@ __global__ void eval_kernel(
 
 
 template<int D, typename FT, typename KT>
-void CudaDirectKde<D,FT,KT>::eval(
+void CudaDirectKde<D,FT,KT>::unnormalized_eval(
     size_t i_r, size_t j_r, size_t i_q, size_t j_q, 
     std::vector<FloatType> &results, size_t block_size) {
 
   if (j_r >= n_ref_points_ || j_q >= n_query_points_) { 
     throw std::out_of_range(
-        "CudaDirectKde<>: eval(): j_r and j_q should be at most "
+        "CudaDirectKde<>: unnormalized_eval(): j_r and j_q should be at most "
         "the number of reference and query points. ");
   }
 
   if (i_r > j_r || i_q > j_q) { 
     throw std::invalid_argument(
-        "CudaDirectKde<>: eval(): must have i_r <= j_r and i_q <= j_q. ");
+        "CudaDirectKde<>: unnormalized_eval(): must have i_r <= j_r and i_q <= j_q. ");
   }
 
   // explicitly copy the density kernel to the device. this is because
@@ -206,6 +209,17 @@ void CudaDirectKde<D,FT,KT>::eval(
              sizeof(FloatType)*n_queries, cudaMemcpyDeviceToHost);
 
   cudaFree(dev_kernel);
+
+  return; 
+}
+
+template<int D, typename FT, typename KT>
+void CudaDirectKde<D,FT,KT>::eval(
+    size_t i_r, size_t j_r, size_t i_q, size_t j_q, 
+    std::vector<FloatType> &results, size_t block_size) {
+
+  unnormalized_eval(i_r, j_r, i_q, j_q, results, block_size);
+  for (auto &r : results) { r *= kernel_.normalization(); }
 
   return; 
 }

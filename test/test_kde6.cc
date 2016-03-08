@@ -24,8 +24,8 @@ using bbrcit::Point;
 
 int main() {
 
-  using EpanKdeType = KernelDensity<2,EpanechnikovKernel<2>>;
-  using GaussKdeType = KernelDensity<2,GaussianKernel<2>>;
+  using EpanKdeType = KernelDensity<2,double,EpanechnikovKernel<2,double>>;
+  using GaussKdeType = KernelDensity<2,double,GaussianKernel<2,double>>;
   using DataPointType = typename EpanKdeType::DataPointType;
 
   std::chrono::time_point<std::chrono::high_resolution_clock> start, end;
@@ -44,6 +44,8 @@ int main() {
 
     cout << k << " ";
     fout << k << " ";
+
+    data.clear();
 
     n_samples = std::pow(2, k);
     for (int i = 0; i < n_samples; ++i) { 

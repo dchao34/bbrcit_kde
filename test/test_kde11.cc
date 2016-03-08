@@ -1,0 +1,102 @@
+#define _USE_MATH_DEFINES
+
+#include <iostream>
+#include <fstream>
+#include <cmath>
+#include <random>
+#include <chrono>
+#include <algorithm>
+#include <numeric>
+
+#include <Kernels/EpanechnikovKernel.h>
+#include <KernelDensity.h>
+#include <Point.h>
+
+#include "kde_test_utils.h"
+
+using namespace std;
+
+namespace {
+  using FloatType = double;
+  using KernelType = bbrcit::EpanechnikovKernel<2, FloatType>;
+  using KernelDensityType = bbrcit::KernelDensity<2, FloatType, KernelType>;
+  using DataPointType = typename KernelDensityType::DataPointType;
+}
+
+int main() {
+
+#ifdef __CUDACC__
+  cudaDeviceSynchronize();
+#endif
+
+  std::chrono::high_resolution_clock::time_point start, end;
+  std::chrono::duration<double, std::milli> elapsed;
+
+  mt19937 e;
+  normal_distribution<FloatType> d(0, 1);
+
+  vector<DataPointType> data, queries;
+  double rel_err = 1e-6, abs_err = 1e-10;
+
+#ifndef __CUDACC__
+  int leaf_max = 32;
+#else 
+  int leaf_max = 1024;
+  int block_size = 128;
+#endif
+
+#ifndef __CUDACC__
+  int direct_kmax = 13;
+#else 
+  int direct_kmax = 16;
+#endif
+
+  size_t n_samples;
+  for (int k = 7; k < 22; ++k) {
+
+    cout << k << " ";
+
+    data.clear();
+    n_samples = 2 << k;
+    for (size_t i = 0; i < n_samples; ++i) {
+      data.push_back({{d(e), d(e)}});
+    }
+
+    KernelDensityType *kde = new KernelDensityType(data, leaf_max);
+    kde->kernel().set_bandwidth(0.1);
+
+    if (k <= direct_kmax) {
+      queries = data;
+
+      start = std::chrono::high_resolution_clock::now();
+      kde->direct_eval(queries);
+      end = std::chrono::high_resolution_clock::now();
+      elapsed = end - start;
+
+      cout << elapsed.count() << " ";
+    } else {
+      cout << 0 << " ";
+    }
+
+    queries = data;
+
+    start = std::chrono::high_resolution_clock::now();
+#ifndef __CUDACC__
+    kde->eval(queries, rel_err, abs_err, leaf_max);
+#else 
+    kde->eval(queries, rel_err, abs_err, leaf_max, block_size);
+#endif
+    end = std::chrono::high_resolution_clock::now();
+    elapsed = end - start;
+
+    cout << elapsed.count() << " ";
+
+
+    delete kde;
+
+    cout << endl;
+
+  }
+
+  return 0;
+}

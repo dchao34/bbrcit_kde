@@ -25,6 +25,10 @@ namespace {
 
 int main() {
 
+#ifdef __CUDACC__
+  cudaDeviceSynchronize();
+#endif
+
   ofstream fout;
 
   std::chrono::high_resolution_clock::time_point start, end;
@@ -69,8 +73,10 @@ int main() {
   // 3. build the kernel density estimator
   cout << "+ building kde (kdtree construction)" << endl;
 
+  size_t leaf_max = 1024;
+
   start = std::chrono::high_resolution_clock::now();
-  KernelDensityType kde(references, 2); 
+  KernelDensityType kde(references, leaf_max); 
   end = std::chrono::high_resolution_clock::now();
   elapsed = end - start;
   cout << "  cpu time: " << elapsed.count() << " ms. " << std::endl;
@@ -82,20 +88,53 @@ int main() {
   
 
   // 4. direct kde evaluation
-  cout << "+ direct kde evaluation" << endl; 
+  cout << "+ direct evaluation" << endl; 
   queries = grid;
-
-#ifdef __CUDACC__
-  cudaDeviceSynchronize();
-#endif
 
   start = std::chrono::high_resolution_clock::now();
   kde.direct_eval(queries);
   end = std::chrono::high_resolution_clock::now();
   elapsed = end - start;
+#ifndef __CUDACC__
   cout << "  cpu time: " << elapsed.count() << " ms. " << std::endl;
+#else 
+  cout << "  gpu time: " << elapsed.count() << " ms. " << std::endl;
+#endif
 
-  fout.open("test_kde10_direct.csv");
+#ifndef __CUDACC__
+  fout.open("test_kde10_cpu_direct.csv");
+#else 
+  fout.open("test_kde10_gpu_direct.csv");
+#endif
+
+  write_kde2d_result(fout, queries, 
+                     start_x, end_x, steps_x,
+                     start_y, end_y, steps_y);
+  fout.close();
+
+  cout << endl;
+
+  // 4. dual tree evaluation
+  cout << "+ dual tree evaluation" << endl; 
+  queries = grid;
+
+  FloatType rel_tol = 1e-6, abs_tol = 1e-6;
+
+  start = std::chrono::high_resolution_clock::now();
+  kde.eval(queries, rel_tol, abs_tol, leaf_max);
+  end = std::chrono::high_resolution_clock::now();
+  elapsed = end - start;
+#ifndef __CUDACC__
+  cout << "  cpu time: " << elapsed.count() << " ms. " << std::endl;
+#else 
+  cout << "  gpu time: " << elapsed.count() << " ms. " << std::endl;
+#endif
+
+#ifndef __CUDACC__
+  fout.open("test_kde10_cpu_tree.csv");
+#else 
+  fout.open("test_kde10_gpu_tree.csv");
+#endif
   write_kde2d_result(fout, queries, 
                      start_x, end_x, steps_x,
                      start_y, end_y, steps_y);
