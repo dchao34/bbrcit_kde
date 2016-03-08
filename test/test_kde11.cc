@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <ostream>
 #include <cmath>
 #include <random>
 #include <chrono>
@@ -23,6 +24,15 @@ namespace {
   using DataPointType = typename KernelDensityType::DataPointType;
 }
 
+void print_line(
+    std::ostream &os, 
+    int k, double direct_time, double tree_time) {
+  os << k << " ";
+  os << direct_time << " ";
+  os << tree_time << " ";
+  os << std::endl;
+}
+
 int main() {
 
 #ifdef __CUDACC__
@@ -39,6 +49,12 @@ int main() {
   double rel_err = 1e-6, abs_err = 1e-10;
 
 #ifndef __CUDACC__
+  ofstream fout("test_kde11_cpu.csv");
+#else 
+  ofstream fout("test_kde11_gpu.csv");
+#endif
+
+#ifndef __CUDACC__
   int leaf_max = 32;
 #else 
   int leaf_max = 1024;
@@ -51,10 +67,8 @@ int main() {
   int direct_kmax = 16;
 #endif
 
-  size_t n_samples;
+  size_t n_samples; double direct_time, tree_time;
   for (int k = 7; k < 22; ++k) {
-
-    cout << k << " ";
 
     data.clear();
     n_samples = 2 << k;
@@ -73,9 +87,12 @@ int main() {
       end = std::chrono::high_resolution_clock::now();
       elapsed = end - start;
 
-      cout << elapsed.count() << " ";
+      direct_time = elapsed.count();
+
     } else {
-      cout << 0 << " ";
+
+      direct_time = 0;
+
     }
 
     queries = data;
@@ -89,12 +106,13 @@ int main() {
     end = std::chrono::high_resolution_clock::now();
     elapsed = end - start;
 
-    cout << elapsed.count() << " ";
+    tree_time = elapsed.count();
 
+    print_line(cout, k, direct_time, tree_time);
+    print_line(fout, k, direct_time, tree_time);
 
     delete kde;
 
-    cout << endl;
 
   }
 
