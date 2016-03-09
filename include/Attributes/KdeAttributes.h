@@ -23,44 +23,31 @@ class KdeAttributes {
 
   public: 
 
-    using WeightType = T;
-    using BoundType = T;
-
     KdeAttributes();
     KdeAttributes(T weight);
-    KdeAttributes(T weight, T lower, T upper);
 
     KdeAttributes(const KdeAttributes<T>&) = default;
     KdeAttributes(KdeAttributes<T>&&) = default;
     KdeAttributes<T>& operator=(const KdeAttributes<T>&) = default;
     KdeAttributes<T>& operator=(KdeAttributes<T>&&) = default;
-    ~KdeAttributes();
+    ~KdeAttributes() = default;
 
-    const T& weight() const;
-    void set_weight(const T&);
+    const T& weight() const { return weight_; }
+    const T& lower() const { return lower_; }
+    const T& upper() const { return upper_; }
+    T middle() const { return lower_+(upper_-lower_)/2; }
 
-    const T& lower() const;
-    T middle() const;
-    const T& upper() const;
-    void set_lower(const T&);
-    void set_upper(const T&);
+    void set_weight(const T &w) { weight_ = w; }
+    void set_lower(const T &l) { lower_ = l; }
+    void set_upper(const T &u) { upper_ = u; }
 
     // required functions for the Attributes<> interface
     KdeAttributes<T>& merge(const KdeAttributes<T>&);
-    template<typename PointT> 
-      static KdeAttributes<T> extract_point_attributes(const PointT &p);
 
   private: 
     T weight_;
     T lower_, upper_;
 };
-
-template<typename T> 
-  template<typename PointT> 
-inline KdeAttributes<T> 
-KdeAttributes<T>::extract_point_attributes(const PointT &p) {
-  return p.attributes();
-}
 
 template<typename T>
 KdeAttributes<T>& 
@@ -74,9 +61,7 @@ KdeAttributes<T>::merge(const KdeAttributes<T> &rhs) {
 template<typename T> 
 std::ostream& operator<<(std::ostream &os, const KdeAttributes<T> &att) {
   os << "("; 
-  os << att.weight() << ", ";
-  os << att.lower() << ", ";
-  os << att.upper();
+  os << att.weight();
   os << ")";
   return os;
 }
@@ -89,53 +74,10 @@ KdeAttributes<T>::KdeAttributes()
 }
 
 template<typename T>
-KdeAttributes<T>::~KdeAttributes() {}
-
-template<typename T>
 KdeAttributes<T>::KdeAttributes(T w) 
   : weight_(w), 
     lower_(ConstantTraits<T>::zero()),
     upper_(ConstantTraits<T>::zero()) {
-}
-
-template<typename T>
-KdeAttributes<T>::KdeAttributes(T w, T l, T u) 
-  : weight_(w), lower_(l), upper_(u) {
-}
-
-template<typename T>
-inline const T& KdeAttributes<T>::weight() const {
-  return weight_;
-}
-
-template<typename T>
-inline void KdeAttributes<T>::set_weight(const T &w) {
-  weight_ = w;
-}
-
-template<typename T>
-inline const T& KdeAttributes<T>::lower() const {
-  return lower_;
-}
-
-template<typename T>
-inline void KdeAttributes<T>::set_lower(const T &l) {
-  lower_ = l;
-}
-
-template<typename T>
-inline const T& KdeAttributes<T>::upper() const {
-  return upper_;
-}
-
-template<typename T>
-inline void KdeAttributes<T>::set_upper(const T &u) {
-  upper_ = u;
-}
-
-template<typename T>
-inline T KdeAttributes<T>::middle() const {
-  return lower_ + (upper_ - lower_) / 2;
 }
 
 }

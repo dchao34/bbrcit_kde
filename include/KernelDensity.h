@@ -12,7 +12,7 @@
 
 #include <Kdtree.h>
 #include <DecoratedPoint.h>
-#include <Attributes/KdeAttributes.h>
+#include <Attributes/AdaKdeAttributes.h>
 #include <Kernels/EpanechnikovKernel.h>
 #include <KdeTraits.h>
 #include <FloatUtils.h>
@@ -33,7 +33,7 @@ void swap(KernelDensity<D,KT,FT,AT>&, KernelDensity<D,KT,FT,AT>&);
 template<int D, 
          typename KernelT=EpanechnikovKernel<D,double>,
          typename FloatT=double,
-         typename AttrT=KdeAttributes<FloatT>>
+         typename AttrT=AdaKdeAttributes<FloatT>>
 class KernelDensity {
 
   private:
