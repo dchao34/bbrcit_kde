@@ -4,8 +4,8 @@
 
 #include <Kernels/EpanechnikovKernel.h>
 #include <Kernels/GaussianKernel.h>
-#include <Kernels/EpanechnikovProductKernel.h>
-#include <Kernels/GaussianProductKernel.h>
+#include <Kernels/EpanechnikovProductKernel2d.h>
+#include <Kernels/GaussianProductKernel2d.h>
 #include <DecoratedPoint.h>
 #include <Attributes/KdeAttributes.h>
 
@@ -15,8 +15,8 @@ using namespace std;
 using FloatType = float;
 using bbrcit::EpanechnikovKernel;
 using bbrcit::GaussianKernel;
-using bbrcit::EpanechnikovProductKernel;
-using bbrcit::GaussianProductKernel;
+using bbrcit::EpanechnikovProductKernel2d;
+using bbrcit::GaussianProductKernel2d;
 using bbrcit::KdeAttributes;
 using PointType1d = bbrcit::DecoratedPoint<1, KdeAttributes<FloatType>>;
 using PointType2d = bbrcit::DecoratedPoint<2, KdeAttributes<FloatType>>;
@@ -87,25 +87,18 @@ int main() {
   fout.close();
 
   // test: GaussianProductKernel
-  GaussianProductKernel<1> gaussprod1d;
-  cout << gaussprod1d.dim() << " " << gaussprod1d.normalization();
-  cout << " (c.f. 1, "<< std::pow(2*M_PI, -0.5)<< ") " << std::endl;
-  fout.open("test_gaussprod1d.csv");
-  for (const auto &p : grid1d) { fout << p[0] << " " << gaussprod1d.eval(p) << endl; }
-  fout.close();
-
-  GaussianProductKernel<2> gaussprod2d({1.2, 1.0});
-  cout << gaussprod2d.dim() << " " << gaussprod2d.normalization();
-  cout << " (c.f. 2, "<< std::pow(2*M_PI, -1.0) / (1.2*1.0) << ") " << std::endl;
-  gaussprod2d.set_bandwidth(0, 1.5);
-  cout << gaussprod2d.dim() << " " << gaussprod2d.normalization();
-  cout << " (c.f. 2, "<< std::pow(2*M_PI, -1.0) / (1.5*1.0) << ") " << std::endl;
-  gaussprod2d.set_bandwidths({1.2, 0.7});
-  cout << gaussprod2d.dim() << " " << gaussprod2d.normalization();
-  cout << " (c.f. 2, "<< std::pow(2*M_PI, -1.0) / (1.2*0.7) << ") " << std::endl;
+  GaussianProductKernel2d<FloatType> gaussprod2d(1.2, 1.0);
+  cout << gaussprod2d.normalization();
+  cout << " (c.f. "<< std::pow(2*M_PI, -1.0) / (1.2*1.0) << ") " << std::endl;
+  gaussprod2d.set_hx(1.5);
+  cout << gaussprod2d.normalization();
+  cout << " (c.f. "<< std::pow(2*M_PI, -1.0) / (1.5*1.0) << ") " << std::endl;
+  gaussprod2d.set_bandwidths(1.2, 0.7);
+  cout << gaussprod2d.normalization();
+  cout << " (c.f. "<< std::pow(2*M_PI, -1.0) / (1.2*0.7) << ") " << std::endl;
   fout.open("test_gaussprod2d.csv");
   for (auto &p : grid2d) { 
-    FloatType result = gaussprod2d.eval(p); 
+    FloatType result = gaussprod2d.normalization() * gaussprod2d.unnormalized_eval(p, origin2d); 
     p.attributes().set_lower(result);
     p.attributes().set_upper(result);
   };
@@ -113,27 +106,18 @@ int main() {
   fout.close();
 
   // test: EpanechnikovProductKernel
-  EpanechnikovKernel<1> epprod1d;
-  cout << epprod1d.dim() << " " << epprod1d.normalization();
-  cout << " (c.f. 1, "<< std::pow(0.75, 1)<< ") " << std::endl;
-  fout.open("test_epprod1d.csv");
-  for (const auto &p : grid1d) { 
-    fout << p[0] << " " << epprod1d.normalization() * epprod1d.unnormalized_eval(p, origin1d) << endl; 
-  }
-  fout.close();
-
-  EpanechnikovProductKernel<2> epprod2d({1.2, 1.0});
-  cout << epprod2d.dim() << " " << epprod2d.normalization();
-  cout << " (c.f. 2, "<< std::pow(0.75, 2) / (1.2*1.0) << ") " << std::endl;
-  epprod2d.set_bandwidth(0, 1.5);
-  cout << epprod2d.dim() << " " << epprod2d.normalization();
-  cout << " (c.f. 2, "<< std::pow(0.75, 2) / (1.5*1.0) << ") " << std::endl;
-  epprod2d.set_bandwidths({1.2, 0.7});
-  cout << epprod2d.dim() << " " << epprod2d.normalization();
-  cout << " (c.f. 2, "<< std::pow(0.75, 2) / (1.2*0.7) << ") " << std::endl;
+  EpanechnikovProductKernel2d<FloatType> epprod2d(1.2, 1.0);
+  cout << epprod2d.normalization();
+  cout << " (c.f. "<< std::pow(0.75, 2) / (1.2*1.0) << ") " << std::endl;
+  epprod2d.set_hx(1.5);
+  cout << epprod2d.normalization();
+  cout << " (c.f. "<< std::pow(0.75, 2) / (1.5*1.0) << ") " << std::endl;
+  epprod2d.set_bandwidths(1.2, 0.7);
+  cout << epprod2d.normalization();
+  cout << " (c.f. "<< std::pow(0.75, 2) / (1.2*0.7) << ") " << std::endl;
   fout.open("test_epprod2d.csv");
   for (auto &p : grid2d) { 
-    FloatType result = epprod2d.eval(p); 
+    FloatType result = epprod2d.normalization() * epprod2d.unnormalized_eval(p, origin2d); 
     p.attributes().set_lower(result);
     p.attributes().set_upper(result);
   };

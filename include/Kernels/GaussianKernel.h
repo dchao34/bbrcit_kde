@@ -96,7 +96,7 @@ inline void GaussianKernel<D,T>::set_bandwidth(T bw) { bandwidth_ = bw; }
 #endif
 template<int D, typename T>
   template<typename PointT>
-T GaussianKernel<D,T>::unnormalized_eval(const PointT &p, const PointT &q) const {
+inline T GaussianKernel<D,T>::unnormalized_eval(const PointT &p, const PointT &q) const {
   return GaussianTraits<D,T>::kernel(point_arg_eval(p, q));
 }
 

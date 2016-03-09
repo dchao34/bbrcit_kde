@@ -125,7 +125,7 @@ template<>
 class GaussianTraits<2,float> {
   public:
 
-    // evaluates 1 / (2pi) * h * h; 1 / (2pi) = 0.15915494309189533577
+    // evaluates 1 / (2pi*h*h); 1 / (2pi) = 0.15915494309189533577
     CUDA_CALLABLE static float normalization(float h) { 
       return 0.1591549431f / (h*h);
     }
@@ -153,13 +153,106 @@ template<>
 class GaussianTraits<2,double> {
   public:
 
-    // evaluates 1 / (2pi) * h * h; 1 / (2pi) = 0.15915494309189533577
+    // evaluates 1 / (2pi*h*h); 1 / (2pi) = 0.15915494309189533577
     CUDA_CALLABLE static double normalization(double h) { 
       return 0.1591549430918953357 / (h*h);
     }
 
     CUDA_CALLABLE static double kernel(double point_arg) {
       return exp(-0.5 * point_arg);
+    }
+};
+
+
+// GaussianProduct2d
+// -----------------
+
+template<typename T> 
+class GaussianProduct2dTraits {
+
+  public:
+    // evaluates 1 / (2pi*hx*hy); 1 / (2pi) = 0.15915494309189533577
+    static T normalization(T hx, T hy) { 
+      return 0.1591549430918953357 / (hx*hy);
+    }
+
+    // evaluates exp(-0.5 * point_arg)
+    static T kernel(T point_arg) {
+      return exp(-0.5 * point_arg);
+    }
+};
+
+template<> 
+class GaussianProduct2dTraits<float> {
+
+  public:
+    // evaluates 1 / (2pi*hx*hy); 1 / (2pi) = 0.15915494309189533577
+    CUDA_CALLABLE static float normalization(float hx, float hy) { 
+      return 0.1591549431f / (hx*hy);
+    }
+
+    // evaluates exp(-0.5 * point_arg)
+    CUDA_CALLABLE static float kernel(float point_arg) {
+      return expf(-0.5f * point_arg);
+    }
+};
+
+template<> 
+class GaussianProduct2dTraits<double> {
+
+  public:
+    // evaluates 1 / (2pi*hx*hy); 1 / (2pi) = 0.15915494309189533577
+    CUDA_CALLABLE static double normalization(double hx, double hy) { 
+      return 0.1591549430918953357 / (hx*hy);
+    }
+
+    // evaluates exp(-0.5 * point_arg)
+    CUDA_CALLABLE static double kernel(double point_arg) {
+      return exp(-0.5 * point_arg);
+    }
+};
+
+// EpanechnikovProduct2d
+// ---------------------
+
+template<typename T> 
+class EpanechnikovProduct2dTraits {
+
+  public:
+    // evaluates (9/16) / (hx*hy); 9/16 = 0.5625
+    static T normalization(T hx, T hy) { 
+      return 0.5625 / (hx*hy);
+    }
+
+    // evaluates max(1-point_arg, 0)
+    static T kernel(T point_arg) {
+      return std::max(1.0 - point_arg, 0.0);
+    }
+};
+
+template<> 
+class EpanechnikovProduct2dTraits<float> {
+
+  public:
+    CUDA_CALLABLE static float normalization(float hx, float hy) { 
+      return 0.5625f / (hx*hy);
+    }
+
+    CUDA_CALLABLE static float kernel(float point_arg) {
+      return fmaxf(1.0f - point_arg, 0.0f);
+    }
+};
+
+template<> 
+class EpanechnikovProduct2dTraits<double> {
+
+  public:
+    CUDA_CALLABLE static double normalization(double hx, double hy) { 
+      return 0.5625 / (hx*hy);
+    }
+
+    CUDA_CALLABLE static double kernel(double point_arg) {
+      return fmax(1.0 - point_arg, 0.0);
     }
 };
 

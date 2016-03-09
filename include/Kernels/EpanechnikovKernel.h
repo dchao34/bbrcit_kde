@@ -30,7 +30,7 @@ namespace bbrcit {
 //   unit_volume(D) = \pi^{D/2} * \Gamma(1+D/2), where
 //
 // + U(x,h) = 
-//       1 - x'x/(h*h), if x'x < 1
+//       1 - x'x/(h*h), if x'x/(h*h) < 1
 //       0            , otherwise
 //
 // + U(x,y,h) := U(x-y,h)
