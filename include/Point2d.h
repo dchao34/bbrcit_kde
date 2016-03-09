@@ -23,13 +23,17 @@ class CUDA_ALIGN16 Point2d<float> {
     using FloatType = float;
 
     CUDA_CALLABLE Point2d() = default;
-    CUDA_CALLABLE Point2d(float x, float y, float w) : x_(x), y_(y), w_(w) {}
+    CUDA_CALLABLE Point2d(float x, float y, float w) : 
+      x_(x), y_(y), w_(w), abw_(1.0f) {}
+    CUDA_CALLABLE Point2d(float x, float y, float w, float abw) : 
+      x_(x), y_(y), w_(w), abw_(abw) {}
 
     template<typename HostDecPointT>
       Point2d<float>& operator=(const HostDecPointT &pt) {
         x_ = pt[0]; 
         y_ = pt[1];
         w_ = pt.attributes().weight();
+        abw_ = pt.attributes().lower_abw();
         return *this;
       }
 
@@ -40,11 +44,13 @@ class CUDA_ALIGN16 Point2d<float> {
     CUDA_CALLABLE float x() const { return x_; }
     CUDA_CALLABLE float y() const { return y_; }
     CUDA_CALLABLE float w() const { return w_; }
+    CUDA_CALLABLE float abw() const { return abw_; }
 
   private:
     float x_ = 0.0f;
     float y_ = 0.0f;
     float w_ = 0.0f;
+    float abw_ = 1.0f;
 };
 
 template <>
@@ -54,13 +60,17 @@ class CUDA_ALIGN16 Point2d<double> {
     using FloatType = double;
 
     CUDA_CALLABLE Point2d() = default;
-    CUDA_CALLABLE Point2d(double x, double y, double w) : x_(x), y_(y), w_(w) {}
+    CUDA_CALLABLE Point2d(double x, double y, double w) : 
+      x_(x), y_(y), w_(w), abw_(1.0) {}
+    CUDA_CALLABLE Point2d(double x, double y, double w, double abw) : 
+      x_(x), y_(y), w_(w), abw_(abw) {}
 
     template<typename HostDecPointT>
       Point2d<double>& operator=(const HostDecPointT &pt) {
         x_ = pt[0]; 
         y_ = pt[1];
         w_ = pt.attributes().weight();
+        abw_ = pt.attributes().lower_abw();
         return *this;
       }
 
@@ -71,11 +81,13 @@ class CUDA_ALIGN16 Point2d<double> {
     CUDA_CALLABLE double x() const { return x_; }
     CUDA_CALLABLE double y() const { return y_; }
     CUDA_CALLABLE double w() const { return w_; }
+    CUDA_CALLABLE double abw() const { return abw_; }
 
   private:
     double x_ = 0.0;
     double y_ = 0.0;
     double w_ = 0.0;
+    double abw_ = 1.0;
 };
 
 

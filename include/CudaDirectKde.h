@@ -153,7 +153,8 @@ __global__ void eval_kernel(
     // phase 2: sum over contributions from the cached reference points
     if (q_idx <= j_q) {
       for (size_t i = 0; i < blockDim.x && i+tile_start <= j_r; ++i) {
-        sum += ref_cache[i].w() * kern.unnormalized_eval(query, ref_cache[i]);
+        sum += ref_cache[i].w() * 
+               kern.unnormalized_eval(query, ref_cache[i], ref_cache[i].abw());
       }
     }
     __syncthreads();

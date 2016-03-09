@@ -371,7 +371,8 @@ void KernelDensity<D,KT,FT,AT>::single_tree_base(
   FloatType delta;
   for (auto i = D_node->start_idx_; i <= D_node->end_idx_; ++i) {
 
-    delta = kernel_.unnormalized_eval(p, data_tree_.points_[i].point());
+    delta = kernel_.unnormalized_eval(p, data_tree_.points_[i].point(), 
+                                      data_tree_.points_[i].attributes().lower_abw());
 
     delta *= data_tree_.points_[i].attributes().weight();
     upper += delta; lower += delta;
@@ -808,10 +809,10 @@ void KernelDensity<D,KT,FT,AT>::estimate_contributions(
   // dimension to bound the min/max kernel contributions
 
   for (int i = 0; i < D; ++i) { proxy[i] = D_node->bbox_.min_dist(i, obj); }
-  du = kernel_.unnormalized_eval(proxy, origin);
+  du = kernel_.unnormalized_eval(proxy, origin, D_node->attr_.upper_abw());
 
   for (int i = 0; i < D; ++i) { proxy[i] = D_node->bbox_.max_dist(i, obj); }
-  dl = kernel_.unnormalized_eval(proxy, origin);
+  dl = kernel_.unnormalized_eval(proxy, origin, D_node->attr_.lower_abw());
 
 }
 
@@ -864,7 +865,8 @@ KernelDensity<D,KT,FT,AT>::direct_eval(const GeomPointType &p) const {
   for (const auto &datum : data_tree_.points()) {
     total += 
       datum.attributes().weight() * 
-      kernel_.unnormalized_eval( p, datum.point() );
+      kernel_.unnormalized_eval(p, datum.point(), 
+                                   datum.attributes().lower_abw() );
   }
   total *= kernel_.normalization();
   return total;

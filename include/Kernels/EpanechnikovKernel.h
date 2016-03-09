@@ -61,6 +61,10 @@ class EpanechnikovKernel {
     template<typename PointT>
     CUDA_CALLABLE T unnormalized_eval(const PointT&, const PointT&) const;
 
+    // evaluate U(x,y,h*a)
+    template<typename PointT>
+    CUDA_CALLABLE T unnormalized_eval(const PointT&, const PointT&, T a) const;
+
     // get/set the bandwidth
     CUDA_CALLABLE T bandwidth() const;
     CUDA_CALLABLE void set_bandwidth(T);
@@ -68,13 +72,13 @@ class EpanechnikovKernel {
   private: 
     T bandwidth_;
 
-    // point_arg_eval: evaluates (x-y)'(x-y)/h*h. 
+    // point_arg_eval: evaluates (x-y)'(x-y)/(h*h*a*a). 
     // default behavior is provided through the function template, while 
     // specialized behavior are provided through overloads. 
     template<typename PointT>
-      T point_arg_eval(const PointT&, const PointT&) const;
+      T point_arg_eval(const PointT&, const PointT&, T a) const;
 
-    CUDA_CALLABLE T point_arg_eval(const Point2d<T>&, const Point2d<T>&) const;
+    CUDA_CALLABLE T point_arg_eval(const Point2d<T>&, const Point2d<T>&, T a) const;
 
     
 };
@@ -100,7 +104,16 @@ inline void EpanechnikovKernel<D,T>::set_bandwidth(T bw) { bandwidth_ = bw; }
 template<int D, typename T>
   template<typename PointT>
 inline T EpanechnikovKernel<D,T>::unnormalized_eval(const PointT &p, const PointT &q) const {
-  return EpanechnikovTraits<D,T>::kernel(point_arg_eval(p, q));
+  return unnormalized_eval(p, q, ConstantTraits<T>::one());
+}
+
+#ifdef __CUDACC__
+#pragma hd_warning_disable
+#endif
+template<int D, typename T>
+  template<typename PointT>
+inline T EpanechnikovKernel<D,T>::unnormalized_eval(const PointT &p, const PointT &q, T a) const {
+  return EpanechnikovTraits<D,T>::kernel(point_arg_eval(p, q, a));
 }
 
 template <int D, typename T>
@@ -110,7 +123,7 @@ inline T EpanechnikovKernel<D,T>::normalization() const {
 
 template<int D, typename T>
   template<typename PointT>
-T EpanechnikovKernel<D,T>::point_arg_eval(const PointT &lhs, const PointT &rhs) const {
+T EpanechnikovKernel<D,T>::point_arg_eval(const PointT &lhs, const PointT &rhs, T a) const {
 
   T result = ConstantTraits<T>::zero(); 
 
@@ -120,15 +133,14 @@ T EpanechnikovKernel<D,T>::point_arg_eval(const PointT &lhs, const PointT &rhs) 
     result += diff * diff;
   }
 
-  return result / (bandwidth_ * bandwidth_);
+  return result / (bandwidth_ * bandwidth_ * a * a);
 }
 
 template<int D, typename T>
 inline T EpanechnikovKernel<D,T>::point_arg_eval(
-    const Point2d<T> &lhs, 
-    const Point2d<T> &rhs) const {
+    const Point2d<T> &lhs, const Point2d<T> &rhs, T a) const {
   return ((lhs.x()-rhs.x())*(lhs.x()-rhs.x()) +
-          (lhs.y()-rhs.y())*(lhs.y()-rhs.y())) / (bandwidth_*bandwidth_);
+          (lhs.y()-rhs.y())*(lhs.y()-rhs.y())) / (bandwidth_*bandwidth_*a*a);
 }
 
 
