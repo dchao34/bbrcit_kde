@@ -8,8 +8,8 @@
 #include <algorithm>
 #include <numeric>
 
-#include <Kernels/EpanechnikovKernel.h>
-#include <Kernels/GaussianKernel.h>
+#include <Kernels/EpanechnikovProductKernel2d.h>
+#include <Kernels/GaussianProductKernel2d.h>
 #include <KernelDensity.h>
 
 #include "kde_test_utils.h"
@@ -19,8 +19,8 @@ using namespace std;
 namespace {
   using FloatType = double;
   using KFloatType = float;
-  using KernelType = bbrcit::EpanechnikovKernel<2, KFloatType>;
-  //using KernelType = bbrcit::GaussianKernel<2, KFloatType>;
+  using KernelType = bbrcit::EpanechnikovProductKernel2d<KFloatType>;
+  //using KernelType = bbrcit::GaussianProductKernel2d<KFloatType>;
   using KernelDensityType = bbrcit::KernelDensity<2, KernelType, FloatType>;
   using DataPointType = typename KernelDensityType::DataPointType;
 }
@@ -51,7 +51,7 @@ int main() {
   elapsed = end - start;
   cout << "  cpu time: " << elapsed.count() << " ms. " << std::endl;
 
-  fout.open("test_kde10_data.csv");
+  fout.open("test_kde12_data.csv");
   write_scatter_data(fout, references);
   fout.close();
 
@@ -84,7 +84,7 @@ int main() {
   cout << "  cpu time: " << elapsed.count() << " ms. " << std::endl;
   
   // configure the kernel
-  kde.kernel().set_bandwidth(0.2);
+  kde.kernel().set_bandwidths(0.2, 0.05);
 
   cout << endl;
   
@@ -104,9 +104,9 @@ int main() {
 #endif
 
 #ifndef __CUDACC__
-  fout.open("test_kde10_cpu_direct.csv");
+  fout.open("test_kde12_cpu_direct.csv");
 #else 
-  fout.open("test_kde10_gpu_direct.csv");
+  fout.open("test_kde12_gpu_direct.csv");
 #endif
 
   write_kde2d_result(fout, queries, 
@@ -133,9 +133,9 @@ int main() {
 #endif
 
 #ifndef __CUDACC__
-  fout.open("test_kde10_cpu_tree.csv");
+  fout.open("test_kde12_cpu_tree.csv");
 #else 
-  fout.open("test_kde10_gpu_tree.csv");
+  fout.open("test_kde12_gpu_tree.csv");
 #endif
   write_kde2d_result(fout, queries, 
                      start_x, end_x, steps_x,

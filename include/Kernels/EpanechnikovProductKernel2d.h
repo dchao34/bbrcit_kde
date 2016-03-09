@@ -14,6 +14,9 @@
 #include <cmath>
 #include <iostream>
 
+#include <Kernels/KernelTraits.h>
+#include <Point2d.h>
+
 namespace bbrcit {
 
 // The one/two-point Epanechnikov product kernel in 2 dimensions 
