@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <numeric>
 
+#include <Kernels/GaussianKernel.h>
 #include <Kernels/EpanechnikovKernel.h>
 #include <KernelDensity.h>
 #include <Point.h>
@@ -20,7 +21,8 @@ using namespace std;
 namespace {
   using FloatType = double;
   using KFloatType = float;
-  using KernelType = bbrcit::EpanechnikovKernel<2, KFloatType>;
+  //using KernelType = bbrcit::EpanechnikovKernel<2, KFloatType>;
+  using KernelType = bbrcit::GaussianKernel<2, KFloatType>;
   using KernelDensityType = bbrcit::KernelDensity<2, KernelType, FloatType>;
   using DataPointType = typename KernelDensityType::DataPointType;
 }
