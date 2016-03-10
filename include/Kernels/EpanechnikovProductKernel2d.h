@@ -54,13 +54,18 @@ class CUDA_ALIGN16 EpanechnikovProductKernel2d {
     CUDA_CALLABLE EpanechnikovProductKernel2d& operator=(const EpanechnikovProductKernel2d<T>&) = default;
     CUDA_CALLABLE EpanechnikovProductKernel2d& operator=(EpanechnikovProductKernel2d<T>&&) = default;
 
-    // evaluate C(h,D)
+    // evaluate C(hx,hy)
     CUDA_CALLABLE T normalization() const;
 
-    // evaluate U(x,y,h)
+    // evaluate U(p,q,hx,hy)
     template<typename PointT>
       CUDA_CALLABLE T unnormalized_eval(const PointT&, const PointT&) const;
     CUDA_CALLABLE T unnormalized_eval(const Point2d<T>&, const Point2d<T>&) const;
+
+    // evaluate U(p,q,hx*a,hy*a)
+    template<typename PointT>
+      CUDA_CALLABLE T unnormalized_eval(const PointT&, const PointT&, T) const;
+    CUDA_CALLABLE T unnormalized_eval(const Point2d<T>&, const Point2d<T>&, T) const;
 
     // get/set the bandwidth
     CUDA_CALLABLE T hx() const;
@@ -100,26 +105,39 @@ inline T EpanechnikovProductKernel2d<T>::normalization() const {
   return EpanechnikovProduct2dTraits<T>::normalization(hx_, hy_);
 }
 
+template<typename T>
+  template<typename PointT>
+inline T EpanechnikovProductKernel2d<T>::unnormalized_eval(
+    const PointT &p, const PointT &q) const {
+  return unnormalized_eval(p, q, ConstantTraits<T>::one());
+}
+
+template<typename T>
+inline T EpanechnikovProductKernel2d<T>::unnormalized_eval(
+    const Point2d<T> &p, const Point2d<T> &q) const {
+  return unnormalized_eval(p, q, ConstantTraits<T>::one());
+}
+
 #ifdef __CUDACC__
 #pragma hd_warning_disable
 #endif
 template<typename T>
   template<typename PointT>
 inline T EpanechnikovProductKernel2d<T>::unnormalized_eval(
-    const PointT &lhs, const PointT &rhs) const {
+    const PointT &lhs, const PointT &rhs, T a) const {
   return EpanechnikovProduct2dTraits<T>::kernel(
-           (lhs[0]-rhs[0])*(lhs[0]-rhs[0])/(hx_*hx_)) *
+           (lhs[0]-rhs[0])*(lhs[0]-rhs[0])/(hx_*hx_*a*a)) *
          EpanechnikovProduct2dTraits<T>::kernel(
-           (lhs[1]-rhs[1])*(lhs[1]-rhs[1])/(hy_*hy_));
+           (lhs[1]-rhs[1])*(lhs[1]-rhs[1])/(hy_*hy_*a*a));
 }
 
 template<typename T>
 inline T EpanechnikovProductKernel2d<T>::unnormalized_eval(
-    const Point2d<T> &lhs, const Point2d<T> &rhs) const {
+    const Point2d<T> &lhs, const Point2d<T> &rhs, T a) const {
   return EpanechnikovProduct2dTraits<T>::kernel(
-           (lhs.x()-rhs.x())*(lhs.x()-rhs.x())/(hx_*hx_)) *
+           (lhs.x()-rhs.x())*(lhs.x()-rhs.x())/(hx_*hx_*a*a)) *
          EpanechnikovProduct2dTraits<T>::kernel(
-           (lhs.y()-rhs.y())*(lhs.y()-rhs.y())/(hy_*hy_));
+           (lhs.y()-rhs.y())*(lhs.y()-rhs.y())/(hy_*hy_*a*a));
 }
 
 }

@@ -79,6 +79,7 @@ class KernelDensity {
     // returns a const reference to the data points
     const std::vector<DataPointType>& points() const;
 
+
     // return the kde evaluated at point `p`. the result satisfies 
     // at least one of the following:
     //   + the relative error is at most `rel_err`.
@@ -89,10 +90,12 @@ class KernelDensity {
     FloatT eval(const GeomPointType &p, 
                 FloatType rel_err, FloatType abs_err) const;
 
+
     // return the kde evaluated at point `p` using the
     // direct algorithm. 
     FloatT direct_eval(DataPointType&) const;
     FloatT direct_eval(const GeomPointType&) const;
+
 
     // return the kde evaluated at points in `queries`. 
     // the evaluataion at each point satisfies the guarantees 
@@ -106,12 +109,25 @@ class KernelDensity {
               size_t block_size=128) const;
 #endif
 
+
     // return the kde evaluated at points in `queries` using 
     // the direct algorithm
 #ifndef __CUDACC__
     void direct_eval(std::vector<DataPointType> &queries) const;
 #else
     void direct_eval(std::vector<DataPointType> &queries, size_t block_size=128) const;
+#endif
+
+
+
+    // convert this object into an adaptive kernel. this method should be called 
+    // once and is not reversible. 
+#ifndef __CUDACC__ 
+    void adapt_density(FloatType alpha, 
+        FloatType rel_err=1e-6, FloatType abs_err=1e-6);
+#else
+    void adapt_density(FloatType alpha, 
+        FloatType rel_err=1e-6, FloatType abs_err=1e-6, size_t block_size=128);
 #endif
 
 
@@ -171,7 +187,138 @@ class KernelDensity {
     void report_error(std::ostream&, const GeomPointType&,
         FloatType, FloatType, FloatType, FloatType) const;
 
+    // helper functions for adaptive densities
+    void refresh_treenode_attributes(TreeNodeType*, const std::vector<DataPointType>&);
+
 };
+
+
+// refresh node attributes stored in the kdtree pointed by `p` based on  
+// the current attributes of its data points (`points`). 
+// consider making this a member function of Kdtree<>? 
+template<int D, typename KT, typename FT, typename AT>
+void KernelDensity<D,KT,FT,AT>::refresh_treenode_attributes(
+    TreeNodeType *p, const std::vector<DataPointType> &points) {
+
+  if (p == nullptr) { return; }
+
+  if (p->is_leaf()) {
+    size_t i = p->start_idx_, j = p->end_idx_;
+    p->attr_ = points[i].attributes();
+    for (int k = i+1; k <= j; ++k) {
+      p->attr_.merge(points[k].attributes());
+    }
+  } else {
+    refresh_treenode_attributes(p->left_, points);
+    refresh_treenode_attributes(p->right_, points);
+    p->attr_ = merge(p->left_->attr_, p->right_->attr_);
+  }
+
+  return;
+}
+
+// Calling this method repurposes `this` KernelDensity object to become 
+// an adaptive kernel density. In particular, the following attributes in
+// the data_tree must be updated:
+//
+// + For each node, update the min/max local bandwidth corrections of 
+//   points under it. 
+//
+// + Update weights for each point and each node. Node weights are 
+//   induced from point weights, while point weights are adjusted by 
+//   scaling. e.g. if the `i`th point currently has weight `w_i` and 
+//   local bandwidth correction `abw_i`, then update the weight to 
+//   `w_i / pow(abw_i,D)`. 
+//
+// This prescription is described in page 101 of Silverman's book
+// `Density Estimation for Statistics and Data Analysis`. 
+template<int D, typename KT, typename FT, typename AT>
+void KernelDensity<D,KT,FT,AT>::adapt_density(
+#ifndef __CUDACC__
+    FloatType alpha, FloatType rel_err, FloatType abs_err
+#else
+    FloatType alpha, FloatType rel_err, FloatType abs_err,
+    size_t block_size
+#endif
+    ) {
+
+  // compute pilot estimate
+  // ----------------------
+
+  // construct a query tree out of the data tree to perform 
+  // dual tree self-evaluation. we use copy-assignment since we would like
+  // to preserve the same ordering of points in both trees. 
+  KdtreeType query_tree = data_tree_;
+
+  // the upper and lower bounds required for dual tree must be initialized 
+  // appropriately the points and the tree nodes.
+  for (auto &q : query_tree.points_) { 
+    q.attributes().set_lower(0);
+    q.attributes().set_upper(data_tree_.root_->attr_.weight());
+  }
+  refresh_treenode_attributes(query_tree.root_, query_tree.points_);
+
+
+  // perform the dual tree evaluation. this is very similar to 
+  // the eval(std::vector<>) method; consider factoring common portions?
+  FloatType normalization = kernel_.normalization(); 
+
+  FloatType du = 1.0, dl = 0.0;
+
+#ifndef __CUDACC__
+  dual_tree(data_tree_.root_, query_tree.root_, 
+            du, dl, rel_err, abs_err/normalization, query_tree);
+#else
+  CudaDirectKde<D,KernelFloatType,KernelType> 
+    cu_kde(data_tree_.points(), query_tree.points());
+  cu_kde.kernel() = kernel_;
+
+  std::vector<KernelFloatType> host_result_cache(query_tree.size());
+
+  dual_tree(data_tree_.root_, query_tree.root_, 
+            du, dl, rel_err, abs_err/normalization, query_tree,
+            cu_kde, host_result_cache, block_size);
+#endif
+
+  for (auto &q : query_tree.points_) { 
+    q.attributes().set_lower(q.attributes().lower()*normalization);
+    q.attributes().set_upper(q.attributes().upper()*normalization);
+  }
+
+  // compute local bandwidth corrections
+  // -----------------------------------
+
+  FloatType g = 0;
+  std::vector<FloatType> local_bw(query_tree.points_.size());
+  for (size_t i = 0; i < query_tree.points_.size(); ++i) {
+    local_bw[i] = query_tree.points_[i].attributes().middle();
+    g += std::log(local_bw[i]);
+  }
+  g = std::exp( g / query_tree.points_.size() );
+
+  for (auto &bw : local_bw) {
+    bw = std::pow(bw/g, -alpha);
+  }
+
+  // update data tree attributes
+  // ---------------------------
+  for (size_t i = 0; i < data_tree_.points_.size(); ++i) {
+
+    // local bandwidth corrections
+    data_tree_.points_[i].attributes().set_lower_abw(local_bw[i]);
+    data_tree_.points_[i].attributes().set_upper_abw(local_bw[i]);
+
+    // scale wieghts
+    data_tree_.points_[i].attributes().set_weight(
+      data_tree_.points_[i].attributes().weight() * pow(local_bw[i], -D));
+  }
+
+  // update node attributes
+  refresh_treenode_attributes(data_tree_.root_, data_tree_.points_);
+
+
+  return;
+}
 
 template<int D, typename KT, typename FT, typename AT>
 inline size_t KernelDensity<D,KT,FT,AT>::size() const { return data_tree_.size(); }

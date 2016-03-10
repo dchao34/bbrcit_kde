@@ -57,6 +57,10 @@ class CUDA_ALIGN16 GaussianProductKernel2d {
     template<typename PointT>
     CUDA_CALLABLE T unnormalized_eval(const PointT&, const PointT&) const;
 
+    // evaluate U(x,y,h*a)
+    template<typename PointT>
+    CUDA_CALLABLE T unnormalized_eval(const PointT&, const PointT&, T) const;
+
     // get/set the bandwidth
     CUDA_CALLABLE T hx() const;
     CUDA_CALLABLE T hy() const;
@@ -68,13 +72,13 @@ class CUDA_ALIGN16 GaussianProductKernel2d {
     T hx_;
     T hy_;
 
-    // point_arg_eval: evaluates (px-qx)*(px-qx)/(hx*hx)+(py-qy)*(py-qy)/(hy*hy)
+    // point_arg_eval: evaluates (px-qx)*(px-qx)/(hx*hx*a*a)+(py-qy)*(py-qy)/(hy*hy*a*a)
     // default behavior is provided through the function template, while 
     // specialized behavior are provided through overloads. 
     template<typename PointT>
-      T point_arg_eval(const PointT&, const PointT&) const;
+      T point_arg_eval(const PointT&, const PointT&, T) const;
 
-    CUDA_CALLABLE T point_arg_eval(const Point2d<T>&, const Point2d<T>&) const;
+    CUDA_CALLABLE T point_arg_eval(const Point2d<T>&, const Point2d<T>&, T) const;
     
 };
 
@@ -105,7 +109,17 @@ template<typename T>
   template<typename PointT>
 inline T GaussianProductKernel2d<T>::unnormalized_eval(
     const PointT &p, const PointT &q) const {
-  return GaussianProduct2dTraits<T>::kernel(point_arg_eval(p, q));
+  return unnormalized_eval(p, q, ConstantTraits<T>::one());
+}
+
+#ifdef __CUDACC__
+#pragma hd_warning_disable
+#endif
+template<typename T>
+  template<typename PointT>
+inline T GaussianProductKernel2d<T>::unnormalized_eval(
+    const PointT &p, const PointT &q, T a) const {
+  return GaussianProduct2dTraits<T>::kernel(point_arg_eval(p, q, a));
 }
 
 template <typename T>
@@ -116,16 +130,16 @@ inline T GaussianProductKernel2d<T>::normalization() const {
 template<typename T>
   template<typename PointT>
 inline T GaussianProductKernel2d<T>::point_arg_eval(
-    const PointT &lhs, const PointT &rhs) const {
-  return (lhs[0]-rhs[0])*(lhs[0]-rhs[0])/(hx_*hx_) +
-         (lhs[1]-rhs[1])*(lhs[1]-rhs[1])/(hy_*hy_);
+    const PointT &lhs, const PointT &rhs, T a) const {
+  return (lhs[0]-rhs[0])*(lhs[0]-rhs[0])/(hx_*hx_*a*a) +
+         (lhs[1]-rhs[1])*(lhs[1]-rhs[1])/(hy_*hy_*a*a);
 }
 
 template<typename T>
 inline T GaussianProductKernel2d<T>::point_arg_eval(
-    const Point2d<T> &lhs, const Point2d<T> &rhs) const {
-  return (lhs.x()-rhs.x())*(lhs.x()-rhs.x())/(hx_*hx_) +
-         (lhs.y()-rhs.y())*(lhs.y()-rhs.y())/(hy_*hy_);
+    const Point2d<T> &lhs, const Point2d<T> &rhs, T a) const {
+  return (lhs.x()-rhs.x())*(lhs.x()-rhs.x())/(hx_*hx_*a*a) +
+         (lhs.y()-rhs.y())*(lhs.y()-rhs.y())/(hy_*hy_*a*a);
 }
 
 }
