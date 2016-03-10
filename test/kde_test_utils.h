@@ -155,6 +155,18 @@ void write_kde2d_result(
   os << std::endl;
 }
 
+template<typename PointT>
+void write_kde1d_result(
+    std::ostream &os, std::vector<PointT> &queries) {
+  std::sort(queries.begin(), queries.end(), 
+            ReverseExactLexicoLess<PointT>);
+  for (size_t i = 0; i < queries.size(); ++i) {
+    os << queries[i][0] << " ";
+    os << queries[i].attributes().middle();
+    os << std::endl;
+  }
+}
+
 
 
 

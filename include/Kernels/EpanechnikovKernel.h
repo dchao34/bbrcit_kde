@@ -15,6 +15,7 @@
 #include <Kernels/KernelTraits.h>
 #include <KdeTraits.h>
 #include <Point2d.h>
+#include <Point1d.h>
 
 namespace bbrcit {
 
@@ -79,6 +80,7 @@ class EpanechnikovKernel {
       T point_arg_eval(const PointT&, const PointT&, T a) const;
 
     CUDA_CALLABLE T point_arg_eval(const Point2d<T>&, const Point2d<T>&, T a) const;
+    CUDA_CALLABLE T point_arg_eval(const Point1d<T>&, const Point1d<T>&, T a) const;
 
     
 };
@@ -141,6 +143,12 @@ inline T EpanechnikovKernel<D,T>::point_arg_eval(
     const Point2d<T> &lhs, const Point2d<T> &rhs, T a) const {
   return ((lhs.x()-rhs.x())*(lhs.x()-rhs.x()) +
           (lhs.y()-rhs.y())*(lhs.y()-rhs.y())) / (bandwidth_*bandwidth_*a*a);
+}
+
+template<int D, typename T>
+inline T EpanechnikovKernel<D,T>::point_arg_eval(
+    const Point1d<T> &lhs, const Point1d<T> &rhs, T a) const {
+  return ((lhs.x()-rhs.x())*(lhs.x()-rhs.x())) / (bandwidth_*bandwidth_*a*a);
 }
 
 

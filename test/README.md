@@ -13,6 +13,11 @@ A single source file can produce both a CPU as well as a GPU test. In this case,
 
 CPU tests
 ---------
++ `test_kde10`: Basic use of KernelDensity<>. 
++ `test_kde11`: Runtime benchmark of KernelDensity<> for all points evaluation on the CPU. 
++ `test_kde12`: Same as `test_kde10`, but with product kernels. 
++ `test_kde13`: Basic use of adaptive kernels.
++ `test_kde14`: Same as `test_kde10`, but for 1D kernels. 
 + `test_point2d`:
 + `test_kernels`:
 + `test_kde_cppthread`:
@@ -41,6 +46,11 @@ CPU tests
 
 GPU tests
 ---------
++ `test_kde10_cuda`: Same test as `test_kde10`, but with the GPU. 
++ `test_kde11_cuda`: Same test as `test_kde11`, but with the GPU. 
++ `test_kde12_cuda`: Same test as `test_kde12`, but with the GPU. 
++ `test_kde13_cuda`: Same test as `test_kde13`, but with the GPU. 
++ `test_kde14_cuda`: Same test as `test_kde14`, but with the GPU. 
 + `test_point2d_cuda`:
 + `test_cukde0_cuda`: Basic usage of CudaDirectKde.
 + `test_cukde1_cuda`: Tests non kde evaluating methods (e.g. constructors, copy-control, etc.). Largely incomplete!

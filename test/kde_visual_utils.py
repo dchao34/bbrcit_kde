@@ -1,6 +1,26 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+def plot_data1d(data1d_fname, ax=None, xlim=None, linestyle='-', marker=None,
+                title=None, axis_fontsize=20, tick_labelsize=16):
+
+    # read in the data file
+    data = np.genfromtxt(data1d_fname)
+
+    # plot the data
+    if ax is None: ax = plt.gca()
+    ax.plot(data[:,0],data[:,1], linestyle=linestyle, marker=marker)
+
+    if xlim:
+        ax.set_xlim(xlim)
+
+
+    # customize axis labels
+    ax.set_xlabel(r'$X_1$', fontsize=axis_fontsize)
+    ax.tick_params(axis='both', which='major', labelsize=tick_labelsize)
+    if title:
+        ax.set_title(title, fontsize=axis_fontsize)
+
 def plot_data2d(data2d_fname, ax=None, xlim=None, ylim=None,
                 title=None, axis_fontsize=20, tick_labelsize=16):
 

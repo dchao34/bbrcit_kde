@@ -7,6 +7,7 @@
 #define CUDA_CALLABLE
 #endif
 
+#include <Point1d.h>
 #include <Point2d.h>
 
 namespace bbrcit {
@@ -48,6 +49,18 @@ class ConstantTraits<unsigned> {
 #ifdef __CUDACC__
 
 template<int D, typename FloatT> class DevicePointTraits;
+
+template<> 
+class DevicePointTraits<1, float> {
+  public: 
+    using Type = Point1d<float>;
+};
+
+template<> 
+class DevicePointTraits<1, double> {
+  public: 
+    using Type = Point1d<double>;
+};
 
 template<> 
 class DevicePointTraits<2, float> {
