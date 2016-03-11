@@ -7,6 +7,7 @@
 #include <chrono>
 #include <algorithm>
 #include <numeric>
+#include <limits>
 
 #include <Kernels/EpanechnikovKernel.h>
 #include <Kernels/GaussianKernel.h>
@@ -51,21 +52,7 @@ int main() {
 
   cout << endl;
 
-  // 2. generate the query grid
-  vector<DataPointType> grid, queries;
-  double start_x = -1, end_x = 1; int steps_x = 1000;
-
-  cout << "+ generating query grid of " << steps_x << " steps " << endl;
-
-  start = std::chrono::high_resolution_clock::now();
-  generate_1dgrid(grid, start_x, end_x, steps_x);
-  end = std::chrono::high_resolution_clock::now();
-  elapsed = end - start;
-  cout << "  cpu time: " << elapsed.count() << " ms. " << std::endl;
-
-  cout << endl;
-
-  // 3. build the kernel density estimator
+  // 2. build the kernel density estimator
   cout << "+ building kde (kdtree construction)" << endl;
 
   size_t leaf_max = 1024;
@@ -77,65 +64,41 @@ int main() {
   cout << "  cpu time: " << elapsed.count() << " ms. " << std::endl;
   
   // configure the kernel
-  kde.kernel().set_bandwidth(0.05);
+  kde.kernel().set_bandwidth(0.2);
 
   cout << endl;
   
-
-  // 4. direct kde evaluation
-  cout << "+ direct evaluation" << endl; 
-  queries = grid;
+  // 3. cross validate
+  cout << "+ likelihood cross validation. " << endl;
+  cout << std::endl;
 
   start = std::chrono::high_resolution_clock::now();
-  kde.direct_eval(queries);
+
+  std::vector<FloatType> bandwidths = { 0.0478, 0.048, 0.049, 0.05, 0.06, 0.07, 0.1, 0.2 };
+
+  FloatType best_bw;
+  FloatType cv, best_cv = std::numeric_limits<FloatType>::min();
+  for (size_t i = 0; i < bandwidths.size(); ++i) {
+    kde.kernel().set_bandwidth(bandwidths[i]);
+    cv = kde.likelihood_cross_validate();
+    if (cv > best_cv) { best_cv = cv; best_bw = bandwidths[i]; }
+    std::cout << "  " << kde.kernel().bandwidth() << " " << cv << std::endl;
+  }
+
   end = std::chrono::high_resolution_clock::now();
   elapsed = end - start;
+
+  cout << std::endl;
+
+  cout << "  best bandwidth: " << best_bw << ", cv score = " << best_cv << std::endl;
+
+  cout << std::endl;
+
 #ifndef __CUDACC__
   cout << "  cpu time: " << elapsed.count() << " ms. " << std::endl;
 #else 
   cout << "  gpu time: " << elapsed.count() << " ms. " << std::endl;
 #endif
-
-#ifndef __CUDACC__
-  fout.open("test_kde14_cpu_direct.csv");
-#else 
-  fout.open("test_kde14_gpu_direct.csv");
-#endif
-
-  write_kde1d_result(fout, queries);
-
-  fout.close();
-
-  cout << endl;
-
-  // 4. dual tree evaluation
-  cout << "+ dual tree evaluation" << endl; 
-  queries = grid;
-
-  FloatType rel_tol = 1e-6, abs_tol = 1e-6;
-
-  start = std::chrono::high_resolution_clock::now();
-  kde.eval(queries, rel_tol, abs_tol, leaf_max);
-  end = std::chrono::high_resolution_clock::now();
-  elapsed = end - start;
-#ifndef __CUDACC__
-  cout << "  cpu time: " << elapsed.count() << " ms. " << std::endl;
-#else 
-  cout << "  gpu time: " << elapsed.count() << " ms. " << std::endl;
-#endif
-
-#ifndef __CUDACC__
-  fout.open("test_kde14_cpu_tree.csv");
-#else 
-  fout.open("test_kde14_gpu_tree.csv");
-#endif
-
-  write_kde1d_result(fout, queries);
-
-  fout.close();
-
-  cout << endl;
-
 
   return 0;
 }

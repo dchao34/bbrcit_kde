@@ -151,10 +151,34 @@ class Kdtree {
     void retrieve_point_indices(const Node*, std::vector<IndexType>&) const;
     void retrieve_range_indices(const Node*, const RectangleType&, std::vector<IndexType>&) const;
     void retrieve_partitions(const Node *, int, std::vector<RectangleType>&) const;
+
+    void refresh_node_attributes(Node*);
 };
 
 // Implementations
 // ---------------
+
+// refresh node attributes stored in the subtree pointed to by `p`, 
+// according to the current attributes of its data points (`points`). 
+template<int D, typename AttrT, typename FloatT>
+void Kdtree<D,AttrT,FloatT>::refresh_node_attributes(Node *p) {
+
+  if (p == nullptr) { return; }
+
+  if (p->is_leaf()) {
+    size_t i = p->start_idx_, j = p->end_idx_;
+    p->attr_ = points_[i].attributes();
+    for (int k = i+1; k <= j; ++k) {
+      p->attr_.merge(points_[k].attributes());
+    }
+  } else {
+    refresh_node_attributes(p->left_);
+    refresh_node_attributes(p->right_);
+    p->attr_ = merge(p->left_->attr_, p->right_->attr_);
+  }
+
+  return;
+}
 
 template<int D, typename AttrT, typename FloatT>
 void Kdtree<D,AttrT,FloatT>::print_partitions(int depth, std::ostream &os) const {
