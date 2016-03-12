@@ -19,6 +19,7 @@ CPU tests
 + `test_kde13`: Basic use of adaptive kernels.
 + `test_kde14`: Same as `test_kde10`, but for 1D kernels. 
 + `test_kde16`: Full example 2d kde with cross validation and adaptive densities. 
++ `test_kde17`: Full example 2d kde with cross validation and adaptive densities, but with weighted points. 
 + `test_point2d`:
 + `test_kernels`:
 + `test_kde_cppthread`:
@@ -53,6 +54,7 @@ GPU tests
 + `test_kde13_cuda`: Same test as `test_kde13`, but with the GPU. 
 + `test_kde14_cuda`: Same test as `test_kde14`, but with the GPU. 
 + `test_kde16_cuda`: Same test as `test_kde16`, but with the GPU. 
++ `test_kde17_cuda`: Same test as `test_kde17`, but with the GPU. 
 + `test_point2d_cuda`:
 + `test_cukde0_cuda`: Basic usage of CudaDirectKde.
 + `test_cukde1_cuda`: Tests non kde evaluating methods (e.g. constructors, copy-control, etc.). Largely incomplete!

@@ -204,6 +204,11 @@ class KernelDensity {
 
 
 
+// perform likelihood cross validation on the current kernel
+// configuration. 
+// NOTE: the weights of the data points are assumed to be normalized. 
+// In particular, this holds before adapt_density() is called. Perhaps 
+// consider removing this caveat? 
 template<int D, typename KT, typename FT, typename AT>
 typename KernelDensity<D,KT,FT,AT>::FloatType
 KernelDensity<D,KT,FT,AT>::likelihood_cross_validate( 
@@ -265,11 +270,8 @@ KernelDensity<D,KT,FT,AT>::likelihood_cross_validate(
     cv_i -= data_tree_.points_[i].attributes().weight() * kernel_.normalization();
 
     // the cross validation score is the log of the leave one out contribution
-    cv += std::log(cv_i);
+    cv += data_tree_.points_[i].attributes().weight() * std::log(cv_i);
   }
-
-  // normalize
-  cv /= query_tree.points_.size();
 
   return cv;
 }
@@ -350,9 +352,9 @@ void KernelDensity<D,KT,FT,AT>::adapt_density(
   std::vector<FloatType> local_bw(query_tree.points_.size());
   for (size_t i = 0; i < query_tree.points_.size(); ++i) {
     local_bw[i] = query_tree.points_[i].attributes().middle();
-    g += std::log(local_bw[i]);
+    g += data_tree_.points_[i].attributes().weight() * std::log(local_bw[i]);
   }
-  g = std::exp( g / query_tree.points_.size() );
+  g = std::exp(g);
 
   for (auto &bw : local_bw) {
     bw = std::pow(bw/g, -alpha);
