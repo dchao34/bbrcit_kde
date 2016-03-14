@@ -15,6 +15,7 @@
 #include <iostream>
 
 #include <Kernels/KernelTraits.h>
+#include <KdeTraits.h>
 #include <Point2d.h>
 
 namespace bbrcit {
