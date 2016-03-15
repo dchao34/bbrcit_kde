@@ -1,7 +1,7 @@
 # Unit tests
-CPUBINS := test_kde20
+CPUBINS := 
 #CPUBINS := $(shell cat cpu_binary_targets.txt)
-GPUBINS := test_kde20_cuda
+GPUBINS := 
 #GPUBINS := $(shell cat gpu_binary_targets.txt)
 
 # additional include and library search paths

@@ -41,11 +41,11 @@ class KernelDensity {
     using KernelDensityType = KernelDensity<D,KernelT,FloatT,AttrT>;
     using KdtreeType = Kdtree<D,AttrT,FloatT>; 
     using TreeNodeType = typename KdtreeType::Node;
+    using GeomPointType = typename KdtreeType::DataPointType::PointType;
 
   public: 
     using FloatType = FloatT;
     using DataPointType = typename KdtreeType::DataPointType;
-    using GeomPointType = typename DataPointType::PointType;
     using KernelType = KernelT;
     using KernelFloatType = typename KernelType::FloatType;
 
@@ -80,7 +80,6 @@ class KernelDensity {
     const std::vector<DataPointType>& points() const;
 
 
-
     // return the direct kde evaluated at point `p` or at points in `queries`
     FloatT direct_eval(DataPointType &p) const;
 #ifndef __CUDACC__
@@ -106,8 +105,6 @@ class KernelDensity {
 #endif
 
 
-
-
     // convert this object into an adaptive kernel. this method should be called 
     // once and is not reversible. 
 #ifndef __CUDACC__ 
@@ -117,7 +114,6 @@ class KernelDensity {
     void adapt_density(FloatType alpha, 
         FloatType rel_err=1e-6, FloatType abs_err=1e-6, size_t block_size=128);
 #endif
-
 
 
     // compute the likelihood cross validation score for the current 
@@ -179,7 +175,7 @@ class KernelDensity {
     // dual tree
 #ifndef __CUDACC__ 
     template<typename KernT>
-      void eval(KdtreeType&, const KernT&, FloatType, FloatType, int) const;
+      void eval(KdtreeType&, const KernT&, FloatType, FloatType) const;
 
     template<typename KernT>
       void dual_tree(const TreeNodeType*, TreeNodeType*, const KernT&,
@@ -191,7 +187,7 @@ class KernelDensity {
 #else
 
     template<typename KernT>
-      void eval(KdtreeType&, const KernT&, FloatType, FloatType, int, size_t) const;
+      void eval(KdtreeType&, const KernT&, FloatType, FloatType, size_t) const;
 
     template<typename KernT>
       void dual_tree(const TreeNodeType*, TreeNodeType*, const KernT&,
@@ -256,39 +252,11 @@ KernelDensity<D,KT,FT,AT>::likelihood_cross_validate(
   // to preserve the same ordering of points in both trees. 
   KdtreeType query_tree = data_tree_;
 
-  // the upper and lower bounds required for dual tree must be initialized 
-  // appropriately the points and the tree nodes.
-  for (auto &q : query_tree.points_) { 
-    q.attributes().set_lower(0);
-    q.attributes().set_upper(data_tree_.root_->attr_.weight());
-  }
-  query_tree.refresh_node_attributes(query_tree.root_);
-
-
-  // perform the dual tree evaluation. 
-  FloatType normalization = kernel_.normalization(); 
-
-  FloatType du = 1.0, dl = 0.0;
-
 #ifndef __CUDACC__
-  dual_tree(data_tree_.root_, query_tree.root_, 
-            du, dl, rel_err, abs_err/normalization, query_tree);
+  eval(query_tree, kernel_, rel_err, abs_err);
 #else
-  CudaDirectKde<D,KernelFloatType,KernelType> 
-    cu_kde(data_tree_.points(), query_tree.points());
-  cu_kde.kernel() = kernel_;
-
-  std::vector<KernelFloatType> host_result_cache(query_tree.size());
-
-  dual_tree(data_tree_.root_, query_tree.root_, 
-            du, dl, rel_err, abs_err/normalization, query_tree,
-            cu_kde, host_result_cache, block_size);
+  eval(query_tree, kernel_, rel_err, abs_err, block_size);
 #endif
-
-  for (auto &q : query_tree.points_) { 
-    q.attributes().set_lower(q.attributes().lower()*normalization);
-    q.attributes().set_upper(q.attributes().upper()*normalization);
-  }
 
   // compute the cross validation score
   FloatType cv = ConstantTraits<FloatType>::zero();
@@ -343,39 +311,11 @@ void KernelDensity<D,KT,FT,AT>::adapt_density(
   // to preserve the same ordering of points in both trees. 
   KdtreeType query_tree = data_tree_;
 
-  // the upper and lower bounds required for dual tree must be initialized 
-  // appropriately the points and the tree nodes.
-  for (auto &q : query_tree.points_) { 
-    q.attributes().set_lower(0);
-    q.attributes().set_upper(data_tree_.root_->attr_.weight());
-  }
-  query_tree.refresh_node_attributes(query_tree.root_);
-
-
-  // perform the dual tree evaluation. 
-  FloatType normalization = kernel_.normalization(); 
-
-  FloatType du = 1.0, dl = 0.0;
-
 #ifndef __CUDACC__
-  dual_tree(data_tree_.root_, query_tree.root_, 
-            du, dl, rel_err, abs_err/normalization, query_tree);
+  eval(query_tree, kernel_, rel_err, abs_err);
 #else
-  CudaDirectKde<D,KernelFloatType,KernelType> 
-    cu_kde(data_tree_.points(), query_tree.points());
-  cu_kde.kernel() = kernel_;
-
-  std::vector<KernelFloatType> host_result_cache(query_tree.size());
-
-  dual_tree(data_tree_.root_, query_tree.root_, 
-            du, dl, rel_err, abs_err/normalization, query_tree,
-            cu_kde, host_result_cache, block_size);
+  eval(query_tree, kernel_, rel_err, abs_err, block_size);
 #endif
-
-  for (auto &q : query_tree.points_) { 
-    q.attributes().set_lower(q.attributes().lower()*normalization);
-    q.attributes().set_upper(q.attributes().upper()*normalization);
-  }
 
   // compute local bandwidth corrections
   // -----------------------------------
@@ -660,9 +600,9 @@ void KernelDensity<D,KT,FT,AT>::eval(
   KdtreeType query_tree(std::move(queries), leaf_nmax);
 
 #ifndef __CUDACC__
-  eval(query_tree, kernel_, rel_err, abs_err, leaf_nmax);
+  eval(query_tree, kernel_, rel_err, abs_err);
 #else
-  eval(query_tree, kernel_, rel_err, abs_err, leaf_nmax, block_size);
+  eval(query_tree, kernel_, rel_err, abs_err, block_size);
 #endif
 
   // move the results back
@@ -678,12 +618,10 @@ void KernelDensity<D,KT,FT,AT>::eval(
 
 #ifndef __CUDACC__
     KdtreeType &query_tree, const KernT &kernel,
-    FloatType rel_err, FloatType abs_err, 
-    int leaf_nmax
+    FloatType rel_err, FloatType abs_err
 #else
     KdtreeType &query_tree, const KernT &kernel,
     FloatType rel_err, FloatType abs_err, 
-    int leaf_nmax, 
     size_t block_size
 #endif
     
