@@ -80,32 +80,22 @@ class KernelDensity {
     const std::vector<DataPointType>& points() const;
 
 
-    // return the kde evaluated at point `p`. the result satisfies 
-    // at least one of the following:
-    //   + the relative error is at most `rel_err`.
-    //   + the absolute error is at most `abs_err`.
-    // otherwise, it will report to stderr that precision has been lost. 
-    FloatT eval(DataPointType &p, 
-                FloatType rel_err, FloatType abs_err) const;
-    FloatT eval(const GeomPointType &p, 
-                FloatType rel_err, FloatType abs_err) const;
 
-
-    // return the kde evaluated at point `p` using the
-    // direct algorithm. 
-    FloatT direct_eval(DataPointType&) const;
-
-    // return the kde evaluated at points in `queries` using 
-    // the direct algorithm
+    // return the direct kde evaluated at point `p` or at points in `queries`
+    FloatT direct_eval(DataPointType &p) const;
 #ifndef __CUDACC__
     void direct_eval(std::vector<DataPointType> &queries) const;
 #else
     void direct_eval(std::vector<DataPointType> &queries, size_t block_size=128) const;
 #endif
 
-    // return the kde evaluated at points in `queries`. 
-    // the evaluataion at each point satisfies the guarantees 
-    // as in the single point evaluation. 
+
+    // return the kde evaluated at point `p` or at points in `queries`
+    // the result satisfies at least one of the following:
+    //   + the relative error is at most `rel_err`.
+    //   + the absolute error is at most `abs_err`.
+    // otherwise, it will report to stderr that precision has been lost. 
+    FloatT eval(DataPointType &p, FloatType rel_err, FloatType abs_err) const;
 #ifndef __CUDACC__
     void eval(std::vector<DataPointType> &queries, 
               FloatType rel_err, FloatType abs_err, int leaf_nmax=2) const;
@@ -152,9 +142,12 @@ class KernelDensity {
     // helper functions for initialization
     void normalize_weights(std::vector<DataPointType>&);
 
+
     // helper functions for direct kde evaluations
-    template<typename KernT> FloatT direct_eval(
-        const GeomPointType&, const KernT&) const;
+    // ------------------------------------------
+
+    template<typename KernT> 
+      FloatT direct_eval(const GeomPointType&, const KernT&) const;
 
 #ifndef __CUDACC__
     template<typename KernT>
@@ -164,11 +157,22 @@ class KernelDensity {
       void direct_eval(std::vector<DataPointType>&, const KernT&, size_t) const;
 #endif
 
-    // helper functions for kde evaluataions
-    void single_tree(const TreeNodeType*, const GeomPointType&, FloatType&, 
-        FloatType&, FloatType, FloatType, FloatType, FloatType) const;
-    void single_tree_base(const TreeNodeType*, const GeomPointType&,
-        FloatType, FloatType, FloatType&, FloatType&) const;
+    // helper functions for tree kde evaluataions
+    // ------------------------------------------
+
+    // single tree
+    template <typename KernT>
+      FloatT eval(const GeomPointType&, const KernT&, FloatType, FloatType) const;
+
+    template <typename KernT>
+      void single_tree(
+          const TreeNodeType*, const GeomPointType&, const KernT&, 
+          FloatType&, FloatType&, FloatType, FloatType, FloatType, FloatType) const;
+
+    template <typename KernT>
+      void single_tree_base(
+          const TreeNodeType*, const GeomPointType&, const KernT&,
+          FloatType, FloatType, FloatType&, FloatType&) const;
 
 #ifndef __CUDACC__ 
     void dual_tree(const TreeNodeType*, TreeNodeType*, 
@@ -186,6 +190,7 @@ class KernelDensity {
         std::vector<KernelFloatType>&,size_t) const;
 #endif
 
+    // general
     bool can_approximate(const TreeNodeType*,
         FloatType,FloatType,FloatType,FloatType,
         FloatType,FloatType,FloatType,FloatType) const;
@@ -202,8 +207,9 @@ class KernelDensity {
     void apply_closer_heuristic(
         TreeNodeType**, TreeNodeType**, const ObjT &) const;
 
-    template<typename ObjT> 
-    void estimate_contributions(const TreeNodeType*, const ObjT&, 
+    template<typename ObjT, typename KernT> 
+    void estimate_contributions(
+        const TreeNodeType*, const ObjT&, const KernT&,
         FloatType&, FloatType&) const;
 
     void report_error(std::ostream&, const GeomPointType&,
@@ -468,25 +474,33 @@ template<int D, typename KT, typename FT, typename AT>
 KernelDensity<D,KT,FT,AT>::~KernelDensity() {}
 
 
+
+// user wrapper for single tree kde evaluation. 
+// computes with the default kernel. 
 template<int D, typename KT, typename FT, typename AT>
 typename KernelDensity<D,KT,FT,AT>::FloatType
 KernelDensity<D,KT,FT,AT>::eval(DataPointType &p, 
     FloatType rel_err, FloatType abs_err) const {
 
-  FloatType result = eval(p.point(), rel_err, abs_err);
-  p.attributes().set_upper(result); p.attributes().set_lower(result);
+  FloatType result = eval(p.point(), kernel_, rel_err, abs_err);
+
+  p.attributes().set_upper(result); 
+  p.attributes().set_lower(result);
+
   return result;
 
 }
-
 
 // single point kde evaluation. based on the following algorithms:
 // + ''Multiresolution Instance-Based Learning'' by Deng and Moore
 // + ''Nonparametric Density Estimation: Toward Computational Tractability'' 
 //   by Gray and Moore
 template<int D, typename KT, typename FT, typename AT>
+  template<typename KernT>
 typename KernelDensity<D,KT,FT,AT>::FloatType
-KernelDensity<D,KT,FT,AT>::eval(const GeomPointType &p, 
+KernelDensity<D,KT,FT,AT>::eval(
+    const GeomPointType &p, 
+    const KernT &kernel,
     FloatType rel_err, FloatType abs_err) const {
 
   // the contribution of some data point `d` to the kde at point `p`
@@ -509,9 +523,10 @@ KernelDensity<D,KT,FT,AT>::eval(const GeomPointType &p,
 
   // tighten the bounds by the single_tree algorithm. since we are computing
   // bounds before including the normalization, we need to scale abs_err accordingly
-  FloatType normalization = kernel_.normalization();
+  FloatType normalization = kernel.normalization();
 
-  single_tree(data_tree_.root_, p, upper, lower, du, dl, 
+  single_tree(data_tree_.root_, p, kernel,
+              upper, lower, du, dl, 
               rel_err, abs_err / normalization);
 
   assert(lower <= upper); assert(lower >= 0);
@@ -529,9 +544,11 @@ KernelDensity<D,KT,FT,AT>::eval(const GeomPointType &p,
 
 }
 
+
 template<int D, typename KT, typename FT, typename AT>
+  template<typename KernT>
 void KernelDensity<D,KT,FT,AT>::single_tree(
-    const TreeNodeType *D_node, const GeomPointType &p, 
+    const TreeNodeType *D_node, const GeomPointType &p, const KernT &kernel,
     FloatType &upper, FloatType &lower, 
     FloatType du, FloatType dl, 
     FloatType rel_err, FloatType abs_err) const {
@@ -539,7 +556,7 @@ void KernelDensity<D,KT,FT,AT>::single_tree(
   // update the kernel contributions due to points in `D_node` 
   // towards the upper/lower bounds on the kde value at point `p`. 
   FloatType du_new, dl_new; 
-  estimate_contributions(D_node, p, du_new, dl_new);
+  estimate_contributions(D_node, p, kernel, du_new, dl_new);
 
   // bound: approximate the total contribution due to `D_node` and 
   // decide whether to prune. 
@@ -555,7 +572,7 @@ void KernelDensity<D,KT,FT,AT>::single_tree(
   // branch: case 1: reached a leaf. brute force computation. 
   if (D_node->is_leaf()) {
 
-    single_tree_base(D_node, p, du, dl, upper, lower);
+    single_tree_base(D_node, p, kernel, du, dl, upper, lower);
 
   // branch: case 2: non-leaf. recursively tighten the bounds. 
   } else {
@@ -568,8 +585,8 @@ void KernelDensity<D,KT,FT,AT>::single_tree(
     apply_closer_heuristic(&closer, &further, p);
     
     // recursively tighten the bounds, closer halfspace first 
-    single_tree(closer, p, upper, lower, du_new, dl_new, rel_err, abs_err);
-    single_tree(further, p, upper, lower, du_new, dl_new, rel_err, abs_err);
+    single_tree(closer, p, kernel, upper, lower, du_new, dl_new, rel_err, abs_err);
+    single_tree(further, p, kernel, upper, lower, du_new, dl_new, rel_err, abs_err);
 
   }
 }
@@ -580,16 +597,17 @@ void KernelDensity<D,KT,FT,AT>::single_tree(
 // output invariants:
 // + lower <= upper
 template<int D, typename KT, typename FT, typename AT>
+  template<typename KernT>
 void KernelDensity<D,KT,FT,AT>::single_tree_base(
-    const TreeNodeType *D_node, const GeomPointType &p,
+    const TreeNodeType *D_node, const GeomPointType &p, const KernT &kernel,
     FloatType du, FloatType dl, 
     FloatType &upper, FloatType &lower) const {
 
   FloatType delta;
   for (auto i = D_node->start_idx_; i <= D_node->end_idx_; ++i) {
 
-    delta = kernel_.unnormalized_eval(p, data_tree_.points_[i].point(), 
-                                      data_tree_.points_[i].attributes().lower_abw());
+    delta = kernel.unnormalized_eval(p, data_tree_.points_[i].point(), 
+                                        data_tree_.points_[i].attributes().lower_abw());
 
     delta *= data_tree_.points_[i].attributes().weight();
     upper += delta; lower += delta;
@@ -691,7 +709,7 @@ void KernelDensity<D,KT,FT,AT>::dual_tree(
 
   // update the kernel contributions due to D_node
   FloatType du_new, dl_new;
-  estimate_contributions(D_node, Q_node->bbox_, du_new, dl_new);
+  estimate_contributions(D_node, Q_node->bbox_, kernel_, du_new, dl_new);
 
   // BOUND: decide whether the approximation satsifies the error guarantees
   if (can_approximate(D_node, Q_node, 
@@ -879,7 +897,8 @@ void KernelDensity<D,KT,FT,AT>::dual_tree_base(
 
 #ifndef __CUDACC__
 
-    single_tree_base(D_node, query_tree.points_[i].point(), 
+    single_tree_base(
+        D_node, query_tree.points_[i].point(), kernel_,
         1.0, 0.0, upper_q, lower_q);
 
 #else
@@ -1014,9 +1033,9 @@ inline void KernelDensity<D,KT,FT,AT>::apply_closer_heuristic(
 
 
 template<int D, typename KT, typename FT, typename AT>
-  template<typename ObjT> 
+  template<typename ObjT, typename KernT> 
 void KernelDensity<D,KT,FT,AT>::estimate_contributions(
-    const TreeNodeType *D_node, const ObjT &obj, 
+    const TreeNodeType *D_node, const ObjT &obj, const KernT &kernel,
     FloatType &du, FloatType &dl) const {
 
   GeomPointType proxy;
@@ -1026,10 +1045,10 @@ void KernelDensity<D,KT,FT,AT>::estimate_contributions(
   // dimension to bound the min/max kernel contributions
 
   for (int i = 0; i < D; ++i) { proxy[i] = D_node->bbox_.min_dist(i, obj); }
-  du = kernel_.unnormalized_eval(proxy, origin, D_node->attr_.upper_abw());
+  du = kernel.unnormalized_eval(proxy, origin, D_node->attr_.upper_abw());
 
   for (int i = 0; i < D; ++i) { proxy[i] = D_node->bbox_.max_dist(i, obj); }
-  dl = kernel_.unnormalized_eval(proxy, origin, D_node->attr_.lower_abw());
+  dl = kernel.unnormalized_eval(proxy, origin, D_node->attr_.lower_abw());
 
 }
 

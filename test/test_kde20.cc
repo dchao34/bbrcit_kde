@@ -114,6 +114,20 @@ int main() {
 
   cout << endl;
 
+  // 3.5 single tree kde evaluation
+  cout << "+ single tree evaluation" << endl; 
+  queries = grid;
+
+  FloatType rel_tol = 1e-6, abs_tol = 1e-6;
+
+  start = std::chrono::high_resolution_clock::now();
+  kde.eval(queries, rel_tol, abs_tol);
+  end = std::chrono::high_resolution_clock::now();
+  elapsed = end - start;
+  cout << "  cpu time: " << elapsed.count() << " ms. " << std::endl;
+
+  cout << endl;
+
   /*
   // 4. dual tree evaluation
   cout << "+ dual tree evaluation" << endl; 
