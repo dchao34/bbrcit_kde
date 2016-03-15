@@ -6,6 +6,11 @@
 #include <Kernels/GaussianKernel.h>
 #include <Kernels/EpanechnikovProductKernel2d.h>
 #include <Kernels/GaussianProductKernel2d.h>
+#include <Kernels/EpanechnikovConvKernel1d.h>
+#include <Kernels/EpanechnikovProductConvKernel2d.h>
+#include <Kernels/GaussianConvKernel1d.h>
+#include <Kernels/GaussianProductConvKernel2d.h>
+
 #include <DecoratedPoint.h>
 #include <Attributes/KdeAttributes.h>
 
@@ -13,10 +18,16 @@
 
 using namespace std;
 using FloatType = float;
+
 using bbrcit::EpanechnikovKernel;
 using bbrcit::GaussianKernel;
 using bbrcit::EpanechnikovProductKernel2d;
 using bbrcit::GaussianProductKernel2d;
+using bbrcit::EpanechnikovConvKernel1d;
+using bbrcit::GaussianConvKernel1d;
+using bbrcit::EpanechnikovProductConvKernel2d;
+using bbrcit::GaussianProductConvKernel2d;
+
 using bbrcit::KdeAttributes;
 using PointType1d = bbrcit::DecoratedPoint<1, KdeAttributes<FloatType>>;
 using PointType2d = bbrcit::DecoratedPoint<2, KdeAttributes<FloatType>>;
@@ -118,6 +129,52 @@ int main() {
   fout.open("test_epprod2d.csv");
   for (auto &p : grid2d) { 
     FloatType result = epprod2d.normalization() * epprod2d.unnormalized_eval(p, origin2d); 
+    p.attributes().set_lower(result);
+    p.attributes().set_upper(result);
+  };
+  write_kde2d_result(fout, grid2d, -5, 5, 1000, -5, 5, 1000);
+  fout.close();
+
+  // test: EpanechnikovConvKernel1d
+  EpanechnikovConvKernel1d<FloatType> epconv1d, epconv1d_narrow(0.5), epconv1d_wide(2.0);
+
+  fout.open("test_epconv1d.csv");
+  for (const auto &p : grid1d) { 
+    fout << p[0] << " " << epconv1d.normalization() * epconv1d.unnormalized_eval(p, origin1d);
+    fout << " " << epconv1d_narrow.normalization() * epconv1d_narrow.unnormalized_eval(p, origin1d);
+    fout << " " << epconv1d_wide.normalization() * epconv1d_wide.unnormalized_eval(p, origin1d);
+    fout << endl; 
+  }
+  fout.close();
+
+  // test: EpanechnikovProductConvKernel2d
+  EpanechnikovProductConvKernel2d<FloatType> epconv2d(2.0, 1.0);
+  fout.open("test_epconv2d.csv");
+  for (auto &p : grid2d) { 
+    FloatType result = epconv2d.normalization() * epconv2d.unnormalized_eval(p, origin2d); 
+    p.attributes().set_lower(result);
+    p.attributes().set_upper(result);
+  };
+  write_kde2d_result(fout, grid2d, -5, 5, 1000, -5, 5, 1000);
+  fout.close();
+
+  // test: GaussianConvKernel1d
+  GaussianConvKernel1d<FloatType> gaussconv1d, gaussconv1d_narrow(0.5), gaussconv1d_wide(2.0);
+
+  fout.open("test_gaussconv1d.csv");
+  for (const auto &p : grid1d) { 
+    fout << p[0] << " " << gaussconv1d.normalization() * gaussconv1d.unnormalized_eval(p, origin1d);
+    fout << " " << gaussconv1d_narrow.normalization() * gaussconv1d_narrow.unnormalized_eval(p, origin1d);
+    fout << " " << gaussconv1d_wide.normalization() * gaussconv1d_wide.unnormalized_eval(p, origin1d);
+    fout << endl; 
+  }
+  fout.close();
+
+  // test: GaussianProductConvKernel2d
+  GaussianProductConvKernel2d<FloatType> gaussconv2d(1.2, 1.0);
+  fout.open("test_gaussconv2d.csv");
+  for (auto &p : grid2d) { 
+    FloatType result = gaussconv2d.normalization() * gaussconv2d.unnormalized_eval(p, origin2d); 
     p.attributes().set_lower(result);
     p.attributes().set_upper(result);
   };
