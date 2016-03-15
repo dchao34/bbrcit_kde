@@ -94,8 +94,14 @@ class KernelDensity {
     // return the kde evaluated at point `p` using the
     // direct algorithm. 
     FloatT direct_eval(DataPointType&) const;
-    FloatT direct_eval(const GeomPointType&) const;
 
+    // return the kde evaluated at points in `queries` using 
+    // the direct algorithm
+#ifndef __CUDACC__
+    void direct_eval(std::vector<DataPointType> &queries) const;
+#else
+    void direct_eval(std::vector<DataPointType> &queries, size_t block_size=128) const;
+#endif
 
     // return the kde evaluated at points in `queries`. 
     // the evaluataion at each point satisfies the guarantees 
@@ -109,14 +115,6 @@ class KernelDensity {
               size_t block_size=128) const;
 #endif
 
-
-    // return the kde evaluated at points in `queries` using 
-    // the direct algorithm
-#ifndef __CUDACC__
-    void direct_eval(std::vector<DataPointType> &queries) const;
-#else
-    void direct_eval(std::vector<DataPointType> &queries, size_t block_size=128) const;
-#endif
 
 
 
@@ -153,6 +151,18 @@ class KernelDensity {
 
     // helper functions for initialization
     void normalize_weights(std::vector<DataPointType>&);
+
+    // helper functions for direct kde evaluations
+    template<typename KernT> FloatT direct_eval(
+        const GeomPointType&, const KernT&) const;
+
+#ifndef __CUDACC__
+    template<typename KernT>
+      void direct_eval(std::vector<DataPointType>&, const KernT&) const;
+#else
+    template<typename KernT>
+      void direct_eval(std::vector<DataPointType>&, const KernT&, size_t) const;
+#endif
 
     // helper functions for kde evaluataions
     void single_tree(const TreeNodeType*, const GeomPointType&, FloatType&, 
@@ -1056,52 +1066,81 @@ void KernelDensity<D,KT,FT,AT>::report_error(
 
 }
 
+// user wrapper for direct kernel density evaluation.
+// computes with the default kernel. 
 template<int D, typename KT, typename FT, typename AT>
 typename KernelDensity<D,KT,FT,AT>::FloatType
 KernelDensity<D,KT,FT,AT>::direct_eval(DataPointType &p) const {
-  FloatType result = direct_eval(p.point());
+  FloatType result = direct_eval(p.point(), kernel_);
   p.attributes().set_upper(result);
   p.attributes().set_lower(result);
   return result;
 }
 
+// direct kernel density evaluation. computes using arbitrary kernels. 
 template<int D, typename KT, typename FT, typename AT>
+  template<typename KernT>
 typename KernelDensity<D,KT,FT,AT>::FloatType
-KernelDensity<D,KT,FT,AT>::direct_eval(const GeomPointType &p) const {
+KernelDensity<D,KT,FT,AT>::direct_eval(
+    const GeomPointType &p, const KernT &kernel) const {
+
   FloatType total = ConstantTraits<FloatType>::zero();
   for (const auto &datum : data_tree_.points()) {
     total += 
       datum.attributes().weight() * 
-      kernel_.unnormalized_eval(p, datum.point(), 
-                                   datum.attributes().lower_abw() );
+      kernel.unnormalized_eval(p, datum.point(), 
+                                  datum.attributes().lower_abw() );
   }
   total *= kernel_.normalization();
   return total;
+
 }
 
-template<int D, typename KT, typename FT, typename AT>
-void KernelDensity<D,KT,FT,AT>::direct_eval(
+
+// user wrapper for direct kernel density evaluation.
 #ifndef __CUDACC__
-    std::vector<DataPointType> &queries
-#else
+template<int D, typename KT, typename FT, typename AT>
+inline void KernelDensity<D,KT,FT,AT>::direct_eval(
+    std::vector<DataPointType> &queries) const {
+  direct_eval(queries, kernel_);
+  return; 
+}
+#else 
+template<int D, typename KT, typename FT, typename AT>
+inline void KernelDensity<D,KT,FT,AT>::direct_eval(
     std::vector<DataPointType> &queries, size_t block_size
+    ) const {
+  direct_eval(queries, kernel_, block_size);
+  return; 
+}
 #endif
+
+
+
+// direct kernel density evaluation. computes using arbitrary kernels. 
+template<int D, typename KT, typename FT, typename AT>
+  template<typename KernT>
+void KernelDensity<D,KT,FT,AT>::direct_eval(
+
+#ifndef __CUDACC__
+    std::vector<DataPointType> &queries, const KernT &kernel
+#else
+    std::vector<DataPointType> &queries, const KernT &kernel, size_t block_size
+#endif
+
     ) const {
 
 #ifndef __CUDACC__
-
   for (auto &q : queries) {
-    FloatType result = direct_eval(q.point());
+    FloatType result = direct_eval(q.point(), kernel);
     q.attributes().set_lower(result);
     q.attributes().set_upper(result);
   }
-
-#else 
-
+#else
   std::vector<KernelFloatType> host_results(queries.size());
 
-  CudaDirectKde<D,KernelFloatType,KernelType> cuda_kde(data_tree_.points(), queries);
-  cuda_kde.kernel() = kernel_;
+  CudaDirectKde<D,KernelFloatType,KernT> cuda_kde(data_tree_.points(), queries);
+  cuda_kde.kernel() = kernel;
 
   cuda_kde.eval(0, data_tree_.size()-1, 0, queries.size()-1, 
                 host_results, block_size);
@@ -1110,10 +1149,9 @@ void KernelDensity<D,KT,FT,AT>::direct_eval(
     queries[i].attributes().set_lower(host_results[i]);
     queries[i].attributes().set_upper(host_results[i]);
   }
-
 #endif
 
-  return;
+  return; 
 }
 
 
