@@ -161,6 +161,7 @@ class KernelDensity {
     // ------------------------------------------
 
     // single tree
+
     template <typename KernT>
       FloatT eval(const GeomPointType&, const KernT&, FloatType, FloatType) const;
 
@@ -174,20 +175,35 @@ class KernelDensity {
           const TreeNodeType*, const GeomPointType&, const KernT&,
           FloatType, FloatType, FloatType&, FloatType&) const;
 
+
+    // dual tree
 #ifndef __CUDACC__ 
-    void dual_tree(const TreeNodeType*, TreeNodeType*, 
-        FloatType, FloatType, FloatType, FloatType, KdtreeType&) const;
-    void dual_tree_base(const TreeNodeType*, TreeNodeType*,
-        FloatType, FloatType, KdtreeType&) const;
+    template<typename KernT>
+      void eval(KdtreeType&, const KernT&, FloatType, FloatType, int) const;
+
+    template<typename KernT>
+      void dual_tree(const TreeNodeType*, TreeNodeType*, const KernT&,
+          FloatType, FloatType, FloatType, FloatType, KdtreeType&) const;
+
+    template<typename KernT>
+      void dual_tree_base(const TreeNodeType*, TreeNodeType*, const KernT&,
+          FloatType, FloatType, KdtreeType&) const;
 #else
-    void dual_tree(const TreeNodeType*, TreeNodeType*, 
-        FloatType, FloatType, FloatType, FloatType, KdtreeType&, 
-        CudaDirectKde<D,KernelFloatType,KernelType>&, 
-        std::vector<KernelFloatType>&,size_t) const;
-    void dual_tree_base(const TreeNodeType*, TreeNodeType*,
-        FloatType, FloatType, KdtreeType&, 
-        CudaDirectKde<D,KernelFloatType,KernelType>&, 
-        std::vector<KernelFloatType>&,size_t) const;
+
+    template<typename KernT>
+      void eval(KdtreeType&, const KernT&, FloatType, FloatType, int, size_t) const;
+
+    template<typename KernT>
+      void dual_tree(const TreeNodeType*, TreeNodeType*, const KernT&,
+          FloatType, FloatType, FloatType, FloatType, KdtreeType&, 
+          CudaDirectKde<D,KernelFloatType,KernT>&, 
+          std::vector<KernelFloatType>&,size_t) const;
+
+    template<typename KernT>
+      void dual_tree_base(const TreeNodeType*, TreeNodeType*, const KernT&,
+          FloatType, FloatType, KdtreeType&, 
+          CudaDirectKde<D,KernelFloatType,KernT>&, 
+          std::vector<KernelFloatType>&,size_t) const;
 #endif
 
     // general
@@ -621,7 +637,8 @@ void KernelDensity<D,KT,FT,AT>::single_tree_base(
 }
 
 
-// multi-point kde evaluation
+// user wrapper for tree multi-point kernel density evaluation.
+// computes with the default kernel. 
 template<int D, typename KT, typename FT, typename AT>
 void KernelDensity<D,KT,FT,AT>::eval(
 
@@ -632,41 +649,76 @@ void KernelDensity<D,KT,FT,AT>::eval(
 #else
     std::vector<DataPointType> &queries, 
     FloatType rel_err, FloatType abs_err, 
-    int leaf_nmax, size_t block_size
+    int leaf_nmax, 
+    size_t block_size
+#endif
+    
+    ) const {
+
+
+  // construct a query tree
+  KdtreeType query_tree(std::move(queries), leaf_nmax);
+
+#ifndef __CUDACC__
+  eval(query_tree, kernel_, rel_err, abs_err, leaf_nmax);
+#else
+  eval(query_tree, kernel_, rel_err, abs_err, leaf_nmax, block_size);
+#endif
+
+  // move the results back
+  queries = std::move(query_tree.points_);
+
+}
+
+
+// tree multi-point kde evaluation. computes with arbitrary kernels.
+template<int D, typename KT, typename FT, typename AT>
+  template<typename KernT>
+void KernelDensity<D,KT,FT,AT>::eval(
+
+#ifndef __CUDACC__
+    KdtreeType &query_tree, const KernT &kernel,
+    FloatType rel_err, FloatType abs_err, 
+    int leaf_nmax
+#else
+    KdtreeType &query_tree, const KernT &kernel,
+    FloatType rel_err, FloatType abs_err, 
+    int leaf_nmax, 
+    size_t block_size
 #endif
     
     ) const {
 
   // initialize upper/lower bounds of individual queries to be
   // such that all data points contribute maximally/minimally
-  for (auto &q : queries) { 
+  for (auto &q : query_tree.points_) { 
     q.attributes().set_lower(0);
     q.attributes().set_upper(data_tree_.root_->attr_.weight());
   }
+  query_tree.refresh_node_attributes(query_tree.root_);
+
   FloatType du = 1.0, dl = 0.0;
 
-  // construct a query tree
-  KdtreeType query_tree(std::move(queries), leaf_nmax);
 
-  // tighten using the dual tree algorithm
-  FloatType normalization = kernel_.normalization(); 
+  // dual tree algorithm
+  FloatType normalization = kernel.normalization(); 
 
 #ifndef __CUDACC__
-  dual_tree(data_tree_.root_, query_tree.root_, 
+  dual_tree(data_tree_.root_, query_tree.root_, kernel,
             du, dl, rel_err, abs_err/normalization, query_tree);
 #else
-  CudaDirectKde<D,KernelFloatType,KernelType> 
+  CudaDirectKde<D,KernelFloatType,KernT> 
     cu_kde(data_tree_.points(), query_tree.points());
-  cu_kde.kernel() = kernel_;
+  cu_kde.kernel() = kernel;
 
   std::vector<KernelFloatType> host_result_cache(query_tree.size());
 
-  dual_tree(data_tree_.root_, query_tree.root_, 
+  dual_tree(data_tree_.root_, query_tree.root_, kernel,
             du, dl, rel_err, abs_err/normalization, query_tree,
             cu_kde, host_result_cache, block_size);
 #endif
 
-  // remember to normalize before returning
+  // remember to normalize
   for (auto &q : query_tree.points_) { 
 
     q.attributes().set_lower(q.attributes().lower()*normalization);
@@ -676,8 +728,6 @@ void KernelDensity<D,KT,FT,AT>::eval(
                  q.attributes().upper(), q.attributes().lower(), 
                  rel_err, abs_err);
   }
-
-  queries = std::move(query_tree.points_);
 
   return;
 }
@@ -690,17 +740,18 @@ void KernelDensity<D,KT,FT,AT>::eval(
 // the lower/upper bounds of Q_node is the min/max of all lower/upper 
 // bounds of the individual queries 
 template<int D, typename KT, typename FT, typename AT>
+  template<typename KernT>
 void KernelDensity<D,KT,FT,AT>::dual_tree(
 
 #ifndef __CUDACC__
-    const TreeNodeType *D_node, TreeNodeType *Q_node, 
+    const TreeNodeType *D_node, TreeNodeType *Q_node, const KernT &kernel,
     FloatType du, FloatType dl, FloatType rel_err, FloatType abs_err,
     KdtreeType &query_tree
 #else
-    const TreeNodeType *D_node, TreeNodeType *Q_node, 
+    const TreeNodeType *D_node, TreeNodeType *Q_node, const KernT &kernel,
     FloatType du, FloatType dl, FloatType rel_err, FloatType abs_err,
     KdtreeType &query_tree,
-    CudaDirectKde<D,KernelFloatType,KT> &cu_kde,
+    CudaDirectKde<D,KernelFloatType,KernT> &cu_kde,
     std::vector<KernelFloatType> &host_result_cache,
     size_t block_size
 #endif
@@ -709,7 +760,7 @@ void KernelDensity<D,KT,FT,AT>::dual_tree(
 
   // update the kernel contributions due to D_node
   FloatType du_new, dl_new;
-  estimate_contributions(D_node, Q_node->bbox_, kernel_, du_new, dl_new);
+  estimate_contributions(D_node, Q_node->bbox_, kernel, du_new, dl_new);
 
   // BOUND: decide whether the approximation satsifies the error guarantees
   if (can_approximate(D_node, Q_node, 
@@ -743,9 +794,9 @@ void KernelDensity<D,KT,FT,AT>::dual_tree(
   if (Q_node->is_leaf() && D_node->is_leaf()) {
 
 #ifndef __CUDACC__
-    dual_tree_base(D_node, Q_node, du, dl, query_tree);
+    dual_tree_base(D_node, Q_node, kernel, du, dl, query_tree);
 #else
-    dual_tree_base(D_node, Q_node, du, dl, query_tree, 
+    dual_tree_base(D_node, Q_node, kernel, du, dl, query_tree, 
                    cu_kde, host_result_cache, block_size);
 #endif
     
@@ -765,15 +816,15 @@ void KernelDensity<D,KT,FT,AT>::dual_tree(
       apply_closer_heuristic(&closer, &further, Q_node->bbox_);
 
 #ifndef __CUDACC__
-      dual_tree(closer, Q_node, 
+      dual_tree(closer, Q_node, kernel, 
           du_new, dl_new, rel_err, abs_err, query_tree);
-      dual_tree(further, Q_node, 
+      dual_tree(further, Q_node, kernel, 
           du_new, dl_new, rel_err, abs_err, query_tree);
 #else
-      dual_tree(closer, Q_node, 
+      dual_tree(closer, Q_node, kernel,
           du_new, dl_new, rel_err, abs_err, query_tree,
           cu_kde, host_result_cache, block_size);
-      dual_tree(further, Q_node, 
+      dual_tree(further, Q_node, kernel,
           du_new, dl_new, rel_err, abs_err, query_tree,
           cu_kde, host_result_cache, block_size);
 #endif
@@ -796,15 +847,15 @@ void KernelDensity<D,KT,FT,AT>::dual_tree(
       if (D_node->is_leaf()) {
 
 #ifndef __CUDACC__
-        dual_tree(D_node, Q_node->left_, 
+        dual_tree(D_node, Q_node->left_, kernel, 
             du_new, dl_new, rel_err, abs_err, query_tree);
-        dual_tree(D_node, Q_node->right_, 
+        dual_tree(D_node, Q_node->right_, kernel, 
             du_new, dl_new, rel_err, abs_err, query_tree);
 #else 
-        dual_tree(D_node, Q_node->left_, 
+        dual_tree(D_node, Q_node->left_, kernel,
             du_new, dl_new, rel_err, abs_err, query_tree,
             cu_kde, host_result_cache, block_size);
-        dual_tree(D_node, Q_node->right_, 
+        dual_tree(D_node, Q_node->right_, kernel,
             du_new, dl_new, rel_err, abs_err, query_tree,
             cu_kde, host_result_cache, block_size);
 #endif
@@ -817,15 +868,15 @@ void KernelDensity<D,KT,FT,AT>::dual_tree(
         apply_closer_heuristic(&closer, &further, Q_node->left_->bbox_);
 
 #ifndef __CUDACC__
-        dual_tree(closer, Q_node->left_, 
+        dual_tree(closer, Q_node->left_, kernel, 
             du_new, dl_new, rel_err, abs_err, query_tree);
-        dual_tree(further, Q_node->left_, 
+        dual_tree(further, Q_node->left_, kernel, 
             du_new, dl_new, rel_err, abs_err, query_tree);
 #else
-        dual_tree(closer, Q_node->left_, 
+        dual_tree(closer, Q_node->left_, kernel,
             du_new, dl_new, rel_err, abs_err, query_tree,
             cu_kde, host_result_cache, block_size);
-        dual_tree(further, Q_node->left_, 
+        dual_tree(further, Q_node->left_, kernel,
             du_new, dl_new, rel_err, abs_err, query_tree,
             cu_kde, host_result_cache, block_size);
 #endif
@@ -835,15 +886,15 @@ void KernelDensity<D,KT,FT,AT>::dual_tree(
         apply_closer_heuristic(&closer, &further, Q_node->right_->bbox_);
 
 #ifndef __CUDACC__
-        dual_tree(closer, Q_node->right_, 
+        dual_tree(closer, Q_node->right_, kernel, 
             du_new, dl_new, rel_err, abs_err, query_tree);
-        dual_tree(further, Q_node->right_, 
+        dual_tree(further, Q_node->right_, kernel, 
             du_new, dl_new, rel_err, abs_err, query_tree);
 #else
-        dual_tree(closer, Q_node->right_, 
+        dual_tree(closer, Q_node->right_, kernel,
             du_new, dl_new, rel_err, abs_err, query_tree,
             cu_kde, host_result_cache, block_size);
-        dual_tree(further, Q_node->right_, 
+        dual_tree(further, Q_node->right_, kernel,
             du_new, dl_new, rel_err, abs_err, query_tree,
             cu_kde, host_result_cache, block_size);
 #endif
@@ -863,16 +914,17 @@ void KernelDensity<D,KT,FT,AT>::dual_tree(
 
 
 template<int D, typename KT, typename FT, typename AT>
+  template<typename KernT>
 void KernelDensity<D,KT,FT,AT>::dual_tree_base(
 #ifndef __CUDACC__
-    const TreeNodeType *D_node, TreeNodeType *Q_node,
+    const TreeNodeType *D_node, TreeNodeType *Q_node, const KernT &kernel,
     FloatType du, FloatType dl, 
     KdtreeType &query_tree
 #else
-    const TreeNodeType *D_node, TreeNodeType *Q_node,
+    const TreeNodeType *D_node, TreeNodeType *Q_node, const KernT &kernel,
     FloatType du, FloatType dl, 
     KdtreeType &query_tree,
-    CudaDirectKde<D,KernelFloatType,KT> &cu_kde,
+    CudaDirectKde<D,KernelFloatType,KernT> &cu_kde,
     std::vector<KernelFloatType> &host_result_cache,
     size_t block_size
 #endif
@@ -898,7 +950,7 @@ void KernelDensity<D,KT,FT,AT>::dual_tree_base(
 #ifndef __CUDACC__
 
     single_tree_base(
-        D_node, query_tree.points_[i].point(), kernel_,
+        D_node, query_tree.points_[i].point(), kernel,
         1.0, 0.0, upper_q, lower_q);
 
 #else

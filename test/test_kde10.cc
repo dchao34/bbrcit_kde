@@ -9,7 +9,6 @@
 #include <numeric>
 
 #include <Kernels/EpanechnikovKernel.h>
-#include <Kernels/GaussianKernel.h>
 #include <KernelDensity.h>
 
 #include "kde_test_utils.h"
@@ -20,7 +19,6 @@ namespace {
   using FloatType = double;
   using KFloatType = float;
   using KernelType = bbrcit::EpanechnikovKernel<2, KFloatType>;
-  //using KernelType = bbrcit::GaussianKernel<2, KFloatType>;
   using KernelDensityType = bbrcit::KernelDensity<2, KernelType, FloatType>;
   using DataPointType = typename KernelDensityType::DataPointType;
 }
@@ -116,11 +114,26 @@ int main() {
 
   cout << endl;
 
+  // 3.5 single tree kde evaluation
+  FloatType rel_tol = 1e-6, abs_tol = 1e-6;
+
+#ifndef __CUDACC__
+  cout << "+ single tree evaluation" << endl; 
+  queries = grid;
+
+  start = std::chrono::high_resolution_clock::now();
+  kde.eval(queries, rel_tol, abs_tol);
+  end = std::chrono::high_resolution_clock::now();
+  elapsed = end - start;
+  cout << "  cpu time: " << elapsed.count() << " ms. " << std::endl;
+
+  cout << endl;
+#endif
+
+
   // 4. dual tree evaluation
   cout << "+ dual tree evaluation" << endl; 
   queries = grid;
-
-  FloatType rel_tol = 1e-6, abs_tol = 1e-6;
 
   start = std::chrono::high_resolution_clock::now();
   kde.eval(queries, rel_tol, abs_tol, leaf_max);
