@@ -1100,7 +1100,7 @@ KernelDensity<D,KT,FT,AT>::direct_eval(
       kernel.unnormalized_eval(p, datum.point(), 
                                   datum.attributes().lower_abw() );
   }
-  total *= kernel_.normalization();
+  total *= kernel.normalization();
   return total;
 
 }
