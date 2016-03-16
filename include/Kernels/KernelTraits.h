@@ -266,14 +266,14 @@ class EpanechnikovConv1dTraits {
   public:
     // evaluates (3/160) / hx; 3/160 = 0.01875
     static T normalization(T hx) { 
-      return 0.01875 / hx;
+      return 0.6 / hx;
     }
 
     // evaluates (2-x)^3*(x^2+6x+4) if 0<=|x|<2 and 0 otherwise. 
     static T kernel(T arg) {
       arg = std::abs(arg);
       T cubic = std::max(2-arg, 0);
-      return cubic*cubic*cubic*(arg*arg+6*arg+4);
+      return 0.03125*cubic*cubic*cubic*(arg*arg+6*arg+4);
     }
 };
 
@@ -282,13 +282,13 @@ class EpanechnikovConv1dTraits<float> {
 
   public:
     CUDA_CALLABLE static float normalization(float hx) { 
-      return 0.01875f / hx;
+      return 0.6f / hx;
     }
 
     CUDA_CALLABLE static float kernel(float arg) {
       arg = fabsf(arg);
       float cubic = fmaxf(2.0f-arg, 0.0f);
-      return cubic*cubic*cubic*(arg*arg+6.0f*arg+4.0f);
+      return 0.03125f*cubic*cubic*cubic*(arg*arg+6.0f*arg+4.0f);
     }
 };
 
@@ -297,13 +297,13 @@ class EpanechnikovConv1dTraits<double> {
 
   public:
     CUDA_CALLABLE static double normalization(double hx) { 
-      return 0.01875 / hx;
+      return 0.6 / hx;
     }
 
     CUDA_CALLABLE static double kernel(double arg) {
       arg = fabs(arg);
       double cubic = fmax(2.0-arg, 0.0);
-      return cubic*cubic*cubic*(arg*arg+6.0*arg+4.0);
+      return 0.03125*cubic*cubic*cubic*(arg*arg+6.0*arg+4.0);
     }
 };
 
@@ -316,14 +316,14 @@ class EpanechnikovProductConv2dTraits {
   public:
     // evaluates (3*3/(160*160)) / (hx*hy); 3*3/(160*160) = 0.0003515625
     static T normalization(T hx, T hy) { 
-      return 0.0003515625 / (hx*hy);
+      return 0.36 / (hx*hy);
     }
 
     // evaluates (2-x)^3*(x^2+6x+4) if 0<=|x|<2 and 0 otherwise. 
     static T kernel(T arg) {
       arg = std::abs(arg);
       T cubic = std::max(2-arg, 0);
-      return cubic*cubic*cubic*(arg*arg+6*arg+4);
+      return 0.03125*cubic*cubic*cubic*(arg*arg+6*arg+4);
     }
 };
 
@@ -332,13 +332,13 @@ class EpanechnikovProductConv2dTraits<float> {
 
   public:
     CUDA_CALLABLE static float normalization(float hx, float hy) { 
-      return 0.0003515625f / (hx*hy);
+      return 0.36f / (hx*hy);
     }
 
     CUDA_CALLABLE static float kernel(float arg) {
       arg = fabsf(arg);
       float cubic = fmaxf(2.0f-arg, 0.0f);
-      return cubic*cubic*cubic*(arg*arg+6.0f*arg+4.0f);
+      return 0.03125f*cubic*cubic*cubic*(arg*arg+6.0f*arg+4.0f);
     }
 };
 
@@ -347,13 +347,13 @@ class EpanechnikovProductConv2dTraits<double> {
 
   public:
     CUDA_CALLABLE static double normalization(double hx, double hy) { 
-      return 0.0003515625 / (hx*hy);
+      return 0.36 / (hx*hy);
     }
 
     CUDA_CALLABLE static double kernel(double arg) {
       arg = fabs(arg);
       double cubic = fmax(2.0-arg, 0.0);
-      return cubic*cubic*cubic*(arg*arg+6.0*arg+4.0);
+      return 0.03125*cubic*cubic*cubic*(arg*arg+6.0*arg+4.0);
     }
 };
 

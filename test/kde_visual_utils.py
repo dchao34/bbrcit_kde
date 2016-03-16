@@ -51,7 +51,8 @@ def plot_contour2d(kde2d_fname, ax=None, colorbar=True,
                    vmin=None, vmax=None,
                    nlevels=10, nlevels_f=50,
                    linewidths=0.4,
-                   title=None, axis_fontsize=20, tick_labelsize=16):
+                   title=None, axis_fontsize=20, tick_labelsize=16, 
+                   cmap=plt.cm.Blues, contour_fmt='%1.2f'):
 
     # read in the specialized file generated from kde_scan
     X, Y = None, None
@@ -65,7 +66,7 @@ def plot_contour2d(kde2d_fname, ax=None, colorbar=True,
     if ax is None: ax = plt.gca()
     csf = ax.contourf(X, Y, Z, nlevels_f,
                       vmin=vmin,vmax=vmax,
-                      cmap=plt.cm.Blues)
+                      cmap=cmap)
     cs = ax.contour(X, Y, Z, nlevels,linewidths=linewidths, colors='k', linestyles='--')
 
 
@@ -73,7 +74,7 @@ def plot_contour2d(kde2d_fname, ax=None, colorbar=True,
     if colorbar:
         cbar = plt.gcf().colorbar(csf)
         cbar.ax.tick_params(labelsize=axis_fontsize)
-    ax.clabel(cs, inline=1, fmt='%1.2f', fontsize=axis_fontsize);
+    ax.clabel(cs, inline=1, fmt=contour_fmt, fontsize=axis_fontsize);
 
     # customize axis labels
     ax.set_xlabel(r'$X_1$', fontsize=axis_fontsize)

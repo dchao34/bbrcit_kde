@@ -14,6 +14,8 @@
 #include <DecoratedPoint.h>
 #include <Attributes/AdaKdeAttributes.h>
 #include <Kernels/EpanechnikovKernel.h>
+#include <Kernels/KernelTraits.h>
+#include <Kernels/ConvKernelAssociator.h>
 #include <KdeTraits.h>
 #include <FloatUtils.h>
 
@@ -116,13 +118,17 @@ class KernelDensity {
 #endif
 
 
-    // compute the likelihood cross validation score for the current 
-    // kernel configuration (i.e. for the current setting of bandwidths. )
+    // compute the cross validation score for the current 
+    // kernel configuration. likelihood and least squares are available. 
 #ifndef __CUDACC__ 
     FloatType likelihood_cross_validate(
         FloatType rel_err=1e-6, FloatType abs_err=1e-6) const;
+    FloatType leastsquares_cross_validate(
+        FloatType rel_err=1e-6, FloatType abs_err=1e-6) const;
 #else
     FloatType likelihood_cross_validate(
+        FloatType rel_err=1e-6, FloatType abs_err=1e-6, size_t block_size=128) const;
+    FloatType leastsquares_cross_validate(
         FloatType rel_err=1e-6, FloatType abs_err=1e-6, size_t block_size=128) const;
 #endif
 
@@ -229,6 +235,80 @@ class KernelDensity {
 
 
 };
+
+// perform least squares cross validation on the current kernel
+// configuration. 
+// NOTE: the weights of the data points are assumed to be normalized. 
+// In particular, this holds before adapt_density() is called. Perhaps 
+// consider removing this caveat? 
+template<int D, typename KT, typename FT, typename AT>
+typename KernelDensity<D,KT,FT,AT>::FloatType
+KernelDensity<D,KT,FT,AT>::leastsquares_cross_validate( 
+#ifndef __CUDACC__ 
+    FloatType rel_err, FloatType abs_err
+#else
+    FloatType rel_err, FloatType abs_err, size_t block_size
+#endif
+    ) const {
+
+
+  // construct a query tree out of the data tree to perform 
+  // dual tree self-evaluation. we use copy-assignment since we would like
+  // to preserve the same ordering of points in both trees. 
+  KdtreeType query_tree = data_tree_;
+
+  // compute the leave one out contribution
+  // --------------------------------------
+
+  // all pairs computation using the default kernel
+#ifndef __CUDACC__
+  eval(query_tree, kernel_, rel_err, abs_err);
+#else
+  eval(query_tree, kernel_, rel_err, abs_err, block_size);
+#endif
+
+  FloatType val = 0.0;
+
+  // compute leave one out score
+  FloatType llo_cv = ConstantTraits<FloatType>::zero();
+  for (size_t i = 0; i < query_tree.points_.size(); ++i) {
+
+    // the dual tree gives contributions from all points; must 
+    // subtract away the self contribution
+    val = query_tree.points_[i].attributes().middle();
+    val -= data_tree_.points_[i].attributes().weight() * kernel_.normalization();
+
+    // contribution is weighted
+    llo_cv += data_tree_.points_[i].attributes().weight() * val;
+  }
+
+  // compute the square integral contribution
+  // ----------------------------------------
+
+  // induce the convolution kernel out of the default kernel
+  typename ConvKernelAssociator<KernelType>::ConvKernelType conv_kernel = 
+    ConvKernelAssociator<KernelType>::make_convolution_kernel(kernel_);
+
+  // all pairs computation using the convolution kernel
+#ifndef __CUDACC__
+  eval(query_tree, conv_kernel, rel_err, abs_err);
+#else
+  eval(query_tree, conv_kernel, rel_err, abs_err, block_size);
+#endif
+
+  // compute square integral score
+  FloatType sq_cv = ConstantTraits<FloatType>::zero();
+  for (size_t i = 0; i < query_tree.points_.size(); ++i) {
+
+    val = query_tree.points_[i].attributes().middle();
+
+    // contribution is weighted
+    sq_cv += data_tree_.points_[i].attributes().weight() * val;
+  }
+
+  return sq_cv - 2*llo_cv;
+
+}
 
 
 

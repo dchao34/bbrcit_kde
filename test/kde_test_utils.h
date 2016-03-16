@@ -133,6 +133,25 @@ void write_scatter_data(std::ostream &os, const std::vector<PointT> &data) {
   for (const auto &p : data) { os << p[0] << " " << p[1] << std::endl; }
 }
 
+void write_cv2d_result(
+    std::ostream &os, const std::vector<double> &cv_scores,
+    double start_x, double end_x, int steps_x, 
+    double start_y, double end_y, int steps_y) {
+
+  double delta_x = (end_x - start_x) / steps_x;
+  double delta_y = (end_y - start_y) / steps_y;
+  for (int i = 0; i < steps_x; ++i) { os << start_x + i * delta_x << " "; } 
+  os << std::endl;
+  for (int i = 0; i < steps_y; ++i) { os << start_y + i * delta_y << " "; } 
+  os << std::endl;
+
+  for (size_t i = 0; i < cv_scores.size(); ++i) {
+    if (i % steps_x == 0 && i) { os << std::endl; }
+    os << cv_scores[i] << " ";
+  }
+  os << std::endl;
+}
+
 template<typename PointT>
 void write_kde2d_result(
     std::ostream &os, std::vector<PointT> &queries,
