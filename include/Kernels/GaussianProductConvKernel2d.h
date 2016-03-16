@@ -93,6 +93,12 @@ template<typename T>
 GaussianProductConvKernel2d<T>::GaussianProductConvKernel2d(T hx, T hy) : hx_(hx), hy_(hy) {}
 
 template<typename T>
+inline T GaussianProductConvKernel2d<T>::hx() const { return hx_; }
+
+template<typename T>
+inline T GaussianProductConvKernel2d<T>::hy() const { return hy_; }
+
+template<typename T>
 inline void GaussianProductConvKernel2d<T>::set_hx(T hx) { hx_ = hx; }
 
 template<typename T>

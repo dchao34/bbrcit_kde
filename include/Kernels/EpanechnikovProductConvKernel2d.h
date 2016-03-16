@@ -89,6 +89,12 @@ template<typename T>
 EpanechnikovProductConvKernel2d<T>::EpanechnikovProductConvKernel2d(T hx, T hy) : hx_(hx), hy_(hy) {}
 
 template<typename T>
+inline T EpanechnikovProductConvKernel2d<T>::hx() const { return hx_; }
+
+template<typename T>
+inline T EpanechnikovProductConvKernel2d<T>::hy() const { return hy_; }
+
+template<typename T>
 inline void EpanechnikovProductConvKernel2d<T>::set_hx(T hx) { hx_ = hx; }
 
 template<typename T>

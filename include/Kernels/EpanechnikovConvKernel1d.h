@@ -86,6 +86,9 @@ template<typename T>
 EpanechnikovConvKernel1d<T>::EpanechnikovConvKernel1d(T hx) : hx_(hx) {}
 
 template<typename T>
+inline T EpanechnikovConvKernel1d<T>::hx() const { return hx_; }
+
+template<typename T>
 inline void EpanechnikovConvKernel1d<T>::set_hx(T hx) { hx_ = hx; }
 
 template <typename T>
