@@ -1,4 +1,5 @@
-*.dat
 *.csv
 *.o
 .d
+.ipynb_checkpoints
+*.pyc
