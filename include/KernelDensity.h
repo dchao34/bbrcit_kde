@@ -38,22 +38,25 @@ template<int D,
          typename AttrT=AdaKdeAttributes<FloatT>>
 class KernelDensity {
 
-  private:
-
-    using KernelDensityType = KernelDensity<D,KernelT,FloatT,AttrT>;
-    using KdtreeType = Kdtree<D,AttrT,FloatT>; 
-    using TreeNodeType = typename KdtreeType::Node;
-    using GeomPointType = typename KdtreeType::DataPointType::PointType;
-
   public: 
+
     using FloatType = FloatT;
+    using KdtreeType = Kdtree<D,AttrT,FloatT>; 
     using DataPointType = typename KdtreeType::DataPointType;
     using KernelType = KernelT;
     using KernelFloatType = typename KernelType::FloatType;
 
+    static constexpr int dim() { return D; }
+
+  private:
+
+    using KernelDensityType = KernelDensity<D,KernelT,FloatT,AttrT>;
+    using TreeNodeType = typename KdtreeType::Node;
+    using GeomPointType = typename KdtreeType::DataPointType::PointType;
+
     friend void swap<>(KernelDensityType&, KernelDensityType&);
 
-    static constexpr int dim() { return D; }
+  public:
 
     // default constructor: estimator on an empty set. 
     KernelDensity();
@@ -91,18 +94,27 @@ class KernelDensity {
 #endif
 
 
-    // return the kde evaluated at point `p` or at points in `queries`
+    // return the kde evaluated at point `p` or at points in `queries`.
     // the result satisfies at least one of the following:
     //   + the relative error is at most `rel_err`.
     //   + the absolute error is at most `abs_err`.
     // otherwise, it will report to stderr that precision has been lost. 
+    //
+    // Note: for multi point queries, the method taking a vector<> first constructs 
+    // KdtreeType<> before evaluation. Since such a construction uses randomized 
+    // partitioning, the exact structure of the tree varies between calls. For 
+    // uses where the exact structure matters, use the overloaded method taking a
+    // KdtreeType<> argrument. 
     FloatT eval(DataPointType &p, FloatType rel_err, FloatType abs_err) const;
 #ifndef __CUDACC__
     void eval(std::vector<DataPointType> &queries, 
               FloatType rel_err, FloatType abs_err, int leaf_nmax=2) const;
+    void eval(KdtreeType &query_tree, FloatType rel_err, FloatType abs_err) const;
 #else
     void eval(std::vector<DataPointType> &queries, 
               FloatType rel_err, FloatType abs_err, int leaf_nmax=2, 
+              size_t block_size=128) const;
+    void eval(KdtreeType &query_tree, FloatType rel_err, FloatType abs_err, 
               size_t block_size=128) const;
 #endif
 
@@ -687,6 +699,30 @@ void KernelDensity<D,KT,FT,AT>::eval(
 
   // move the results back
   queries = std::move(query_tree.points_);
+
+}
+
+// user wrapper for tree multi-point kernel density evaluation.
+// computes with the default kernel. 
+template<int D, typename KT, typename FT, typename AT>
+inline void KernelDensity<D,KT,FT,AT>::eval(
+
+#ifndef __CUDACC__
+    KdtreeType &query_tree, 
+    FloatType rel_err, FloatType abs_err
+#else
+    KdtreeType &query_tree,
+    FloatType rel_err, FloatType abs_err, 
+    size_t block_size
+#endif
+    
+    ) const {
+
+#ifndef __CUDACC__
+  eval(query_tree, kernel_, rel_err, abs_err);
+#else
+  eval(query_tree, kernel_, rel_err, abs_err, block_size);
+#endif
 
 }
 
