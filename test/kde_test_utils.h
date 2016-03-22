@@ -169,7 +169,7 @@ void write_kde2d_result(
             ReverseExactLexicoLess<PointT>);
   for (size_t i = 0; i < queries.size(); ++i) {
     if (i % steps_x == 0 && i) { os << std::endl; }
-    os << queries[i].attributes().middle() << " ";
+    os << queries[i].attributes().value() << " ";
   }
   os << std::endl;
 }
@@ -181,7 +181,7 @@ void write_kde1d_result(
             ReverseExactLexicoLess<PointT>);
   for (size_t i = 0; i < queries.size(); ++i) {
     os << queries[i][0] << " ";
-    os << queries[i].attributes().middle();
+    os << queries[i].attributes().value();
     os << std::endl;
   }
 }

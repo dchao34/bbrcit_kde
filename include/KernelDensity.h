@@ -302,7 +302,7 @@ KernelDensity<D,KT,FT,AT>::leastsquares_cross_validate(
 
     // the dual tree gives contributions from all points; must 
     // subtract away the self contribution
-    val = query_tree.points_[i].attributes().middle();
+    val = query_tree.points_[i].attributes().value();
     val -= data_tree_.points_[i].attributes().mass() * kernel_.normalization();
 
     // contribution is weighted
@@ -327,7 +327,7 @@ KernelDensity<D,KT,FT,AT>::leastsquares_cross_validate(
   FloatType sq_cv = ConstantTraits<FloatType>::zero();
   for (size_t i = 0; i < query_tree.points_.size(); ++i) {
 
-    val = query_tree.points_[i].attributes().middle();
+    val = query_tree.points_[i].attributes().value();
 
     // contribution is weighted
     sq_cv += data_tree_.points_[i].attributes().weight() * val;
@@ -370,7 +370,7 @@ KernelDensity<D,KT,FT,AT>::likelihood_cross_validate(
 
     // the dual tree gives contributions from all points; must 
     // subtract away the self contribution
-    cv_i = query_tree.points_[i].attributes().middle();
+    cv_i = query_tree.points_[i].attributes().value();
     cv_i -= data_tree_.points_[i].attributes().mass() * kernel_.normalization();
 
     // the cross validation score is the log of the leave one out contribution
@@ -427,7 +427,7 @@ void KernelDensity<D,KT,FT,AT>::adapt_density(
   FloatType g = 0;
   std::vector<FloatType> local_bw(query_tree.points_.size());
   for (size_t i = 0; i < query_tree.points_.size(); ++i) {
-    local_bw[i] = query_tree.points_[i].attributes().middle();
+    local_bw[i] = query_tree.points_[i].attributes().value();
     g += data_tree_.points_[i].attributes().weight() * std::log(local_bw[i]);
   }
   g = std::exp(g);
@@ -671,7 +671,7 @@ void KernelDensity<D,KT,FT,AT>::single_tree_base(
   for (auto i = D_node->start_idx_; i <= D_node->end_idx_; ++i) {
 
     delta = kernel.unnormalized_eval(p, data_tree_.points_[i].point(), 
-                                        data_tree_.points_[i].attributes().lower_abw());
+                                        data_tree_.points_[i].attributes().abw());
 
     delta *= data_tree_.points_[i].attributes().mass();
     upper += delta; lower += delta;
@@ -1231,7 +1231,7 @@ KernelDensity<D,KT,FT,AT>::direct_eval(
     total += 
       datum.attributes().mass() * 
       kernel.unnormalized_eval(p, datum.point(), 
-                                  datum.attributes().lower_abw() );
+                                  datum.attributes().abw() );
   }
   total *= kernel.normalization();
   return total;

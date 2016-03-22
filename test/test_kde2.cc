@@ -57,9 +57,9 @@ int main() {
       ReverseExactLexicoLess<DataPoint1d>);
 
   for (int i = 0; i < n_query; ++i) {
-    double direct = direct_result[i].attributes().middle();
-    double single = single_tree_result[i].attributes().middle();
-    double dual = dual_tree_result[i].attributes().middle();
+    double direct = direct_result[i].attributes().value();
+    double single = single_tree_result[i].attributes().value();
+    double dual = dual_tree_result[i].attributes().value();
 
     double diff = std::abs(single - direct);
     if (diff > abs_err) {
@@ -122,9 +122,9 @@ int main() {
       ReverseExactLexicoLess<DataPoint1d>);
 
   for (int i = 0; i < n_query; ++i) {
-    double direct = direct_result[i].attributes().middle();
-    double single = single_tree_result[i].attributes().middle();
-    double dual = dual_tree_result[i].attributes().middle();
+    double direct = direct_result[i].attributes().value();
+    double single = single_tree_result[i].attributes().value();
+    double dual = dual_tree_result[i].attributes().value();
 
     double diff = std::abs(single - direct);
     if (diff > abs_err) {

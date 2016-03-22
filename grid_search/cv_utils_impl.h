@@ -77,7 +77,7 @@ void write_2dgrid_values(std::ostream &os, std::vector<PointT> &point_values,
   std::sort(point_values.begin(), point_values.end(), ReverseExactLexicoLess<PointT>);
   std::vector<double> values(point_values.size());
   for (size_t i = 0; i < point_values.size(); ++i) {
-    values[i] = point_values[i].attributes().middle();
+    values[i] = point_values[i].attributes().value();
   }
   write_2dgrid_values(os, static_cast<const std::vector<double>>(values), 
                       start_x, end_x, steps_x, start_y, end_y, steps_y);

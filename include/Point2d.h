@@ -33,7 +33,7 @@ class CUDA_ALIGN16 Point2d<float> {
         x_ = pt[0]; 
         y_ = pt[1];
         m_ = pt.attributes().mass();
-        abw_ = pt.attributes().lower_abw();
+        abw_ = pt.attributes().abw();
         return *this;
       }
 
@@ -70,7 +70,7 @@ class CUDA_ALIGN16 Point2d<double> {
         x_ = pt[0]; 
         y_ = pt[1];
         m_ = pt.attributes().mass();
-        abw_ = pt.attributes().lower_abw();
+        abw_ = pt.attributes().abw();
         return *this;
       }
 

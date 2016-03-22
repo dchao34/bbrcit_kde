@@ -32,7 +32,7 @@ class CUDA_ALIGN16 Point1d<float> {
       Point1d<float>& operator=(const HostDecPointT &pt) {
         x_ = pt[0]; 
         m_ = pt.attributes().mass();
-        abw_ = pt.attributes().lower_abw();
+        abw_ = pt.attributes().abw();
         return *this;
       }
 
@@ -66,7 +66,7 @@ class CUDA_ALIGN16 Point1d<double> {
       Point1d<double>& operator=(const HostDecPointT &pt) {
         x_ = pt[0]; 
         m_ = pt.attributes().mass();
-        abw_ = pt.attributes().lower_abw();
+        abw_ = pt.attributes().abw();
         return *this;
       }
 
