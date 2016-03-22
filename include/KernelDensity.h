@@ -147,13 +147,30 @@ class KernelDensity {
 
   private:
 
+    // internal state
+    // --------------
+
     // the kernel function of the estimator 
     KernelType kernel_;
 
-    // the kernel function of the estimator 
+    // the reference points associated with this kernel density. the points 
+    // are required to have the same attributes as those in AdaKdeAttributes<>. 
+    // Below are some additional invariants maintained as well as some notable
+    // comments:
+    //
+    // + weight: these are the relative importance of each data point. 
+    //           throughout the lifetime of this KernelDensity<> object, 
+    //           we maintain the sum over all point weights to be 1.0. 
+    //
+    // + mass: while similar to weight, this is the actual contribution that
+    //         the point has towards kde queries. though this is usually the 
+    //         same as weight, it can be different; for example, in the adaptive
+    //         kernels, this is the weight multiplied by local bandwidth corrections. 
+    //
     KdtreeType data_tree_;
 
     // helper functions for initialization
+    // ------------------------------------------
     void initialize_attributes(std::vector<DataPointType>&);
     void normalize_weights(std::vector<DataPointType>&);
 
@@ -251,9 +268,6 @@ class KernelDensity {
 
 // perform least squares cross validation on the current kernel
 // configuration. 
-// NOTE: the weights of the data points are assumed to be normalized. 
-// In particular, this holds before adapt_density() is called. Perhaps 
-// consider removing this caveat? 
 template<int D, typename KT, typename FT, typename AT>
 typename KernelDensity<D,KT,FT,AT>::FloatType
 KernelDensity<D,KT,FT,AT>::leastsquares_cross_validate( 
@@ -289,7 +303,7 @@ KernelDensity<D,KT,FT,AT>::leastsquares_cross_validate(
     // the dual tree gives contributions from all points; must 
     // subtract away the self contribution
     val = query_tree.points_[i].attributes().middle();
-    val -= data_tree_.points_[i].attributes().weight() * kernel_.normalization();
+    val -= data_tree_.points_[i].attributes().mass() * kernel_.normalization();
 
     // contribution is weighted
     llo_cv += data_tree_.points_[i].attributes().weight() * val;
@@ -327,9 +341,6 @@ KernelDensity<D,KT,FT,AT>::leastsquares_cross_validate(
 
 // perform likelihood cross validation on the current kernel
 // configuration. 
-// NOTE: the weights of the data points are assumed to be normalized. 
-// In particular, this holds before adapt_density() is called. Perhaps 
-// consider removing this caveat? 
 template<int D, typename KT, typename FT, typename AT>
 typename KernelDensity<D,KT,FT,AT>::FloatType
 KernelDensity<D,KT,FT,AT>::likelihood_cross_validate( 
@@ -360,7 +371,7 @@ KernelDensity<D,KT,FT,AT>::likelihood_cross_validate(
     // the dual tree gives contributions from all points; must 
     // subtract away the self contribution
     cv_i = query_tree.points_[i].attributes().middle();
-    cv_i -= data_tree_.points_[i].attributes().weight() * kernel_.normalization();
+    cv_i -= data_tree_.points_[i].attributes().mass() * kernel_.normalization();
 
     // the cross validation score is the log of the leave one out contribution
     cv += data_tree_.points_[i].attributes().weight() * std::log(cv_i);
@@ -433,14 +444,13 @@ void KernelDensity<D,KT,FT,AT>::adapt_density(
     data_tree_.points_[i].attributes().set_lower_abw(local_bw[i]);
     data_tree_.points_[i].attributes().set_upper_abw(local_bw[i]);
 
-    // scale wieghts
-    data_tree_.points_[i].attributes().set_weight(
+    // scale masses
+    data_tree_.points_[i].attributes().set_mass(
       data_tree_.points_[i].attributes().weight() * pow(local_bw[i], -D));
   }
 
   // update node attributes
   data_tree_.refresh_node_attributes(data_tree_.root_);
-
 
   return;
 }
