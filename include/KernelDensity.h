@@ -564,33 +564,26 @@ KernelDensity<D,KT,FT,AT>::eval(
     const KernT &kernel,
     FloatType rel_err, FloatType abs_err) const {
 
-  // the contribution of some data point `d` to the kde at point `p`
-  // is given by its weight scaled by the kernel value, which depends
-  // on the distance between `d` and `p`. 
-  //
-  // (we will normalize the kernel once the computation is complete; 
-  //  thus, we assume that the maximum value of any kernel is 1.0. )
+  // each reference point `d` contributes some proportion of its mass 
+  // towards the kde at point `p`. 
+  // Note: we factor out the overall normalization during the tree traversal 
+  //       and normalize later. 
   //
   // initialization: 
-  // + upper: upper bound on the kde value. initially, every point 
-  //          contributes its maximum weight. 
-  // + lower: lower bound on the kde value. initially, every point 
-  //          contributes none of its weight. 
-  // + du: the upper bound on the proportion of weight each point contributes. 
-  // + dl: the lower bound on the proportion of weight each point contributes. 
-  FloatType upper = data_tree_.root_->attr_.weight();
+  // + upper: upper bound on the kde value. initially, take all of the mass. 
+  // + lower: lower bound on the kde value. initially, take none of the mass. 
+  // + du: the upper bound on the proportion of mass each point contributes.
+  // + dl: the lower bound on the proportion of mass each point contributes. 
+  FloatType upper = data_tree_.root_->attr_.mass();
   FloatType lower = ConstantTraits<FloatType>::zero();
   FloatType du = 1.0, dl = 0.0;
 
-  // tighten the bounds by the single_tree algorithm. since we are computing
-  // bounds before including the normalization, we need to scale abs_err accordingly
+  // tighten the bounds by the single_tree algorithm. since we include the
+  // overall normalization afterwards, we need to scale abs_err accordingly
   FloatType normalization = kernel.normalization();
-
   single_tree(data_tree_.root_, p, kernel,
               upper, lower, du, dl, 
               rel_err, abs_err / normalization);
-
-  assert(lower <= upper); assert(lower >= 0);
 
   // take the mean of the bounds and remember to include the normalization
   FloatType result = normalization * (lower + (upper - lower) / 2);
@@ -670,11 +663,11 @@ void KernelDensity<D,KT,FT,AT>::single_tree_base(
     delta = kernel.unnormalized_eval(p, data_tree_.points_[i].point(), 
                                         data_tree_.points_[i].attributes().lower_abw());
 
-    delta *= data_tree_.points_[i].attributes().weight();
+    delta *= data_tree_.points_[i].attributes().mass();
     upper += delta; lower += delta;
   }
-  upper -= D_node->attr_.weight() * du; 
-  lower -= D_node->attr_.weight() * dl;
+  upper -= D_node->attr_.mass() * du; 
+  lower -= D_node->attr_.mass() * dl;
 
   // see comment in tighten_bounds. 
   if (lower > upper) { upper = lower; }
@@ -760,7 +753,7 @@ void KernelDensity<D,KT,FT,AT>::eval(
   // such that all data points contribute maximally/minimally
   for (auto &q : query_tree.points_) { 
     q.attributes().set_lower(0);
-    q.attributes().set_upper(data_tree_.root_->attr_.weight());
+    q.attributes().set_upper(data_tree_.root_->attr_.mass());
   }
   query_tree.refresh_node_attributes(query_tree.root_);
 
@@ -801,8 +794,9 @@ void KernelDensity<D,KT,FT,AT>::eval(
 
 
 // tighten the contribution from all points in D_node to the upper/lower
-// bounds of Q_node as well as each individual queries in Q_node
-// `du`, `dl` are the present kernel contributions of D_node to bounds in Q_node. 
+// bounds of Q_node as well as each individual queries in Q_node.
+// `du`, `dl` are upper and lower bounds on the proportion of mass 
+// contributions of every point in D_node to points in Q_node. 
 //
 // the lower/upper bounds of Q_node is the min/max of all lower/upper 
 // bounds of the individual queries 
@@ -1023,7 +1017,7 @@ void KernelDensity<D,KT,FT,AT>::dual_tree_base(
 #else
 
     upper_q += host_result_cache[i-(Q_node->start_idx_)]; 
-    upper_q -= D_node->attr_.weight();
+    upper_q -= D_node->attr_.mass();
 
     lower_q += host_result_cache[i-(Q_node->start_idx_)]; 
 
@@ -1075,8 +1069,8 @@ void KernelDensity<D,KT,FT,AT>::tighten_bounds(
     FloatType &upper, FloatType &lower) const {
 
   // add the new contributions, but remember to subtract away the old ones
-  lower += D_node->attr_.weight() * (dl_new - dl);
-  upper += D_node->attr_.weight() * (du_new - du); 
+  lower += D_node->attr_.mass() * (dl_new - dl);
+  upper += D_node->attr_.mass() * (du_new - du); 
 
   // the input invariants guarantee, mathematically, that lower <= upper.
   // however, roundoff error (approx. cancellation) can break this gurantee.
@@ -1225,7 +1219,7 @@ KernelDensity<D,KT,FT,AT>::direct_eval(
   FloatType total = ConstantTraits<FloatType>::zero();
   for (const auto &datum : data_tree_.points()) {
     total += 
-      datum.attributes().weight() * 
+      datum.attributes().mass() * 
       kernel.unnormalized_eval(p, datum.point(), 
                                   datum.attributes().lower_abw() );
   }

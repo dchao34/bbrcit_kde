@@ -23,15 +23,15 @@ class CUDA_ALIGN16 Point1d<float> {
     using FloatType = float;
 
     CUDA_CALLABLE Point1d() = default;
-    CUDA_CALLABLE Point1d(float x, float w) : 
-      x_(x), w_(w), abw_(1.0f) {}
-    CUDA_CALLABLE Point1d(float x, float w, float abw) : 
-      x_(x), w_(w), abw_(abw) {}
+    CUDA_CALLABLE Point1d(float x, float m) : 
+      x_(x), m_(m), abw_(1.0f) {}
+    CUDA_CALLABLE Point1d(float x, float m, float abw) : 
+      x_(x), m_(m), abw_(abw) {}
 
     template<typename HostDecPointT>
       Point1d<float>& operator=(const HostDecPointT &pt) {
         x_ = pt[0]; 
-        w_ = pt.attributes().weight();
+        m_ = pt.attributes().mass();
         abw_ = pt.attributes().lower_abw();
         return *this;
       }
@@ -41,12 +41,12 @@ class CUDA_ALIGN16 Point1d<float> {
     CUDA_CALLABLE Point1d<float>& operator=(const Point1d<float>&) = default;
 
     CUDA_CALLABLE float x() const { return x_; }
-    CUDA_CALLABLE float w() const { return w_; }
+    CUDA_CALLABLE float m() const { return m_; }
     CUDA_CALLABLE float abw() const { return abw_; }
 
   private:
     float x_ = 0.0f;
-    float w_ = 0.0f;
+    float m_ = 1.0f;
     float abw_ = 1.0f;
 };
 
@@ -57,15 +57,15 @@ class CUDA_ALIGN16 Point1d<double> {
     using FloatType = double;
 
     CUDA_CALLABLE Point1d() = default;
-    CUDA_CALLABLE Point1d(double x, double w) : 
-      x_(x), w_(w), abw_(1.0f) {}
-    CUDA_CALLABLE Point1d(double x, double w, double abw) : 
-      x_(x), w_(w), abw_(abw) {}
+    CUDA_CALLABLE Point1d(double x, double m) : 
+      x_(x), m_(m), abw_(1.0f) {}
+    CUDA_CALLABLE Point1d(double x, double m, double abw) : 
+      x_(x), m_(m), abw_(abw) {}
 
     template<typename HostDecPointT>
       Point1d<double>& operator=(const HostDecPointT &pt) {
         x_ = pt[0]; 
-        w_ = pt.attributes().weight();
+        m_ = pt.attributes().mass();
         abw_ = pt.attributes().lower_abw();
         return *this;
       }
@@ -75,12 +75,12 @@ class CUDA_ALIGN16 Point1d<double> {
     CUDA_CALLABLE Point1d<double>& operator=(const Point1d<double>&) = default;
 
     CUDA_CALLABLE double x() const { return x_; }
-    CUDA_CALLABLE double w() const { return w_; }
+    CUDA_CALLABLE double m() const { return m_; }
     CUDA_CALLABLE double abw() const { return abw_; }
 
   private:
     double x_ = 0.0f;
-    double w_ = 0.0f;
+    double m_ = 1.0f;
     double abw_ = 1.0f;
 };
 
