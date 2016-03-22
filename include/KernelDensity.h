@@ -63,7 +63,7 @@ class KernelDensity {
 
     // construct a kernel density estimator with 
     // kernel `k` over the points `data`.
-    KernelDensity(const std::vector<DataPointType> &data, int leaf_nmax=2);
+    KernelDensity(std::vector<DataPointType> data, int leaf_nmax=2);
     KernelDensity(std::vector<DataPointType> &&data, int leaf_nmax=2);
 
     // copy-control
@@ -154,6 +154,7 @@ class KernelDensity {
     KdtreeType data_tree_;
 
     // helper functions for initialization
+    void initialize_attributes(std::vector<DataPointType>&);
     void normalize_weights(std::vector<DataPointType>&);
 
 
@@ -467,12 +468,11 @@ KernelDensity<D,KT,FT,AT>::KernelDensity() :
 
 template<int D, typename KT, typename FT, typename AT>
 KernelDensity<D,KT,FT,AT>::KernelDensity(
-    const std::vector<DataPointType> &pts, int leaf_max) 
+    std::vector<DataPointType> pts, int leaf_max) 
   : kernel_() {
 
-  std::vector<DataPointType> pts_normed = pts;
-  normalize_weights(pts_normed);
-  data_tree_ = KdtreeType(std::move(pts_normed), leaf_max);
+  initialize_attributes(pts);
+  data_tree_ = KdtreeType(std::move(pts), leaf_max);
 
 }
 
@@ -481,7 +481,7 @@ KernelDensity<D,KT,FT,AT>::KernelDensity(
     std::vector<DataPointType> &&pts, int leaf_max) 
   : kernel_() {
 
-  normalize_weights(pts);
+  initialize_attributes(pts);
   data_tree_ = KdtreeType(std::move(pts), leaf_max);
 
 }
@@ -503,6 +503,19 @@ KernelDensity<D,KT,FT,AT>::kernel() {
 template<int D, typename KT, typename FT, typename AT>
 inline void KernelDensity<D,KT,FT,AT>::set_kernel(const KernelType &k) {
   kernel_ = k;
+}
+
+template<int D, typename KT, typename FT, typename AT>
+void KernelDensity<D,KT,FT,AT>::initialize_attributes(
+    std::vector<DataPointType> &pts) {
+
+  // normalize point weights
+  normalize_weights(pts);
+
+  // set masses to equal normalized weights
+  for (auto &p : pts) { 
+    p.attributes().set_mass(p.attributes().weight());
+  }
 }
 
 template<int D, typename KT, typename FT, typename AT>
