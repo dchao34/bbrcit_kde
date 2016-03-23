@@ -103,8 +103,8 @@ def plot_hist2d(fname, bins, ax=None, colorbar=True, normed=False,
     # custimize contour labels
     if colorbar:
         cbar = plt.gcf().colorbar(H[3])
-    
-    cbar.ax.tick_params(labelsize=axis_fontsize)
+        cbar.ax.tick_params(labelsize=axis_fontsize)
+
     # customize axis labels
     ax.set_xlabel(r'$X_1$', fontsize=axis_fontsize)
     ax.set_ylabel(r'$X_2$', fontsize=axis_fontsize)

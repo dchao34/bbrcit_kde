@@ -71,7 +71,7 @@ class EpanechnikovKernel {
     // `e` is a random number engine from `std::random`. 
     // the result is stored in `p` with `p[i]` corresponding to component `i`. 
     template<typename RNG> 
-      void simulate(RNG &e, std::vector<T> &p, T a = ConstantTraits<T>::one());
+      void simulate(RNG &e, std::vector<T> &p, T a = ConstantTraits<T>::one()) const;
 
     // get/set the bandwidth
     CUDA_CALLABLE T bandwidth() const;
@@ -161,7 +161,7 @@ inline T EpanechnikovKernel<D,T>::point_arg_eval(
 
 template<>
   template<typename RNG> 
-void EpanechnikovKernel<1, float>::simulate(RNG &e, std::vector<float> &p, float a) {
+void EpanechnikovKernel<1, float>::simulate(RNG &e, std::vector<float> &p, float a) const {
 
   static std::uniform_real_distribution<float> d(-1, 1);
   p.resize(1);
@@ -171,7 +171,7 @@ void EpanechnikovKernel<1, float>::simulate(RNG &e, std::vector<float> &p, float
 
 template<>
   template<typename RNG> 
-void EpanechnikovKernel<1, double>::simulate(RNG &e, std::vector<double> &p, double a) {
+void EpanechnikovKernel<1, double>::simulate(RNG &e, std::vector<double> &p, double a) const {
 
   static std::uniform_real_distribution<double> d(-1, 1);
   p.resize(1);

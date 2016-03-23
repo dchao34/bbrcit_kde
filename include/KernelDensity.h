@@ -9,6 +9,7 @@
 #include <cassert>
 #include <iostream>
 #include <iomanip>
+#include <random>
 
 #include <Kdtree.h>
 #include <DecoratedPoint.h>
@@ -145,6 +146,15 @@ class KernelDensity {
 #endif
 
 
+    // simulate a point from this kernel density. 
+    // `e` is a random number engine from `std::random``. 
+    // (1) the result is stored in `p` with `p[i]` corresponding to component `i`. 
+    // (2) the result is returned as a DataPointType with attributes default initialized. 
+    template <typename RNG> 
+      void simulate(RNG&, std::vector<FloatType> &p) const;
+    template <typename RNG> 
+      DataPointType simulate(RNG&) const;
+
   private:
 
     // internal state
@@ -169,10 +179,14 @@ class KernelDensity {
     //
     KdtreeType data_tree_;
 
+    // cumulative weights of each data point. used for simulation. 
+    std::vector<FloatType> cum_weights_;
+
     // helper functions for initialization
     // ------------------------------------------
     void initialize_attributes(std::vector<DataPointType>&);
     void normalize_weights(std::vector<DataPointType>&);
+    void initialize_cum_weights();
 
 
     // helper functions for direct kde evaluations
@@ -265,6 +279,47 @@ class KernelDensity {
 
 
 };
+
+template<int D, typename KT, typename FT, typename AT>
+  template <typename RNG> 
+typename KernelDensity<D,KT,FT,AT>::DataPointType 
+KernelDensity<D,KT,FT,AT>::simulate(RNG &e) const {
+  static std::vector<FloatType> p(D, 0.0);
+  DataPointType q; 
+  simulate(e, p);
+  for (size_t i = 0; i < D; i++) { q[i] = p[i]; }
+  return q;
+}
+
+
+template<int D, typename KT, typename FT, typename AT>
+  template <typename RNG> 
+void KernelDensity<D,KT,FT,AT>::simulate(RNG &e, std::vector<FloatType> &p) const {
+  
+  // Step 1: choose a random point from the reference tree, but weighted by `weight`
+  // i.e. choose point `i` if `i` is the smallest index such that `cum_sum[i]` 
+  // is strictly larger than `d(e)`, a random number sampled from uniform(0,1). 
+
+  static std::uniform_real_distribution<FloatType> d(0, 1);
+
+  auto it = std::upper_bound(cum_weights_.begin(), cum_weights_.end(), d(e));
+  assert(it != cum_weights_.end());
+
+  const DataPointType &ref_pt = data_tree_.points()[it - cum_weights_.begin()];
+
+  // Step 2: choose a random point from the kernel, but accounting for the local
+  // adaptive bandwidth correction. 
+  // Note: the cast between float types are necessary. Consider a way to fix this?
+  static std::vector<KernelFloatType> q(D, 0.0);
+  kernel_.simulate(e, q, static_cast<KernelFloatType>(ref_pt.attributes().abw()));
+
+  // Step 3: combine the result
+  p.resize(D);
+  for (size_t i = 0; i < D; ++i) { p[i] = ref_pt[i] + q[i]; }
+
+  return;
+
+}
 
 // perform least squares cross validation on the current kernel
 // configuration. 
@@ -474,7 +529,7 @@ void swap(KernelDensity<D,KT,FT,AT> &lhs, KernelDensity<D,KT,FT,AT> &rhs) {
 
 template<int D, typename KT, typename FT, typename AT>
 KernelDensity<D,KT,FT,AT>::KernelDensity() : 
-  kernel_(), data_tree_() {}
+  kernel_(), data_tree_(), cum_weights_() {}
 
 template<int D, typename KT, typename FT, typename AT>
 KernelDensity<D,KT,FT,AT>::KernelDensity(
@@ -483,6 +538,7 @@ KernelDensity<D,KT,FT,AT>::KernelDensity(
 
   initialize_attributes(pts);
   data_tree_ = KdtreeType(std::move(pts), leaf_max);
+  initialize_cum_weights();
 
 }
 
@@ -493,6 +549,7 @@ KernelDensity<D,KT,FT,AT>::KernelDensity(
 
   initialize_attributes(pts);
   data_tree_ = KdtreeType(std::move(pts), leaf_max);
+  initialize_cum_weights();
 
 }
 
@@ -539,6 +596,27 @@ void KernelDensity<D,KT,FT,AT>::normalize_weights(std::vector<DataPointType> &pt
     );
   }
 
+}
+
+// note: points weights in the data tree should have already been 
+// normalized; i.e. sum over all weights is 1.0
+template<int D, typename KT, typename FT, typename AT>
+void KernelDensity<D,KT,FT,AT>::initialize_cum_weights() {
+
+  // start with a clean slate 
+  cum_weights_.clear(); cum_weights_.reserve(data_tree_.size());
+
+  // cum_weights_[i] contains the sum of weights up to and including 
+  // the weight at point i. 
+  FloatType cum_sum = 0.0;
+  for (const auto &p : data_tree_.points()) {
+    cum_sum += p.attributes().weight();
+    cum_weights_.push_back(cum_sum);
+  }
+
+  // assign roundoff errors to the last element... for lack 
+  // of a better idea
+  if (data_tree_.size()) { cum_weights_[data_tree_.size()-1] = 1.0; }
 }
 
 template<int D, typename KT, typename FT, typename AT>

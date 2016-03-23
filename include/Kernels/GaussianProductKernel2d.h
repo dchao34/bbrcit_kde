@@ -67,7 +67,7 @@ class CUDA_ALIGN16 GaussianProductKernel2d {
     // `e` is a random number engine from `std::random`. 
     // the result is stored in `p` with `p[i]` corresponding to component `i`. 
     template<typename RNG> 
-      void simulate(RNG &e, std::vector<T> &p, T a = ConstantTraits<T>::one());
+      void simulate(RNG &e, std::vector<T> &p, T a = ConstantTraits<T>::one()) const;
 
     // get/set the bandwidth
     CUDA_CALLABLE T hx() const;
@@ -158,7 +158,7 @@ inline T GaussianProductKernel2d<T>::point_arg_eval(
 
 template<typename T>
   template<typename RNG> 
-void GaussianProductKernel2d<T>::simulate(RNG &e, std::vector<T> &p, T a) {
+void GaussianProductKernel2d<T>::simulate(RNG &e, std::vector<T> &p, T a) const {
 
   static std::normal_distribution<T> d(0, 1);
 

@@ -68,7 +68,7 @@ class GaussianKernel {
     // `e` is a random number engine from `std::random`. 
     // the result is stored in `p` with `p[i]` corresponding to component `i`. 
     template<typename RNG> 
-      void simulate(RNG &e, std::vector<T> &p, T a = ConstantTraits<T>::one());
+      void simulate(RNG &e, std::vector<T> &p, T a = ConstantTraits<T>::one()) const;
 
     // get/set the bandwidth
     CUDA_CALLABLE T bandwidth() const;
@@ -143,7 +143,7 @@ T GaussianKernel<D,T>::point_arg_eval(const PointT &lhs, const PointT &rhs, T a)
 
 template<int D, typename T>
   template<typename RNG> 
-void GaussianKernel<D, T>::simulate(RNG &e, std::vector<T> &p, T a) {
+void GaussianKernel<D, T>::simulate(RNG &e, std::vector<T> &p, T a) const {
 
   static std::normal_distribution<T> d(0, 1);
   p.resize(D);
