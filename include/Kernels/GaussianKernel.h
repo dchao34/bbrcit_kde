@@ -64,6 +64,12 @@ class GaussianKernel {
     template<typename PointT>
     CUDA_CALLABLE T unnormalized_eval(const PointT&, const PointT&, T a) const;
 
+    // simulate a point from the kernel with local bandwidth correction `a`.
+    // `e` is a random number engine from `std::random`. 
+    // the result is stored in `p` with `p[i]` corresponding to component `i`. 
+    template<typename RNG> 
+      void simulate(RNG &e, std::vector<T> &p, T a = ConstantTraits<T>::one());
+
     // get/set the bandwidth
     CUDA_CALLABLE T bandwidth() const;
     CUDA_CALLABLE void set_bandwidth(T);
@@ -133,6 +139,16 @@ T GaussianKernel<D,T>::point_arg_eval(const PointT &lhs, const PointT &rhs, T a)
   }
 
   return result / (bandwidth_ * bandwidth_ * a * a);
+}
+
+template<int D, typename T>
+  template<typename RNG> 
+void GaussianKernel<D, T>::simulate(RNG &e, std::vector<T> &p, T a) {
+
+  static std::normal_distribution<T> d(0, 1);
+  p.resize(D);
+  for (size_t i = 0; i < D; ++i) { p[i] = a * bandwidth_ * d(e); }
+
 }
 
 template<int D, typename T>

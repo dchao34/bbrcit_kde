@@ -84,3 +84,33 @@ def plot_contour2d(kde2d_fname, ax=None, colorbar=True,
         ax.set_title(title, fontsize=axis_fontsize)
 
     return
+
+
+def plot_hist2d(fname, bins, ax=None, colorbar=True, normed=False,
+                title=None, axis_fontsize=20, tick_labelsize=16,
+                range=None,
+                cmap=plt.cm.Blues):
+
+    # read in 2-column data
+    data = np.genfromtxt(fname)
+
+    # plot the data
+    if ax is None: ax = plt.gca()
+    
+    H = ax.hist2d(data[:,0], data[:,1], bins, range=range, normed=normed, cmap=cmap)
+
+
+    # custimize contour labels
+    if colorbar:
+        cbar = plt.gcf().colorbar(H[3])
+    
+    cbar.ax.tick_params(labelsize=axis_fontsize)
+    # customize axis labels
+    ax.set_xlabel(r'$X_1$', fontsize=axis_fontsize)
+    ax.set_ylabel(r'$X_2$', fontsize=axis_fontsize)
+    ax.tick_params(axis='both', which='major', labelsize=tick_labelsize)
+    if title:
+        ax.set_title(title, fontsize=axis_fontsize)
+
+    return
+

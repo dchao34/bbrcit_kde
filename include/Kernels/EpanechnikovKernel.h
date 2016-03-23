@@ -13,6 +13,7 @@
 #include <iostream>
 
 #include <Kernels/KernelTraits.h>
+#include <Kernels/Utils.h>
 #include <KdeTraits.h>
 #include <Point2d.h>
 #include <Point1d.h>
@@ -65,6 +66,12 @@ class EpanechnikovKernel {
     // evaluate U(x,y,h*a)
     template<typename PointT>
     CUDA_CALLABLE T unnormalized_eval(const PointT&, const PointT&, T a) const;
+
+    // simulate a point from the kernel with local bandwidth correction `a`.
+    // `e` is a random number engine from `std::random`. 
+    // the result is stored in `p` with `p[i]` corresponding to component `i`. 
+    template<typename RNG> 
+      void simulate(RNG &e, std::vector<T> &p, T a = ConstantTraits<T>::one());
 
     // get/set the bandwidth
     CUDA_CALLABLE T bandwidth() const;
@@ -149,6 +156,27 @@ template<int D, typename T>
 inline T EpanechnikovKernel<D,T>::point_arg_eval(
     const Point1d<T> &lhs, const Point1d<T> &rhs, T a) const {
   return ((lhs.x()-rhs.x())*(lhs.x()-rhs.x())) / (bandwidth_*bandwidth_*a*a);
+}
+
+
+template<>
+  template<typename RNG> 
+void EpanechnikovKernel<1, float>::simulate(RNG &e, std::vector<float> &p, float a) {
+
+  static std::uniform_real_distribution<float> d(-1, 1);
+  p.resize(1);
+  p[0] = a * bandwidth_ * epanechnikov_choice(d(e), d(e), d(e));
+
+}
+
+template<>
+  template<typename RNG> 
+void EpanechnikovKernel<1, double>::simulate(RNG &e, std::vector<double> &p, double a) {
+
+  static std::uniform_real_distribution<double> d(-1, 1);
+  p.resize(1);
+  p[0] = a * bandwidth_ * epanechnikov_choice(d(e), d(e), d(e));
+
 }
 
 

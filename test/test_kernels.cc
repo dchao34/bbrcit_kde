@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <random>
 
 #include <Kernels/EpanechnikovKernel.h>
 #include <Kernels/GaussianKernel.h>
@@ -12,7 +13,7 @@
 #include <Kernels/GaussianProductConvKernel2d.h>
 
 #include <DecoratedPoint.h>
-#include <Attributes/KdeAttributes.h>
+#include <Attributes/AdaKdeAttributes.h>
 
 #include "kde_test_utils.h"
 
@@ -28,14 +29,17 @@ using bbrcit::GaussianConvKernel1d;
 using bbrcit::EpanechnikovProductConvKernel2d;
 using bbrcit::GaussianProductConvKernel2d;
 
-using bbrcit::KdeAttributes;
-using PointType1d = bbrcit::DecoratedPoint<1, KdeAttributes<FloatType>>;
-using PointType2d = bbrcit::DecoratedPoint<2, KdeAttributes<FloatType>>;
+using bbrcit::AdaKdeAttributes;
+using PointType1d = bbrcit::DecoratedPoint<1, AdaKdeAttributes<FloatType>>;
+using PointType2d = bbrcit::DecoratedPoint<2, AdaKdeAttributes<FloatType>>;
 
 const PointType1d origin1d; 
 const PointType2d origin2d;
 
 int main() {
+
+  std::mt19937 e;
+  vector<FloatType> sim_p;
 
   ofstream fout;
   vector<PointType1d> grid1d; generate_1dgrid(grid1d, -5, 5, 1000);
@@ -68,6 +72,18 @@ int main() {
   write_kde2d_result(fout, grid2d, -5, 5, 1000, -5, 5, 1000);
   fout.close();
 
+  // simulate
+  fout.open("test_epanechnikov1d_sim.csv");
+  for (size_t i = 0; i < 100000; ++i) {
+    ep1d.simulate(e, sim_p);
+    fout << sim_p[0] << " ";
+    ep1d.simulate(e, sim_p, 0.5);
+    fout << sim_p[0] << " ";
+    ep1d.simulate(e, sim_p, 2.0);
+    fout << sim_p[0] << endl;
+  }
+  fout.close();
+
   // test: GaussianKernel
   GaussianKernel<1,FloatType> gauss1d, gauss1d_narrow(0.5), gauss1d_wide(2);
   cout << gauss1d.dim() << " " << gauss1d.normalization();
@@ -85,6 +101,18 @@ int main() {
   }
   fout.close();
 
+  // simulate
+  fout.open("test_gauss1d_sim.csv");
+  for (size_t i = 0; i < 100000; ++i) {
+    gauss1d.simulate(e, sim_p);
+    fout << sim_p[0] << " ";
+    gauss1d.simulate(e, sim_p, 0.5);
+    fout << sim_p[0] << " ";
+    gauss1d.simulate(e, sim_p, 2.0);
+    fout << sim_p[0] << endl;
+  }
+  fout.close();
+
   GaussianKernel<2,FloatType> gauss2d;
   cout << gauss2d.dim() << " " << gauss2d.normalization();
   cout << " (c.f. 2, "<< std::pow(2*M_PI, -1.0)<< ") " << std::endl;
@@ -95,6 +123,14 @@ int main() {
     p.attributes().set_upper(result);
   };
   write_kde2d_result(fout, grid2d, -5, 5, 1000, -5, 5, 1000);
+  fout.close();
+
+  // simulate
+  fout.open("test_gauss2d_sim.csv");
+  for (size_t i = 0; i < 100000; ++i) {
+    gauss2d.simulate(e, sim_p);
+    fout << sim_p[0] << " " << sim_p[1] << endl;
+  }
   fout.close();
 
   // test: GaussianProductKernel
@@ -116,7 +152,15 @@ int main() {
   write_kde2d_result(fout, grid2d, -5, 5, 1000, -5, 5, 1000);
   fout.close();
 
-  // test: EpanechnikovProductKernel
+  // simulate
+  fout.open("test_gaussprod2d_sim.csv");
+  for (size_t i = 0; i < 100000; ++i) {
+    gaussprod2d.simulate(e, sim_p);
+    fout << sim_p[0] << " " << sim_p[1] << endl;
+  }
+  fout.close();
+
+  // test: EpanechnikovProductKernel2d
   EpanechnikovProductKernel2d<FloatType> epprod2d(1.2, 1.0);
   cout << epprod2d.normalization();
   cout << " (c.f. "<< std::pow(0.75, 2) / (1.2*1.0) << ") " << std::endl;
@@ -133,6 +177,14 @@ int main() {
     p.attributes().set_upper(result);
   };
   write_kde2d_result(fout, grid2d, -5, 5, 1000, -5, 5, 1000);
+  fout.close();
+
+  // simulate
+  fout.open("test_epprod2d_sim.csv");
+  for (size_t i = 0; i < 100000; ++i) {
+    epprod2d.simulate(e, sim_p);
+    fout << sim_p[0] << " " << sim_p[1] << endl;
+  }
   fout.close();
 
   // test: EpanechnikovConvKernel1d

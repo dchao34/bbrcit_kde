@@ -13,7 +13,9 @@
 
 #include <cmath>
 #include <iostream>
+#include <random>
 
+#include <Kernels/Utils.h>
 #include <Kernels/KernelTraits.h>
 #include <KdeTraits.h>
 #include <Point2d.h>
@@ -67,6 +69,12 @@ class CUDA_ALIGN16 EpanechnikovProductKernel2d {
     template<typename PointT>
       CUDA_CALLABLE T unnormalized_eval(const PointT&, const PointT&, T) const;
     CUDA_CALLABLE T unnormalized_eval(const Point2d<T>&, const Point2d<T>&, T) const;
+
+    // simulate a point from the kernel with local bandwidth correction `a`.
+    // `e` is a random number engine from `std::random`. 
+    // the result is stored in `p` with `p[i]` corresponding to component `i`. 
+    template<typename RNG> 
+      void simulate(RNG &e, std::vector<T> &p, T a = ConstantTraits<T>::one());
 
     // get/set the bandwidth
     CUDA_CALLABLE T hx() const;
@@ -145,6 +153,17 @@ inline T EpanechnikovProductKernel2d<T>::unnormalized_eval(
            (lhs.x()-rhs.x())*(lhs.x()-rhs.x())/(hx_*hx_*a*a)) *
          EpanechnikovProduct2dTraits<T>::kernel(
            (lhs.y()-rhs.y())*(lhs.y()-rhs.y())/(hy_*hy_*a*a));
+}
+
+template<typename T>
+  template<typename RNG> 
+void EpanechnikovProductKernel2d<T>::simulate(RNG &e, std::vector<T> &p, T a) {
+
+  static std::uniform_real_distribution<T> d(-1, 1);
+
+  p.resize(2);
+  p[0] = a * hx_ * epanechnikov_choice(d(e), d(e), d(e));
+  p[1] = a * hy_ * epanechnikov_choice(d(e), d(e), d(e));
 }
 
 }
