@@ -28,6 +28,7 @@ namespace bbrcit {
 
 template<int D, typename KT, typename FT, typename AT> class KernelDensity;
 
+// custom swap for KernelDensity<>
 template<int D, typename KT, typename FT, typename AT>
 void swap(KernelDensity<D,KT,FT,AT>&, KernelDensity<D,KT,FT,AT>&);
 
@@ -84,6 +85,9 @@ class KernelDensity {
 
     // returns a const reference to the data points
     const std::vector<DataPointType>& points() const;
+
+    // returns a const reference to the data tree
+    const KdtreeType& data_tree() const;
 
 
     // return the direct kde evaluated at point `p` or at points in `queries`
@@ -279,6 +283,112 @@ class KernelDensity {
 
 
 };
+
+// least squares cross validation using numerical integration for 2d data. 
+// note: the member method `leastsquares_cross_validate` for 
+//       KernelDensity<> uses the convolution kernel.
+#ifndef __CUDACC__
+template<typename KT, typename FT, typename AT>
+FT leastsquares_numint_cross_validate(
+    const KernelDensity<2,KT,FT,AT> &kde, 
+    FT start_x, FT end_x, int step_x, 
+    FT start_y, FT end_y, int step_y,
+    FT rel_err=1e-6, FT abs_err=1e-8, int qtree_leaf_nmax=2);
+#else
+template<typename KT, typename FT, typename AT>
+FT leastsquares_numint_cross_validate(
+    const KernelDensity<2,KT,FT,AT> &kde, 
+    FT start_x, FT end_x, int step_x, 
+    FT start_y, FT end_y, int step_y,
+    FT rel_err=1e-6, FT abs_err=1e-8, int qtree_leaf_nmax=1024,
+    size_t block_size=128);
+#endif
+
+
+template<typename KT, typename FT, typename AT>
+FT leastsquares_numint_cross_validate( 
+#ifndef __CUDACC__
+  const KernelDensity<2,KT,FT,AT> &kde, 
+  FT start_x, FT end_x, int steps_x, 
+  FT start_y, FT end_y, int steps_y,
+  FT rel_err, FT abs_err, int qtree_leaf_nmax
+#else 
+  const KernelDensity<2,KT,FT,AT> &kde, 
+  FT start_x, FT end_x, int steps_x, 
+  FT start_y, FT end_y, int steps_y,
+  FT rel_err, FT abs_err, int qtree_leaf_nmax,
+  size_t block_size
+#endif
+  ) {
+
+  using KernelDensityType = KernelDensity<2,KT,FT,AT>;
+  using KdtreeType = typename KernelDensityType::KdtreeType;
+  using DataPointType = typename KernelDensityType::DataPointType;
+
+  // compute leave one out contribution
+  // ----------------------------------
+
+  // construct a reference query tree out of the data tree to perform 
+  // dual tree self-evaluation. we use copy-assignment since we would like
+  // to preserve the same ordering of points in both trees. 
+  KdtreeType rtree = kde.data_tree();
+
+  // all pairs self-evaluation
+#ifndef __CUDACC__
+  kde.eval(rtree, rel_err, abs_err);
+#else
+  kde.eval(rtree, rel_err, abs_err, block_size);
+#endif
+
+  // compute leave one out score
+  FT llo_cv = ConstantTraits<FT>::zero(), val = ConstantTraits<FT>::zero();
+  for (size_t i = 0; i < rtree.points().size(); ++i) {
+
+    // the dual tree gives contributions from all points; must 
+    // subtract away the self contribution
+    val = rtree.points()[i].attributes().value();
+    val -= kde.points()[i].attributes().mass() * kde.kernel().normalization();
+
+    // contribution is weighted
+    llo_cv += kde.points()[i].attributes().weight() * val;
+  }
+
+
+  // compute square integral contribution
+  // ------------------------------------
+
+  // generate integration grid and build a query tree out of it
+  std::vector<DataPointType> q_grid;
+  double delta_x = (end_x-start_x)/steps_x;
+  double delta_y = (end_y-start_y)/steps_y;
+  for (int j = 0; j < steps_y; ++j) {
+    for (int i = 0; i < steps_x; ++i) {
+      q_grid.push_back({{start_x+i*delta_x, start_y+j*delta_y}});
+    }
+  }
+  KdtreeType qtree(std::move(q_grid), qtree_leaf_nmax);
+
+  // evaluate the kernel density at every grid points
+#ifndef __CUDACC__
+  kde.eval(qtree, rel_err, abs_err);
+#else
+  kde.eval(qtree, rel_err, abs_err, block_size);
+#endif
+
+  // compute the square integral term. 
+  FT self_cv = ConstantTraits<FT>::zero();
+  for (const auto &p : qtree.points()) {
+
+    val = p.attributes().value();
+
+    // remember to square the kde value. 
+    // we also multiply the area element for numerical purposes. move outside?
+    self_cv += val*val*delta_x*delta_y;
+  }
+
+  return self_cv - 2 * llo_cv;
+
+}
 
 template<int D, typename KT, typename FT, typename AT>
   template <typename RNG> 
@@ -517,6 +627,12 @@ template<int D, typename KT, typename FT, typename AT>
 inline const std::vector<typename KernelDensity<D,KT,FT,AT>::DataPointType>& 
 KernelDensity<D,KT,FT,AT>::points() const {
   return data_tree_.points();
+}
+
+template<int D, typename KT, typename FT, typename AT>
+inline const typename KernelDensity<D,KT,FT,AT>::KdtreeType&
+KernelDensity<D,KT,FT,AT>::data_tree() const {
+  return data_tree_;
 }
 
 template<int D, typename KT, typename FT, typename AT>
