@@ -1,4 +1,14 @@
-#include "KernelDensity.h"
+#include <utility>
+#include <limits>
+#include <cassert>
+#include <iomanip>
+#include <random>
+
+#include <Kernels/ConvKernelAssociator.h>
+#include <Kernels/KernelTraits.h>
+#include <KdeTraits.h>
+
+namespace bbrcit {
 
 template<typename KT, typename FT, typename AT>
 FT lsq_numint_cross_validate( 
@@ -1184,3 +1194,6 @@ void KernelDensity<D,KT,FT,AT>::direct_eval(
 
   return; 
 }
+
+}
+

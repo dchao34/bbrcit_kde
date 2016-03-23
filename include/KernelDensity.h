@@ -1,24 +1,11 @@
 #ifndef BBRCITKDE_KERNELDENSITY_H__
 #define BBRCITKDE_KERNELDENSITY_H__
 
-#include <limits>
-#include <queue>
-#include <stack>
-#include <tuple>
-#include <utility>
-#include <cassert>
 #include <iostream>
-#include <iomanip>
-#include <random>
 
 #include <Kdtree.h>
-#include <DecoratedPoint.h>
 #include <Attributes/AdaKdeAttributes.h>
 #include <Kernels/EpanechnikovKernel.h>
-#include <Kernels/KernelTraits.h>
-#include <Kernels/ConvKernelAssociator.h>
-#include <KdeTraits.h>
-#include <FloatUtils.h>
 
 #ifdef __CUDACC__
 #include <CudaDirectKde.h>
@@ -304,8 +291,8 @@ class KernelDensity {
 
 };
 
-#include "KernelDensityImpl.h"
-
 }
+
+#include "KernelDensityImpl.h"
 
 #endif
