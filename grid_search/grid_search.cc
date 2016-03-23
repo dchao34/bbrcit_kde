@@ -240,9 +240,9 @@ void grid_search(const po::variables_map &vm) {
       kde.kernel().set_bandwidths(p.first, p.second);
 
 #ifndef __CUDACC__
-      curr_cv = kde.leastsquares_cross_validate(rel_tol, abs_tol);
+      curr_cv = kde.lsq_convolution_cross_validate(rel_tol, abs_tol);
 #else
-      curr_cv = kde.leastsquares_cross_validate(rel_tol, abs_tol, gpu_block_size);
+      curr_cv = kde.lsq_convolution_cross_validate(rel_tol, abs_tol, gpu_block_size);
 #endif
 
       cv_scores.push_back(curr_cv);

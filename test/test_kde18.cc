@@ -30,7 +30,7 @@ namespace {
 int main() {
 
 #ifdef __CUDACC__
-  cudaDeviceSynchronize();
+  cudaSetDevice(0);
 #endif
 
   ofstream fout;
@@ -62,7 +62,7 @@ int main() {
   // 2. build the kde's
   cout << "+ building kde's " << endl;
 
-  size_t leaf_max = 1024;
+  size_t leaf_max = 32768;
 
   start = std::chrono::high_resolution_clock::now();
   KernelDensityType kde(references, leaf_max); 
@@ -94,7 +94,7 @@ int main() {
   double best_bw_x, best_bw_y;
   for (const auto &p : bandwidths_pair) {
     kde.kernel().set_bandwidths(p.first, p.second);
-    cv = kde.leastsquares_cross_validate();
+    cv = kde.lsq_convolution_cross_validate();
     cv_scores.push_back(cv);
     if (cv < best_cv) { 
       best_cv = cv; 

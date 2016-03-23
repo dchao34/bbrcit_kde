@@ -140,12 +140,12 @@ class KernelDensity {
 #ifndef __CUDACC__ 
     FloatType likelihood_cross_validate(
         FloatType rel_err=1e-6, FloatType abs_err=1e-6) const;
-    FloatType leastsquares_cross_validate(
+    FloatType lsq_convolution_cross_validate(
         FloatType rel_err=1e-6, FloatType abs_err=1e-6) const;
 #else
     FloatType likelihood_cross_validate(
         FloatType rel_err=1e-6, FloatType abs_err=1e-6, size_t block_size=128) const;
-    FloatType leastsquares_cross_validate(
+    FloatType lsq_convolution_cross_validate(
         FloatType rel_err=1e-6, FloatType abs_err=1e-6, size_t block_size=128) const;
 #endif
 
@@ -285,18 +285,16 @@ class KernelDensity {
 };
 
 // least squares cross validation using numerical integration for 2d data. 
-// note: the member method `leastsquares_cross_validate` for 
-//       KernelDensity<> uses the convolution kernel.
 #ifndef __CUDACC__
 template<typename KT, typename FT, typename AT>
-FT leastsquares_numint_cross_validate(
+FT lsq_numint_cross_validate(
     const KernelDensity<2,KT,FT,AT> &kde, 
     FT start_x, FT end_x, int step_x, 
     FT start_y, FT end_y, int step_y,
     FT rel_err=1e-6, FT abs_err=1e-8, int qtree_leaf_nmax=2);
 #else
 template<typename KT, typename FT, typename AT>
-FT leastsquares_numint_cross_validate(
+FT lsq_numint_cross_validate(
     const KernelDensity<2,KT,FT,AT> &kde, 
     FT start_x, FT end_x, int step_x, 
     FT start_y, FT end_y, int step_y,
@@ -306,7 +304,7 @@ FT leastsquares_numint_cross_validate(
 
 
 template<typename KT, typename FT, typename AT>
-FT leastsquares_numint_cross_validate( 
+FT lsq_numint_cross_validate( 
 #ifndef __CUDACC__
   const KernelDensity<2,KT,FT,AT> &kde, 
   FT start_x, FT end_x, int steps_x, 
@@ -435,7 +433,7 @@ void KernelDensity<D,KT,FT,AT>::simulate(RNG &e, std::vector<FloatType> &p) cons
 // configuration. 
 template<int D, typename KT, typename FT, typename AT>
 typename KernelDensity<D,KT,FT,AT>::FloatType
-KernelDensity<D,KT,FT,AT>::leastsquares_cross_validate( 
+KernelDensity<D,KT,FT,AT>::lsq_convolution_cross_validate( 
 #ifndef __CUDACC__ 
     FloatType rel_err, FloatType abs_err
 #else

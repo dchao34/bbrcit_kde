@@ -62,10 +62,10 @@ int main() {
   start = std::chrono::high_resolution_clock::now();
 
 #ifndef __CUDACC__
-  FloatType conv_cv = kde.leastsquares_cross_validate(rel_tol, abs_tol);
+  FloatType conv_cv = kde.lsq_convolution_cross_validate(rel_tol, abs_tol);
 #else
   size_t block_size = 128;
-  FloatType conv_cv = kde.leastsquares_cross_validate(rel_tol, abs_tol, block_size);
+  FloatType conv_cv = kde.lsq_convolution_cross_validate(rel_tol, abs_tol, block_size);
 #endif
 
   end = std::chrono::high_resolution_clock::now();
@@ -84,12 +84,12 @@ int main() {
   start = std::chrono::high_resolution_clock::now();
 
 #ifndef __CUDACC__
-  FloatType num_cv = leastsquares_numint_cross_validate(
+  FloatType num_cv = lsq_numint_cross_validate(
       kde, start_x, end_x, steps_x, start_y, end_y, steps_y,
       rel_tol, abs_tol);
 #else
   int query_leaf_max = 65536;
-  FloatType num_cv = leastsquares_numint_cross_validate(
+  FloatType num_cv = lsq_numint_cross_validate(
       kde, start_x, end_x, steps_x, start_y, end_y, steps_y,
       rel_tol, abs_tol, query_leaf_max, block_size);
 #endif
