@@ -54,42 +54,42 @@ int main(int argc, char **argv) {
         ("input_refpts_fname", po::value<std::string>(), "path to the input reference points. ")
         ("output_scatter_fname", po::value<std::string>(), "path to output matplotlib scatter plot data. ")
 
-        ("skip_cross_validation", po::value<bool>(), "skip cross validation to go straight to evaluation. ")
-        ("use_manual_bwgrid", po::value<bool>(), "use manually specified bandwidth grid for grid search. ")
+        ("use_adaptive_cv", po::value<bool>(), "cross validate using adaptive bandwidths. ")
         ("cv_method", po::value<std::string>(), "method to use for cross validation. one of the following: \n"
                                                 "lsq_conv: least squares based on convolution kernel. \n"
                                                 "lsq_numint: least squares based on numerical integration.")
+        ("skip_cross_validation", po::value<bool>(), "skip cross validation to go straight to evaluation. ")
 
+        ("base_bwx", po::value<double>(), "x bandwidth to evaluate and output for plotting. ")
+        ("base_bwy", po::value<double>(), "y bandwidth to evaluate and output for plotting. ")
+        ("alpha", po::value<double>(), "adaptive kernel sensitivity. ")
+
+        ("use_manual_bwgrid", po::value<bool>(), "use manually specified bandwidth grid for grid search. ")
         ("manual_bwx", po::value<std::string>(), "manual bandwidths in the x-dimension. ")
         ("manual_bwy", po::value<std::string>(), "manual bandwidths in the y-dimension. ")
-
         ("start_bwx", po::value<double>(), "starting x bandwidth for the automatic bandwidth grid. ")
         ("end_bwx", po::value<double>(), "ending x bandwidth for the automatic bandwidth grid. ")
         ("steps_bwx", po::value<int>(), "bandwidth increments in x for the automatic bandwidth grid. ")
         ("start_bwy", po::value<double>(), "starting y bandwidth for the automatic bandwidth grid. ")
         ("end_bwy", po::value<double>(), "ending y bandwidth for the automatic bandwidth grid. ")
         ("steps_bwy", po::value<int>(), "bandwidth increments in y for the automatic bandwidth grid. ")
-        ("output_gridsearch_fname", po::value<std::string>(), "path to output matplotlib grid search data. ")
-
         ("start_qix", po::value<double>(), "starting x value for the numerical integration grid. ")
         ("end_qix", po::value<double>(), "ending x value for the numerical integration grid. ")
         ("steps_qix", po::value<int>(), "increments in x values for the numerical integration grid. ")
         ("start_qiy", po::value<double>(), "starting y value for the numerical integration grid. ")
         ("end_qiy", po::value<double>(), "ending y value for the numerical integration grid. ")
         ("steps_qiy", po::value<int>(), "increments in y values for the numerical integration grid. ")
+        ("output_gridsearch_fname", po::value<std::string>(), "path to output matplotlib grid search data. ")
 
         ("use_gridsearch_best", po::value<bool>(), "whether to use the best bandwidth found during grid search. ")
-        ("eval_bwx", po::value<double>(), "x bandwidth to evaluate and output for plotting. ")
-        ("eval_bwy", po::value<double>(), "y bandwidth to evaluate and output for plotting. ")
-
+        ("adapted_base_bwx", po::value<double>(), "overall x bandwidth for adaptive kernels after cv. ")
+        ("adapted_base_bwy", po::value<double>(), "overall y bandwidth for adaptive kernels after cv. ")
         ("start_qx", po::value<double>(), "starting x value for the query grid. ")
         ("end_qx", po::value<double>(), "ending x value for the query grid. ")
         ("steps_qx", po::value<int>(), "increments in x values for the query grid. ")
         ("start_qy", po::value<double>(), "starting y value for the query grid. ")
         ("end_qy", po::value<double>(), "ending y value for the query grid. ")
         ("steps_qy", po::value<int>(), "increments in y values for the query grid. ")
-
-        ("alpha", po::value<double>(), "adaptive kernel sensitivity. ")
         ("output_eval_fname", po::value<std::string>(), "path to output matplotlib data to for plotting kde. ")
         ("output_adaptive_eval_fname", po::value<std::string>(), "path to output matplotlib data to for plotting adaptive kde. ")
 
@@ -220,11 +220,22 @@ void grid_search(const po::variables_map &vm) {
   std::cout << "  => wrote results to: " << output_scatter_fname << ". \n" << std::endl;
 
 
-  // 2. construct the kernel density estimator
+  // 2. configure the kernel density estimator
   // -----------------------------------------
+
+  // setup parameters
+  bool use_adaptive_cv = vm["use_adaptive_cv"].as<bool>();
+  bool skip_cross_validation = vm["skip_cross_validation"].as<bool>();
+  double base_bwx = vm["base_bwx"].as<double>();
+  double base_bwy = vm["base_bwy"].as<double>();
+  double alpha = vm["alpha"].as<double>();
 
   // build kernel density estimator
   std::cout << "+ constructing kernel density estimator. \n" << std::endl;
+
+  std::cout << "  base bandwidth x: " << base_bwx << std::endl;
+  std::cout << "  base bandwidth y: " << base_bwy << std::endl;
+  std::cout << std::endl;
 
   start = std::chrono::high_resolution_clock::now();
   KernelDensityType kde(data, refpt_max_leaf_size);
@@ -232,12 +243,42 @@ void grid_search(const po::variables_map &vm) {
   elapsed = end - start;
   std::cout << "  => running time: " << elapsed.count() << " ms. \n" << std::endl;
 
+  // set base bandwidth
+  kde.kernel().set_bandwidths(base_bwx, base_bwy);
 
-  // 3. grid search cross validation
-  // -------------------------------
+  // decide whether to convert to adaptive density
+  std::cout << "  perform adaptive density cross validation: ";
+  std::cout << (use_adaptive_cv ? "true" : "false" ) << std::endl;
+  std::cout << "  skip cross validation: ";
+  std::cout << (skip_cross_validation ? "true" : "false" ) << std::endl;
+  std::cout << std::endl;
+
+  if (use_adaptive_cv && !skip_cross_validation) {
+
+    std::cout << "  converting to adaptive density for cross validation. \n" << std::endl;
+    std::cout << "  base bandwidth x: " << base_bwx << std::endl;
+    std::cout << "  base bandwidth y: " << base_bwy << std::endl;
+    std::cout << "  alpha: " << alpha << "\n" << std::endl;
+
+    start = std::chrono::high_resolution_clock::now();
+
+#ifndef __CUDACC__
+    kde.adapt_density(alpha, rel_tol, abs_tol);
+#else
+    kde.adapt_density(alpha, rel_tol, abs_tol, gpu_block_size);
+#endif
+
+    end = std::chrono::high_resolution_clock::now();
+    elapsed = end - start;
+    std::cout << "  => running time: " << elapsed.count() << " ms. \n" << std::endl;
+
+  }
+
+
+  // 3. grid search
+  // --------------
 
   // setup parameters
-  bool skip_cross_validation = vm["skip_cross_validation"].as<bool>();
   bool use_manual_bwgrid = vm["use_manual_bwgrid"].as<bool>();
   std::string cv_method = vm["cv_method"].as<std::string>();
 
@@ -262,17 +303,27 @@ void grid_search(const po::variables_map &vm) {
 
   double best_bwx, best_bwy;
   if (!skip_cross_validation) {
+
+    // decide which cv method to use
+    // -----------------------------
     
     // define recognized cross validation methods 
     std::set<std::string> recognized_cv_methods;
     recognized_cv_methods.insert("lsq_conv");
     recognized_cv_methods.insert("lsq_numint");
 
-    // decide which cv method to use
-    if (recognized_cv_methods.find(cv_method) == recognized_cv_methods.end()) {
-      throw std::invalid_argument("grid_search: unrecognized cv method. ");
+    // if not using adaptive cross validation, check that the cv method is recognized
+    if (!use_adaptive_cv) { 
+      if (recognized_cv_methods.find(cv_method) == recognized_cv_methods.end()) {
+        throw std::invalid_argument("grid_search: unrecognized cv method. ");
+      }
+
+    // otherwise, override to "lsq_numint"
+    } else {
+      cv_method = "lsq_numint"; 
     }
 
+    // print settings
     if (cv_method == "lsq_conv") {
       std::cout << "+ using convolution based least squares cross validation. \n" << std::endl;
     } else {
@@ -284,6 +335,7 @@ void grid_search(const po::variables_map &vm) {
     }
 
     // setup the search grid
+    // ---------------------
     std::vector<std::pair<double, double>> bandwidth_grid;
     if (!use_manual_bwgrid) {
       generate_2dgrid(bandwidth_grid, start_bwx, end_bwx, steps_bwx,
@@ -307,6 +359,8 @@ void grid_search(const po::variables_map &vm) {
     std::cout << std::endl;
 
     // grid search
+    // -----------
+
     std::cout << "  grid searching: \n" << std::endl;
     
     start = std::chrono::high_resolution_clock::now();
@@ -374,8 +428,6 @@ void grid_search(const po::variables_map &vm) {
 
   // setup parameters
   bool use_gridsearch_best = vm["use_gridsearch_best"].as<bool>();
-  double eval_bwx = vm["eval_bwx"].as<double>();
-  double eval_bwy = vm["eval_bwy"].as<double>();
 
   double start_qx = vm["start_qx"].as<double>();
   double end_qx = vm["end_qx"].as<double>();
@@ -387,26 +439,27 @@ void grid_search(const po::variables_map &vm) {
 
   if (skip_cross_validation) { use_gridsearch_best = false; }
 
-  if (use_gridsearch_best) {
-    eval_bwx = best_bwx;
-    eval_bwy = best_bwy;
+  // configure the kernel
+  kde.unadapt_density();
+  if (use_gridsearch_best && !use_adaptive_cv) {
+    kde.kernel().set_bandwidths(best_bwx, best_bwy);
+  } else {
+    kde.kernel().set_bandwidths(base_bwx, base_bwy);
   }
-
 
   // generate query grid
   std::vector<DataPointType> grid, queries;
   generate_2dgrid(grid, start_qx, end_qx, steps_qx, start_qy, end_qy, steps_qy);
 
-  std::cout << "+ evaluating cross validated kde over plotting grid. \n" << std::endl;
+  std::cout << "+ evaluating cross validated non-adapted kernel density over plotting grid. \n" << std::endl;
   std::cout << "  grid dimensions: " << steps_qx << "x" << steps_qy << std::endl;
   std::cout << "  grid bounds: ";
   std::cout << "[" << start_qx << ", " << end_qx << "]" << " x ";
   std::cout << "[" << start_qy << ", " << end_qy << "]" << std::endl;
-  std::cout << "  x bandwidth: " << eval_bwx << std::endl;
-  std::cout << "  y bandwidth: " << eval_bwy << "\n" << std::endl;
+  std::cout << "  x bandwidth: " << base_bwx << std::endl;
+  std::cout << "  y bandwidth: " << base_bwy << "\n" << std::endl;
 
   // evaluate
-  kde.kernel().set_bandwidths(eval_bwx, eval_bwy);
   queries = grid;
 
   start = std::chrono::high_resolution_clock::now();
@@ -428,16 +481,26 @@ void grid_search(const po::variables_map &vm) {
   std::cout << "  => wrote results to: " << output_eval_fname << ". \n" << std::endl;
 
 
-  // 5. adaptive density
-  // -------------------
+  // 5. evaluate adaptive density for plotting
+  // -----------------------------------------
 
   // setup parameters
-  double alpha = vm["alpha"].as<double>();
+  double adapted_base_bwx = vm["adapted_base_bwx"].as<double>();
+  double adapted_base_bwy = vm["adapted_base_bwy"].as<double>();
+  std::string output_adaptive_eval_fname = vm["output_adaptive_eval_fname"].as<std::string>();
 
-  // convert 
-  std::cout << "+ converting to adaptive density. \n" << std::endl;
-  std::cout << "  alpha: " << alpha << std::endl;
-  std::cout << std::endl;
+  // configure base kernel to compute adaptive corrections
+  double before_bwx = base_bwx, before_bwy = base_bwy;
+  if (!use_adaptive_cv && use_gridsearch_best) {
+    before_bwx = best_bwx; before_bwy = best_bwy;
+  } 
+  kde.kernel().set_bandwidths(before_bwx, before_bwy);
+
+  // convert to adaptive density
+  std::cout << "+ converting to adaptive density for evaluation. \n" << std::endl;
+  std::cout << "  base bandwidth x: " << before_bwx << std::endl;
+  std::cout << "  base bandwidth y: " << before_bwy << std::endl;
+  std::cout << "  alpha: " << alpha << "\n" << std::endl;
 
   start = std::chrono::high_resolution_clock::now();
 
@@ -451,16 +514,21 @@ void grid_search(const po::variables_map &vm) {
   elapsed = end - start;
   std::cout << "  => running time: " << elapsed.count() << " ms. \n" << std::endl;
 
+  // evaluate adaptive density
+  double after_bwx = before_bwx, after_bwy = before_bwy;
+  if (use_adaptive_cv) {
+    if (use_gridsearch_best) {
+      after_bwx = best_bwx; after_bwy = best_bwy;
+    } else {
+      after_bwx = adapted_base_bwx; after_bwy = adapted_base_bwy;
+    }
+  }
+  kde.kernel().set_bandwidths(after_bwx, after_bwy);
 
-  // 6. evaluate adaptive density for plotting
-  // -----------------------------------------
-
-  // setup parameters
-  std::string output_adaptive_eval_fname = vm["output_adaptive_eval_fname"].as<std::string>();
-
-  // evaluate
-  std::cout << "+ evaluating adaptive density over plotting grid. \n" << std::endl;
-
+  std::cout << "+ evaluating cross validated adapted kernel density over plotting grid. \n" << std::endl;
+  std::cout << "  final bandwidth x: " << after_bwx << std::endl;
+  std::cout << "  final bandwidth y: " << after_bwy << std::endl;
+  std::cout << "  alpha: " << alpha << "\n" << std::endl;
   queries = grid;
 
   start = std::chrono::high_resolution_clock::now();
