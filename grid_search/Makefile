@@ -4,14 +4,14 @@ OBJECTS = cv_utils.o custom_program_option_utils.o
 
 SRCS = $(wildcard *.cc *.cpp)
 
-CUDA_ROOT = 
+CUDA_ROOT = /usr/local/cuda-7.5
 CUDA_LIBS = $(CUDA_ROOT)/lib64
 
-BOOST_ROOT = 
+BOOST_ROOT = /usr/local/boost_1_59_0
 BOOST_LIBS = $(BOOST_ROOT)/stage/lib
 LIBS = -lboost_program_options
 
-BBRCITKDE_ROOT = 
+BBRCITKDE_ROOT = ..
 INCFLAGS = -I$(BBRCITKDE_ROOT)/include -I$(BOOST_ROOT)
 LDFLAGS = -L$(CUDA_LIBS) -lcudart \
           -L$(BOOST_LIBS) \

@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <set>
 #include <string>
 #include <chrono>
 #include <algorithm>
@@ -22,9 +23,14 @@ namespace {
 
 namespace po = boost::program_options;
 
-
 void grid_search(const po::variables_map &vm);
 
+// helper function for printing vectors
+template<class T>
+std::ostream& operator<<(std::ostream& os, const std::vector<T>& v) {
+  std::copy(v.begin(), v.end(), std::ostream_iterator<T>(os, " "));
+  return os;
+}
 
 int main(int argc, char **argv) {
 
@@ -50,8 +56,13 @@ int main(int argc, char **argv) {
 
         ("skip_cross_validation", po::value<bool>(), "skip cross validation to go straight to evaluation. ")
         ("use_manual_bwgrid", po::value<bool>(), "use manually specified bandwidth grid for grid search. ")
+        ("cv_method", po::value<std::string>(), "method to use for cross validation. one of the following: \n"
+                                                "lsq_conv: least squares based on convolution kernel. \n"
+                                                "lsq_numint: least squares based on numerical integration.")
+
         ("manual_bwx", po::value<std::string>(), "manual bandwidths in the x-dimension. ")
         ("manual_bwy", po::value<std::string>(), "manual bandwidths in the y-dimension. ")
+
         ("start_bwx", po::value<double>(), "starting x bandwidth for the automatic bandwidth grid. ")
         ("end_bwx", po::value<double>(), "ending x bandwidth for the automatic bandwidth grid. ")
         ("steps_bwx", po::value<int>(), "bandwidth increments in x for the automatic bandwidth grid. ")
@@ -60,6 +71,17 @@ int main(int argc, char **argv) {
         ("steps_bwy", po::value<int>(), "bandwidth increments in y for the automatic bandwidth grid. ")
         ("output_gridsearch_fname", po::value<std::string>(), "path to output matplotlib grid search data. ")
 
+        ("start_qix", po::value<double>(), "starting x value for the numerical integration grid. ")
+        ("end_qix", po::value<double>(), "ending x value for the numerical integration grid. ")
+        ("steps_qix", po::value<int>(), "increments in x values for the numerical integration grid. ")
+        ("start_qiy", po::value<double>(), "starting y value for the numerical integration grid. ")
+        ("end_qiy", po::value<double>(), "ending y value for the numerical integration grid. ")
+        ("steps_qiy", po::value<int>(), "increments in y values for the numerical integration grid. ")
+
+        ("use_gridsearch_best", po::value<bool>(), "whether to use the best bandwidth found during grid search. ")
+        ("eval_bwx", po::value<double>(), "x bandwidth to evaluate and output for plotting. ")
+        ("eval_bwy", po::value<double>(), "y bandwidth to evaluate and output for plotting. ")
+
         ("start_qx", po::value<double>(), "starting x value for the query grid. ")
         ("end_qx", po::value<double>(), "ending x value for the query grid. ")
         ("steps_qx", po::value<int>(), "increments in x values for the query grid. ")
@@ -67,12 +89,8 @@ int main(int argc, char **argv) {
         ("end_qy", po::value<double>(), "ending y value for the query grid. ")
         ("steps_qy", po::value<int>(), "increments in y values for the query grid. ")
 
-        ("use_gridsearch_best", po::value<bool>(), "whether to use the best bandwidth found during grid search. ")
-        ("eval_bwx", po::value<double>(), "x bandwidth to evaluate and output for plotting. ")
-        ("eval_bwy", po::value<double>(), "y bandwidth to evaluate and output for plotting. ")
-        ("output_eval_fname", po::value<std::string>(), "path to output matplotlib data to for plotting kde. ")
-
         ("alpha", po::value<double>(), "adaptive kernel sensitivity. ")
+        ("output_eval_fname", po::value<std::string>(), "path to output matplotlib data to for plotting kde. ")
         ("output_adaptive_eval_fname", po::value<std::string>(), "path to output matplotlib data to for plotting adaptive kde. ")
 
     ;
@@ -219,20 +237,51 @@ void grid_search(const po::variables_map &vm) {
   // -------------------------------
 
   // setup parameters
-  bool use_manual_bwgrid = vm["use_manual_bwgrid"].as<bool>();
   bool skip_cross_validation = vm["skip_cross_validation"].as<bool>();
+  bool use_manual_bwgrid = vm["use_manual_bwgrid"].as<bool>();
+  std::string cv_method = vm["cv_method"].as<std::string>();
+
   std::string manual_bwx = vm["manual_bwx"].as<std::string>();
   std::string manual_bwy = vm["manual_bwy"].as<std::string>();
+
   double start_bwx = vm["start_bwx"].as<double>();
   double end_bwx = vm["end_bwx"].as<double>();
   int steps_bwx = vm["steps_bwx"].as<int>();
   double start_bwy = vm["start_bwy"].as<double>();
   double end_bwy = vm["end_bwy"].as<double>();
   int steps_bwy = vm["steps_bwy"].as<int>();
+
+  double start_qix = vm["start_qix"].as<double>();
+  double end_qix = vm["end_qix"].as<double>();
+  int steps_qix = vm["steps_qix"].as<int>();
+  double start_qiy = vm["start_qiy"].as<double>();
+  double end_qiy = vm["end_qiy"].as<double>();
+  int steps_qiy = vm["steps_qiy"].as<int>();
+
   std::string output_gridsearch_fname = vm["output_gridsearch_fname"].as<std::string>();
 
   double best_bwx, best_bwy;
   if (!skip_cross_validation) {
+    
+    // define recognized cross validation methods 
+    std::set<std::string> recognized_cv_methods;
+    recognized_cv_methods.insert("lsq_conv");
+    recognized_cv_methods.insert("lsq_numint");
+
+    // decide which cv method to use
+    if (recognized_cv_methods.find(cv_method) == recognized_cv_methods.end()) {
+      throw std::invalid_argument("grid_search: unrecognized cv method. ");
+    }
+
+    if (cv_method == "lsq_conv") {
+      std::cout << "+ using convolution based least squares cross validation. \n" << std::endl;
+    } else {
+      std::cout << "+ using numerical integration based least squares cross validation. " << std::endl;
+      std::cout << "    grid dimensions: " << steps_qix << " by " << steps_qiy << std::endl;
+      std::cout << "    grid bounds: ";
+      std::cout << "[" << start_qix << ", " << end_qix << "]" << " x ";
+      std::cout << "[" << start_qiy << ", " << end_qiy << "]\n" << std::endl;
+    }
 
     // setup the search grid
     std::vector<std::pair<double, double>> bandwidth_grid;
@@ -245,9 +294,21 @@ void grid_search(const po::variables_map &vm) {
       bandwidth_grid = make_crossed_vector_pairs(manual_bwx, manual_bwy);
     }
 
-    // grid search
-    std::cout << "+ least squares cross validation grid search: \n" << std::endl;
+    if (use_manual_bwgrid) {
+      std::cout << "  using manual bandwidth grid: \n";
+      std::cout << "    grid points: [" << manual_bwx << "] x [" << manual_bwy << "]\n";
+    } else {
+      std::cout << "  using automatic bandwidth grid: \n";
+      std::cout << "    grid dimensions: " << steps_bwx << " by " << steps_bwy << std::endl;
+      std::cout << "    grid bounds: ";
+      std::cout << "[" << start_bwx << ", " << end_bwx << "]" << " x ";
+      std::cout << "[" << start_bwy << ", " << end_bwy << "]\n";
+    }
+    std::cout << std::endl;
 
+    // grid search
+    std::cout << "  grid searching: \n" << std::endl;
+    
     start = std::chrono::high_resolution_clock::now();
     
     std::vector<double> cv_scores;
@@ -255,11 +316,28 @@ void grid_search(const po::variables_map &vm) {
     for (const auto &p : bandwidth_grid) {
       kde.kernel().set_bandwidths(p.first, p.second);
 
+      if (cv_method == "lsq_conv") {
 #ifndef __CUDACC__
-      curr_cv = kde.lsq_convolution_cross_validate(rel_tol, abs_tol);
+        curr_cv = kde.lsq_convolution_cross_validate(rel_tol, abs_tol);
 #else
-      curr_cv = kde.lsq_convolution_cross_validate(rel_tol, abs_tol, gpu_block_size);
+        curr_cv = kde.lsq_convolution_cross_validate(rel_tol, abs_tol, gpu_block_size);
 #endif
+      } else if (cv_method == "lsq_numint") {
+#ifndef __CUDACC__
+        curr_cv = lsq_numint_cross_validate(kde, 
+                                            start_qix, end_qix, steps_qix,
+                                            start_qiy, end_qiy, steps_qiy,
+                                            rel_tol, abs_tol, qgrid_max_leaf_size);
+#else
+        curr_cv = lsq_numint_cross_validate(kde, 
+                                            start_qix, end_qix, steps_qix,
+                                            start_qiy, end_qiy, steps_qiy,
+                                            rel_tol, abs_tol, qgrid_max_leaf_size, 
+                                            gpu_block_size);
+#endif
+      } else {
+        assert(false);
+      }
 
       cv_scores.push_back(curr_cv);
       if (curr_cv < best_cv) { 
@@ -295,6 +373,10 @@ void grid_search(const po::variables_map &vm) {
   // ------------------------------------------------
 
   // setup parameters
+  bool use_gridsearch_best = vm["use_gridsearch_best"].as<bool>();
+  double eval_bwx = vm["eval_bwx"].as<double>();
+  double eval_bwy = vm["eval_bwy"].as<double>();
+
   double start_qx = vm["start_qx"].as<double>();
   double end_qx = vm["end_qx"].as<double>();
   int steps_qx = vm["steps_qx"].as<int>();
@@ -302,10 +384,6 @@ void grid_search(const po::variables_map &vm) {
   double end_qy = vm["end_qy"].as<double>();
   int steps_qy = vm["steps_qy"].as<int>();
   std::string output_eval_fname = vm["output_eval_fname"].as<std::string>();
-
-  bool use_gridsearch_best = vm["use_gridsearch_best"].as<bool>();
-  double eval_bwx = vm["eval_bwx"].as<double>();
-  double eval_bwy = vm["eval_bwy"].as<double>();
 
   if (skip_cross_validation) { use_gridsearch_best = false; }
 
@@ -321,9 +399,11 @@ void grid_search(const po::variables_map &vm) {
 
   std::cout << "+ evaluating cross validated kde over plotting grid. \n" << std::endl;
   std::cout << "  grid dimensions: " << steps_qx << "x" << steps_qy << std::endl;
+  std::cout << "  grid bounds: ";
+  std::cout << "[" << start_qx << ", " << end_qx << "]" << " x ";
+  std::cout << "[" << start_qy << ", " << end_qy << "]" << std::endl;
   std::cout << "  x bandwidth: " << eval_bwx << std::endl;
-  std::cout << "  y bandwidth: " << eval_bwy << std::endl;
-  std::cout << std::endl;
+  std::cout << "  y bandwidth: " << eval_bwy << "\n" << std::endl;
 
   // evaluate
   kde.kernel().set_bandwidths(eval_bwx, eval_bwy);
@@ -402,4 +482,3 @@ void grid_search(const po::variables_map &vm) {
 
   return;
 }
-
