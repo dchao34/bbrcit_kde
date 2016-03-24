@@ -131,8 +131,18 @@ class KernelDensity {
 #endif
 
 
-    // convert this object into an adaptive kernel. this method should be called 
-    // once and is not reversible. 
+    // convert between adaptive and non-adaptive kernel density estimates.
+    //
+    // `adapt_density`: makes the kernel density adaptive. degree of the adaptation
+    //                  depends on 0 <= `alpha` <= 1, with 0 being equivalent to no 
+    //                  adaptation at all. the local bandwidth corrections are computed
+    //                  using the current bandwidth setting. 
+    //     
+    // `unadapt_density`: makes the density non-adaptive.
+    //
+    // note: adapting densitities require all pair self evaluations of the reference
+    // data points and is thus computationally intensive. for large problem sizes, a 
+    // GPU is highly recommended. 
 #ifndef __CUDACC__ 
     void adapt_density(FloatType alpha, 
         FloatType rel_err=1e-6, FloatType abs_err=1e-6);
@@ -140,10 +150,18 @@ class KernelDensity {
     void adapt_density(FloatType alpha, 
         FloatType rel_err=1e-6, FloatType abs_err=1e-6, size_t block_size=128);
 #endif
+    void unadapt_density();
 
 
     // compute the cross validation score for the current 
     // kernel configuration. likelihood and least squares are available. 
+    // see non-member `lsq_convolution_cross_validate` for another flavor of
+    // cross validation. 
+    //
+    // note: for adaptive kernels, convolution kernel based least squares cross
+    // validation is not well defined. for this reason, least square cross validation 
+    // for adaptive kernels should use `lsq_numint_cross_validate` instead of 
+    // `lsq_convolution_cross_validate` 
 #ifndef __CUDACC__ 
     FloatType likelihood_cross_validate(
         FloatType rel_err=1e-6, FloatType abs_err=1e-6) const;

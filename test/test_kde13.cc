@@ -94,46 +94,9 @@ int main() {
 
   cout << endl;
 
-  // 4. adapt
-  cout << "+ adapting kernel density" << endl;
 
-  start = std::chrono::high_resolution_clock::now();
-  kde.adapt_density(0.5);
-  end = std::chrono::high_resolution_clock::now();
-  elapsed = end - start;
-  cout << "  cpu time: " << elapsed.count() << " ms. " << std::endl;
-  
-  cout << endl;
-
-  // 5. direct kde evaluation
-  cout << "+ direct evaluation" << endl; 
-  queries = grid;
-
-  start = std::chrono::high_resolution_clock::now();
-  kde.direct_eval(queries);
-  end = std::chrono::high_resolution_clock::now();
-  elapsed = end - start;
-#ifndef __CUDACC__
-  cout << "  cpu time: " << elapsed.count() << " ms. " << std::endl;
-#else 
-  cout << "  gpu time: " << elapsed.count() << " ms. " << std::endl;
-#endif
-
-#ifndef __CUDACC__
-  fout.open("test_kde13_cpu_direct.csv");
-#else 
-  fout.open("test_kde13_gpu_direct.csv");
-#endif
-
-  write_kde2d_result(fout, queries, 
-                     start_x, end_x, steps_x,
-                     start_y, end_y, steps_y);
-  fout.close();
-
-  cout << endl;
-
-  // 6. dual tree evaluation
-  cout << "+ dual tree evaluation" << endl; 
+  // 4. evaluate non-adaptive kernel
+  cout << "+ evaluating non-adaptive kernel" << endl; 
   queries = grid;
 
   FloatType rel_tol = 1e-6, abs_tol = 1e-6;
@@ -148,11 +111,46 @@ int main() {
   cout << "  gpu time: " << elapsed.count() << " ms. " << std::endl;
 #endif
 
+  fout.open("test_kde13_nonadaptive.csv");
+
+  write_kde2d_result(fout, queries, 
+                     start_x, end_x, steps_x,
+                     start_y, end_y, steps_y);
+  fout.close();
+
+  cout << endl;
+
+
+  // 5. adapt
+  cout << "+ adapting kernel density" << endl;
+
+  start = std::chrono::high_resolution_clock::now();
+  kde.adapt_density(0.5);
+  end = std::chrono::high_resolution_clock::now();
+  elapsed = end - start;
 #ifndef __CUDACC__
-  fout.open("test_kde13_cpu_tree.csv");
+  cout << "  cpu time: " << elapsed.count() << " ms. " << std::endl;
 #else 
-  fout.open("test_kde13_gpu_tree.csv");
+  cout << "  gpu time: " << elapsed.count() << " ms. " << std::endl;
 #endif
+  
+  cout << endl;
+
+  // 6. evaluating adaptive kernel
+  cout << "+ evaluating adaptive kernel" << endl; 
+  queries = grid;
+
+  start = std::chrono::high_resolution_clock::now();
+  kde.eval(queries, rel_tol, abs_tol, leaf_max);
+  end = std::chrono::high_resolution_clock::now();
+  elapsed = end - start;
+#ifndef __CUDACC__
+  cout << "  cpu time: " << elapsed.count() << " ms. " << std::endl;
+#else 
+  cout << "  gpu time: " << elapsed.count() << " ms. " << std::endl;
+#endif
+
+  fout.open("test_kde13_adaptive.csv");
   write_kde2d_result(fout, queries, 
                      start_x, end_x, steps_x,
                      start_y, end_y, steps_y);

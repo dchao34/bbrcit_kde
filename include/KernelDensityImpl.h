@@ -3,6 +3,7 @@
 #include <cassert>
 #include <iomanip>
 #include <random>
+#include <stdexcept>
 
 #include <Kernels/ConvKernelAssociator.h>
 #include <Kernels/KernelTraits.h>
@@ -250,6 +251,26 @@ KernelDensity<D,KT,FT,AT>::likelihood_cross_validate(
   return cv;
 }
 
+template<int D, typename KT, typename FT, typename AT>
+void KernelDensity<D,KT,FT,AT>::unadapt_density() {
+
+  // reset reference data point attributes
+  for (size_t i = 0; i < data_tree_.points_.size(); ++i) {
+
+    // set local bandwidth corrections to 1.0
+    data_tree_.points_[i].attributes().set_lower_abw(
+        ConstantTraits<FloatType>::one());
+    data_tree_.points_[i].attributes().set_upper_abw(
+        ConstantTraits<FloatType>::one());
+
+    // set masses to equal weights
+    data_tree_.points_[i].attributes().set_mass(
+      data_tree_.points_[i].attributes().weight());
+  }
+
+  // update node attributes
+  data_tree_.refresh_node_attributes(data_tree_.root_);
+}
 
 
 // Calling this method repurposes `this` KernelDensity object to become 
@@ -259,10 +280,10 @@ KernelDensity<D,KT,FT,AT>::likelihood_cross_validate(
 // + For each node, update the min/max local bandwidth corrections of 
 //   points under it. 
 //
-// + Update weights for each point and each node. Node weights are 
-//   induced from point weights, while point weights are adjusted by 
-//   scaling. e.g. if the `i`th point currently has weight `w_i` and 
-//   local bandwidth correction `abw_i`, then update the weight to 
+// + Update masses for each point and each node. Node masses are 
+//   induced from point masses, while point masses are computed by 
+//   scaling. e.g. if the `i`th point has weight `w_i` and 
+//   local bandwidth correction `abw_i`, then set the mass to 
 //   `w_i / pow(abw_i,D)`. 
 //
 // This prescription is described in page 101 of Silverman's book
@@ -276,6 +297,18 @@ void KernelDensity<D,KT,FT,AT>::adapt_density(
     size_t block_size
 #endif
     ) {
+
+  if (alpha < 0 || alpha > 1) { 
+    throw std::invalid_argument("adapt_density: alpha must be between [0, 1]. ");
+  }
+
+  // must first reset to non-adaptive densities before computing 
+  // the pilot estimate. 
+  unadapt_density();
+
+  // already done if `alpha` is 0. Checking for exact equality, since
+  // it is not impossible that a user requests only a slight adaptation. 
+  if (alpha == 0) { return; }
 
   // compute pilot estimate
   // ----------------------
