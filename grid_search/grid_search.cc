@@ -40,9 +40,10 @@ int main(int argc, char **argv) {
     config.add_options()
         ("rel_tol", po::value<double>(), "relative tolerace for the evaluation error. ")
         ("abs_tol", po::value<double>(), "absolute tolerace for the evaluation error. ")
+        ("cuda_device_number", po::value<int>(), "cuda gpu device number used for this session. ")
         ("gpu_block_size", po::value<int>(), "block size for the gpu kernel. ")
-        ("ref_max_leaf_size", po::value<int>(), "maximum leaf size of reference point tree. ")
-        ("query_max_leaf_size", po::value<int>(), "maximum leaf size of the query tree. ")
+        ("refpt_max_leaf_size", po::value<int>(), "maximum leaf size of reference point tree. ")
+        ("qgrid_max_leaf_size", po::value<int>(), "maximum leaf size of the query grid tree. ")
 
         ("input_refpts_fname", po::value<std::string>(), "path to the input reference points. ")
         ("output_scatter_fname", po::value<std::string>(), "path to output matplotlib scatter plot data. ")
@@ -141,21 +142,40 @@ void grid_search(const po::variables_map &vm) {
   // 0. setup general utilities
   // --------------------------
 
-  std::cout << "+ general parameters: \n" << std::endl;
-
   std::ofstream fout;
   std::chrono::high_resolution_clock::time_point start, end;
   std::chrono::duration<double, std::milli> elapsed;
   double rel_tol = vm["rel_tol"].as<double>();
   double abs_tol = vm["abs_tol"].as<double>();
 
+  std::cout << "+ performance parameters: \n" << std::endl;
+
   std::cout << "  relative tolerance: " << rel_tol << std::endl;
   std::cout << "  absolute tolerance: " << abs_tol << std::endl;
+  std::cout << std::endl;
 
 #ifdef __CUDACC__
+  int cuda_device_number = vm["cuda_device_number"].as<int>();
+  cudaSetDevice(cuda_device_number);
+  cudaDeviceProp deviceProp;
+  cudaGetDeviceProperties(&deviceProp, cuda_device_number);
+  std::cout << "  gpu device number used for this session: ";
+  std::cout << cuda_device_number << "\n";
+  std::cout << "  device name: " << deviceProp.name << std::endl;
+
   int gpu_block_size = vm["gpu_block_size"].as<int>();
   std::cout << "  gpu block size: " << gpu_block_size << std::endl;
+  std::cout << std::endl;
 #endif
+
+  int refpt_max_leaf_size = vm["refpt_max_leaf_size"].as<int>();
+  std::cout << "  reference point tree max leaf size: ";
+  std::cout << refpt_max_leaf_size << std::endl;
+
+  int qgrid_max_leaf_size = vm["qgrid_max_leaf_size"].as<int>();
+  std::cout << "  query grid tree max leaf size: ";
+  std::cout << qgrid_max_leaf_size << std::endl;
+
 
   std::cout << std::endl;
 
@@ -185,15 +205,11 @@ void grid_search(const po::variables_map &vm) {
   // 2. construct the kernel density estimator
   // -----------------------------------------
 
-  // setup parameters
-  int ref_max_leaf_size = vm["ref_max_leaf_size"].as<int>();
-
   // build kernel density estimator
   std::cout << "+ constructing kernel density estimator. \n" << std::endl;
-  std::cout << "  max leaf size: " << ref_max_leaf_size << "\n" << std::endl;
 
   start = std::chrono::high_resolution_clock::now();
-  KernelDensityType kde(data, ref_max_leaf_size);
+  KernelDensityType kde(data, refpt_max_leaf_size);
   end = std::chrono::high_resolution_clock::now();
   elapsed = end - start;
   std::cout << "  => running time: " << elapsed.count() << " ms. \n" << std::endl;
@@ -285,7 +301,6 @@ void grid_search(const po::variables_map &vm) {
   double start_qy = vm["start_qy"].as<double>();
   double end_qy = vm["end_qy"].as<double>();
   int steps_qy = vm["steps_qy"].as<int>();
-  int query_max_leaf_size = vm["query_max_leaf_size"].as<int>();
   std::string output_eval_fname = vm["output_eval_fname"].as<std::string>();
 
   bool use_gridsearch_best = vm["use_gridsearch_best"].as<bool>();
@@ -306,7 +321,6 @@ void grid_search(const po::variables_map &vm) {
 
   std::cout << "+ evaluating cross validated kde over plotting grid. \n" << std::endl;
   std::cout << "  grid dimensions: " << steps_qx << "x" << steps_qy << std::endl;
-  std::cout << "  query max leaf size: " << query_max_leaf_size << std::endl;
   std::cout << "  x bandwidth: " << eval_bwx << std::endl;
   std::cout << "  y bandwidth: " << eval_bwy << std::endl;
   std::cout << std::endl;
@@ -318,9 +332,9 @@ void grid_search(const po::variables_map &vm) {
   start = std::chrono::high_resolution_clock::now();
 
 #ifndef __CUDACC__
-  kde.eval(queries, rel_tol, abs_tol, query_max_leaf_size);
+  kde.eval(queries, rel_tol, abs_tol, qgrid_max_leaf_size);
 #else
-  kde.eval(queries, rel_tol, abs_tol, query_max_leaf_size, gpu_block_size);
+  kde.eval(queries, rel_tol, abs_tol, qgrid_max_leaf_size, gpu_block_size);
 #endif
 
   end = std::chrono::high_resolution_clock::now();
@@ -372,9 +386,9 @@ void grid_search(const po::variables_map &vm) {
   start = std::chrono::high_resolution_clock::now();
 
 #ifndef __CUDACC__
-  kde.eval(queries, rel_tol, abs_tol, query_max_leaf_size);
+  kde.eval(queries, rel_tol, abs_tol, qgrid_max_leaf_size);
 #else
-  kde.eval(queries, rel_tol, abs_tol, query_max_leaf_size, gpu_block_size);
+  kde.eval(queries, rel_tol, abs_tol, qgrid_max_leaf_size, gpu_block_size);
 #endif
 
   end = std::chrono::high_resolution_clock::now();
