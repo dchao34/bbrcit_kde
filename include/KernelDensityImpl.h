@@ -387,11 +387,12 @@ KernelDensity<D,KT,FT,AT>::KernelDensity() :
 
 template<int D, typename KT, typename FT, typename AT>
 KernelDensity<D,KT,FT,AT>::KernelDensity(
-    std::vector<DataPointType> pts, int leaf_max) 
+    const std::vector<DataPointType> &pts, int leaf_max) 
   : kernel_() {
 
-  initialize_attributes(pts);
-  data_tree_ = KdtreeType(std::move(pts), leaf_max);
+  std::vector<DataPointType> ref_pts = pts;
+  initialize_attributes(ref_pts);
+  data_tree_ = KdtreeType(std::move(ref_pts), leaf_max);
   initialize_cum_weights();
 
 }

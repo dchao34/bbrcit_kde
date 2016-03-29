@@ -72,7 +72,7 @@ class KernelDensity {
 
     // construct a kernel density estimator with 
     // kernel `k` over the points `data`.
-    KernelDensity(std::vector<DataPointType> data, int leaf_nmax=2);
+    KernelDensity(const std::vector<DataPointType> &data, int leaf_nmax=2);
     KernelDensity(std::vector<DataPointType> &&data, int leaf_nmax=2);
 
     // copy-control
