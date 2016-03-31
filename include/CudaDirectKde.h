@@ -8,6 +8,8 @@
 #include <KdeTraits.h>
 #include <Kernels/EpanechnikovKernel.h>
 
+#include <sharedmem.h>
+
 namespace bbrcit {
 
 template<int D, typename FloatT, typename KernelT> class CudaDirectKde;
@@ -128,7 +130,8 @@ __global__ void eval_kernel(
     FloatT *results, 
     KernelT *kernel) {
 
-  extern __shared__ PointT ref_cache[];
+  SharedMemory<PointT> smem;
+  PointT *ref_cache = smem.getPointer();
 
   // cache the density kernel into a register
   KernelT kern = *kernel;
