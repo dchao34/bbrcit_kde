@@ -61,13 +61,13 @@ int main() {
   elapsed = end - start;
   cout << "  running time: " << elapsed.count() << " ms. " << std::endl;
 
-  fout.open("test1d_data.csv");
+  fout.open("test_kde21_data.csv");
   write_scatter_data(fout, references);
   fout.close();
 
   cout << endl;
 
-  // 2. generate the query grid
+  // 2. generate the query grids
   vector<DataPoint2dType> grid2d;
   double start_x = -3, end_x = 2; int steps_x = 100;
   double start_y = -2, end_y = 2.5; int steps_y = 100;
@@ -83,7 +83,7 @@ int main() {
   cout << endl;
 
   // 3. build the kernel density estimator
-  cout << "+ building kde (kdtree construction)" << endl;
+  cout << "+ building 2d kde" << endl;
 
   size_t leaf_max = 1024;
 
@@ -98,8 +98,8 @@ int main() {
 
   cout << endl;
 
-  // 4. dual tree evaluation
-  cout << "+ dual tree evaluation" << endl; 
+  // 4. evaluate 2d density
+  cout << "+ evaluating 2d density" << endl; 
 
   start = std::chrono::high_resolution_clock::now();
   kde.eval(grid2d, rel_tol, abs_tol, leaf_max);
@@ -107,7 +107,7 @@ int main() {
   elapsed = end - start;
   cout << "  running time: " << elapsed.count() << " ms. " << std::endl;
 
-  fout.open("test1d.csv");
+  fout.open("test_kde21.csv");
   write_kde2d_result(fout, grid2d, 
                      start_x, end_x, steps_x,
                      start_y, end_y, steps_y);
@@ -115,23 +115,46 @@ int main() {
 
   cout << endl;
 
+  // 5. build and evaluate marginal density in x
 
-  // marginal in x
   std::vector<DataPoint1dType> grid1d;
+
+  // process marginal in x
+  cout << "+ building and evaluating marginal density in x" << endl; 
+
   generate_1dgrid(grid1d, start_x, end_x, steps_x);
 
-  auto kde_x = bbrcit::EpanechnikovProduct2dKdeMarginalizer<KFloatType,FloatType>::make_marginal_density_x(kde);
+  start = std::chrono::high_resolution_clock::now();
+  KernelDensity1dType kde_x = make_marginal_density_x(kde);
   kde_x.eval(grid1d, rel_tol, abs_tol, leaf_max);
-  fout.open("test1d_x.csv");
+  end = std::chrono::high_resolution_clock::now();
+  elapsed = end - start;
+  cout << "  running time: " << elapsed.count() << " ms. " << std::endl;
+
+  fout.open("test_kde21_x.csv");
   write_kde1d_result(fout, grid1d);
   fout.close();
 
+  cout << endl;
+
+
+  // process marginal in y
+  cout << "+ building and evaluating marginal density in y" << endl; 
+
   generate_1dgrid(grid1d, start_y, end_y, steps_y);
-  auto kde_y = bbrcit::EpanechnikovProduct2dKdeMarginalizer<KFloatType,FloatType>::make_marginal_density_y(kde);
+
+  start = std::chrono::high_resolution_clock::now();
+  KernelDensity1dType kde_y = make_marginal_density_y(kde);
   kde_y.eval(grid1d, rel_tol, abs_tol, leaf_max);
-  fout.open("test1d_y.csv");
+  end = std::chrono::high_resolution_clock::now();
+  elapsed = end - start;
+  cout << "  running time: " << elapsed.count() << " ms. " << std::endl;
+
+  fout.open("test_kde21_y.csv");
   write_kde1d_result(fout, grid1d);
   fout.close();
+
+  cout << endl;
 
   return 0;
 }

@@ -23,6 +23,7 @@ CPU tests
 + `test_kde18`: Full example 2d kde with least squares cross validation and adaptive densities. 
 + `test_kde19`: Simulating from kde. 
 + `test_kde20`: Least squares cross validation using numerical integration. 
++ `test_kde21`: Marginal density demo.  
 + `test_point2d`:
 + `test_kernels`:
 + `test_kde_cppthread`:
@@ -60,6 +61,7 @@ GPU tests
 + `test_kde17_cuda`: Same test as `test_kde17`, but with the GPU. 
 + `test_kde18_cuda`: Same test as `test_kde18`, but with the GPU. 
 + `test_kde20_cuda`: Same test as `test_kde20`, but with the GPU. 
++ `test_kde21_cuda`: Same test as `test_kde21`, but with the GPU. 
 + `test_point2d_cuda`:
 + `test_cukde0_cuda`: Basic usage of CudaDirectKde.
 + `test_cukde1_cuda`: Tests non kde evaluating methods (e.g. constructors, copy-control, etc.). Largely incomplete!
