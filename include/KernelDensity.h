@@ -54,6 +54,7 @@ class KernelDensity {
     using DataPointType = typename KdtreeType::DataPointType;
     using KernelType = KernelT;
     using KernelFloatType = typename KernelType::FloatType;
+    using AttributeType = AttrT;
 
     static constexpr int dim() { return D; }
 

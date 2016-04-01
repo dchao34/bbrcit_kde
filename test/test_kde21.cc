@@ -12,26 +12,27 @@
 #include <Kernels/EpanechnikovKernel.h>
 #include <KernelDensity.h>
 
-#include <MarginalDensityMaker.h>
+#include <MarginalDensityAssociator.h>
 
 #include "kde_test_utils.h"
 
 using namespace std;
 
 namespace {
+
   using FloatType = double;
   using KFloatType = float;
 
   double rel_tol = 1e-6;
   double abs_tol = 1e-8;
 
-  using Kernel2dType = bbrcit::EpanechnikovProductKernel2d<KFloatType>;
-  using KernelDensity2dType = bbrcit::KernelDensity<2, Kernel2dType, FloatType>;
-  using DataPoint2dType = typename KernelDensity2dType::DataPointType;
+  using KernelType = bbrcit::EpanechnikovProductKernel2d<KFloatType>;
+  using KernelDensityType = bbrcit::KernelDensity<2, KernelType, FloatType>;
+  using Point2d = typename KernelDensityType::DataPointType;
 
-  using Kernel1dType = bbrcit::EpanechnikovKernel<1, KFloatType>;
-  using KernelDensity1dType = bbrcit::KernelDensity<1, Kernel1dType, FloatType>;
-  using DataPoint1dType = typename KernelDensity1dType::DataPointType;
+  using MarginalDensityType = 
+    typename bbrcit::MarginalDensityAssociator<KernelDensityType>::MarginalDensityType;
+  using Point1d = typename MarginalDensityType::DataPointType;
 }
 
 int main() {
@@ -51,7 +52,7 @@ int main() {
   cout << "+ generating " << n_references << " reference points " << endl;
 
   default_random_engine e;
-  vector<DataPoint2dType> references;
+  vector<Point2d> references;
 
   start = std::chrono::high_resolution_clock::now();
   generate_bimodal_gaussian(e, references, n_references, 
@@ -68,7 +69,7 @@ int main() {
   cout << endl;
 
   // 2. generate the query grids
-  vector<DataPoint2dType> grid2d;
+  vector<Point2d> grid2d;
   double start_x = -3, end_x = 2; int steps_x = 100;
   double start_y = -2, end_y = 2.5; int steps_y = 100;
 
@@ -88,7 +89,7 @@ int main() {
   size_t leaf_max = 1024;
 
   start = std::chrono::high_resolution_clock::now();
-  KernelDensity2dType kde(references, leaf_max); 
+  KernelDensityType kde(references, leaf_max); 
   end = std::chrono::high_resolution_clock::now();
   elapsed = end - start;
   cout << "  running time: " << elapsed.count() << " ms. " << std::endl;
@@ -117,7 +118,7 @@ int main() {
 
   // 5. build and evaluate marginal density in x
 
-  std::vector<DataPoint1dType> grid1d;
+  std::vector<Point1d> grid1d;
 
   // process marginal in x
   cout << "+ building and evaluating marginal density in x" << endl; 
@@ -125,7 +126,8 @@ int main() {
   generate_1dgrid(grid1d, start_x, end_x, steps_x);
 
   start = std::chrono::high_resolution_clock::now();
-  KernelDensity1dType kde_x = make_marginal_density_x(kde);
+  MarginalDensityType kde_x = 
+    bbrcit::MarginalDensityAssociator<KernelDensityType>::marginal_density_x(kde);
   kde_x.eval(grid1d, rel_tol, abs_tol, leaf_max);
   end = std::chrono::high_resolution_clock::now();
   elapsed = end - start;
@@ -144,7 +146,8 @@ int main() {
   generate_1dgrid(grid1d, start_y, end_y, steps_y);
 
   start = std::chrono::high_resolution_clock::now();
-  KernelDensity1dType kde_y = make_marginal_density_y(kde);
+  MarginalDensityType kde_y = 
+    bbrcit::MarginalDensityAssociator<KernelDensityType>::marginal_density_y(kde);
   kde_y.eval(grid1d, rel_tol, abs_tol, leaf_max);
   end = std::chrono::high_resolution_clock::now();
   elapsed = end - start;
