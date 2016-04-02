@@ -434,9 +434,10 @@ void KernelDensity<D,KT,FT,AT>::initialize_attributes(
   // normalize point weights
   normalize_weights(pts);
 
-  // set masses to equal normalized weights
+  // set masses
   for (auto &p : pts) { 
-    p.attributes().set_mass(p.attributes().weight());
+    p.attributes().set_mass(
+        p.attributes().weight() * pow(p.attributes().abw(), -D));
   }
 }
 
