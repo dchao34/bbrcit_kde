@@ -21,8 +21,8 @@ using namespace std;
 namespace {
   using FloatType = double;
   using KFloatType = float;
-  //using KernelType = bbrcit::EpanechnikovKernel<2, KFloatType>;
-  using KernelType = bbrcit::GaussianKernel<2, KFloatType>;
+  using KernelType = bbrcit::EpanechnikovKernel<2, KFloatType>;
+  //using KernelType = bbrcit::GaussianKernel<2, KFloatType>;
   using KernelDensityType = bbrcit::KernelDensity<2, KernelType, FloatType>;
   using DataPointType = typename KernelDensityType::DataPointType;
 }
@@ -66,7 +66,7 @@ int main() {
 
 #ifndef __CUDACC__
   int kstart = 7;
-  int kend = 20;
+  int kend = 21;
   int direct_kmax = 13;
 #else 
   int kstart = 7;
